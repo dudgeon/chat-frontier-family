@@ -56,13 +56,6 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </div>
           
           <ScrollArea className="flex-1 px-4">
-            <div className="py-6 border-b">
-              <h3 className="text-sm font-semibold mb-4 flex items-center">
-                Theme Color
-              </h3>
-              <ColorPicker currentColor={activeColor} onColorChange={handleColorChange} />
-            </div>
-            
             <div className="py-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -82,6 +75,11 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <ChatHistory />
             </div>
           </ScrollArea>
+          
+          {/* Color picker moved to bottom and made sticky */}
+          <div className="sticky bottom-0 bg-white border-t p-4 shadow-md">
+            <ColorPicker currentColor={activeColor} onColorChange={handleColorChange} />
+          </div>
         </div>
       </div>
     </>

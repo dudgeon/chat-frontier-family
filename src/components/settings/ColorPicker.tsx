@@ -8,34 +8,40 @@ interface ColorPickerProps {
 }
 
 const ColorPicker: React.FC<ColorPickerProps> = ({ currentColor, onColorChange }) => {
-  // Predefined color options with the new color set
+  // Predefined color options with the new color set, with dark purple first as default
   const colorOptions = [
+    { value: '#4C356B', label: 'Dark Purple' },
     { value: '#E92F2F', label: 'Red' },
     { value: '#F66737', label: 'Orange' },
     { value: '#FDD85D', label: 'Yellow' },
     { value: '#F699B3', label: 'Pink' },
-    { value: '#4C356B', label: 'Purple' },
     { value: '#00A199', label: 'Teal' },
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
-        {colorOptions.map((color) => (
-          <button
-            key={color.value}
-            className={cn(
-              "w-8 h-8 rounded-full border transition-all",
-              currentColor === color.value 
-                ? "border-gray-900 ring-2 ring-hero/50 scale-110" 
-                : "border-transparent hover:scale-105"
-            )}
-            style={{ backgroundColor: color.value }}
-            onClick={() => onColorChange(color.value)}
-            title={color.label}
-          />
-        ))}
-      </div>
+    <div className="flex justify-center gap-3">
+      {colorOptions.map((color) => (
+        <button
+          key={color.value}
+          className={cn(
+            "w-8 h-8 rounded-full transition-all relative",
+            currentColor === color.value 
+              ? "scale-110" 
+              : "hover:scale-105"
+          )}
+          style={{ backgroundColor: color.value }}
+          onClick={() => onColorChange(color.value)}
+          title={color.label}
+          aria-label={color.label}
+        >
+          {currentColor === color.value && (
+            <span 
+              className="absolute inset-0 border-2 rounded-full" 
+              style={{ borderColor: color.value }}
+            />
+          )}
+        </button>
+      ))}
     </div>
   );
 };

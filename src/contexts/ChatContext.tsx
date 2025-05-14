@@ -1,9 +1,8 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
 import { useApiKey } from '@/hooks/useApiKey';
 import { useMessageHandler } from '@/hooks/useMessageHandler';
-import { updateCssVariable } from '@/utils/colorUtils';
+import { updateCssVariable, loadSavedColor } from '@/utils/colorUtils';
 import { generateChatName } from '@/utils/chatNameGenerator';
 
 interface ChatSession {
@@ -41,11 +40,8 @@ const ACTIVE_SESSION_KEY = 'chat-app-active-session';
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { apiKey, setApiKey } = useApiKey();
   
-  // Get stored color or use default
-  const [heroColor, setHeroColorState] = useState<string>(() => {
-    const storedColor = localStorage.getItem(COLOR_STORAGE_KEY);
-    return storedColor || '#6366F1';
-  });
+  // Get stored color or use default via loadSavedColor utility
+  const [heroColor, setHeroColorState] = useState<string>(() => loadSavedColor());
 
   // Store sessions and active session ID
   const [chatSessions, setChatSessions] = useState<ChatSession[]>(() => {
@@ -128,10 +124,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Update CSS variable when hero color changes
+  // Update CSS variable when hero color changes - updateCssVariable now handles localStorage
   useEffect(() => {
     updateCssVariable(heroColor);
-    localStorage.setItem(COLOR_STORAGE_KEY, heroColor);
   }, [heroColor]);
 
   // Store the updated message list in the chat sessions

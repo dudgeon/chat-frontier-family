@@ -37,4 +37,15 @@ export const hexToHSL = (hex: string): string => {
 export const updateCssVariable = (colorHex: string): void => {
   const root = document.documentElement;
   root.style.setProperty('--hero', hexToHSL(colorHex));
+  
+  // Save to localStorage
+  localStorage.setItem('chat-app-color', colorHex);
+};
+
+// Default color is now dark purple
+export const DEFAULT_THEME_COLOR = '#4C356B';
+
+// Load color from localStorage or use default
+export const loadSavedColor = (): string => {
+  return localStorage.getItem('chat-app-color') || DEFAULT_THEME_COLOR;
 };
