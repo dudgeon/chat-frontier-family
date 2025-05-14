@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ColorPicker from './ColorPicker';
 import ChatHistory from './ChatHistory';
+import APIKeyInput from './APIKeyInput';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -39,6 +40,10 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               Theme Color
             </h3>
             <ColorPicker currentColor={currentColor} onColorChange={onColorChange} />
+          </div>
+          
+          <div className="py-6 border-b">
+            <APIKeyInput />
           </div>
           
           <div className="py-6">

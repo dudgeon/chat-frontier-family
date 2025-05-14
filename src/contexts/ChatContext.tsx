@@ -10,6 +10,8 @@ interface ChatContextType {
   heroColor: string;
   setHeroColor: (color: string) => void;
   isWaitingForResponse: boolean;
+  apiKey: string;
+  setApiKey: (key: string) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -20,6 +22,17 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ]);
   const [heroColor, setHeroColor] = useState<string>('#6366F1');
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
+  const [apiKey, setApiKey] = useState<string>(() => {
+    const savedKey = localStorage.getItem('openai-api-key');
+    return savedKey || '';
+  });
+
+  // Save API key to localStorage when it changes
+  useEffect(() => {
+    if (apiKey) {
+      localStorage.setItem('openai-api-key', apiKey);
+    }
+  }, [apiKey]);
 
   // Update CSS variable when hero color changes
   useEffect(() => {
@@ -139,7 +152,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addMessage, 
       heroColor, 
       setHeroColor, 
-      isWaitingForResponse 
+      isWaitingForResponse,
+      apiKey,
+      setApiKey
     }}>
       {children}
     </ChatContext.Provider>
