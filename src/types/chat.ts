@@ -1,13 +1,16 @@
 
 export interface Message {
+  id?: string;
   content: string;
   isUser: boolean;
-  timestamp?: Date;
+  timestamp?: number;
+  role?: 'user' | 'assistant' | 'system';
 }
 
 export interface ChatSession {
   id: string;
-  title: string;
-  lastMessage: string;
-  timestamp: Date;
+  name: string;
+  messages: Message[];
+  createdAt: number;
+  updatedAt: number;
 }
