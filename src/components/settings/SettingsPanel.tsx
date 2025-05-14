@@ -10,13 +10,28 @@ import { useChat } from '@/contexts/ChatContext';
 interface SettingsPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  onColorChange?: (color: string) => void;
+  currentColor?: string;
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
   isOpen,
   onClose,
+  onColorChange,
+  currentColor,
 }) => {
   const { heroColor, setHeroColor, createNewChat } = useChat();
+  
+  // Use the props if provided, otherwise use the context values
+  const handleColorChange = (color: string) => {
+    if (onColorChange) {
+      onColorChange(color);
+    } else {
+      setHeroColor(color);
+    }
+  };
+
+  const activeColor = currentColor || heroColor;
   
   return (
     <>
@@ -45,7 +60,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <h3 className="text-sm font-semibold mb-4 flex items-center">
                 Theme Color
               </h3>
-              <ColorPicker currentColor={heroColor} onColorChange={setHeroColor} />
+              <ColorPicker currentColor={activeColor} onColorChange={handleColorChange} />
             </div>
             
             <div className="py-6">
