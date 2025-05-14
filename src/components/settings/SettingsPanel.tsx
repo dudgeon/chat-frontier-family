@@ -45,7 +45,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       
       <div
         className={`fixed top-0 left-0 h-full w-72 bg-white shadow-lg z-20 transition-transform duration-300 ease-in-out
-          ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:relative md:z-auto`}
+          ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:relative md:z-auto md:shadow-none md:border-r md:border-hero/30`}
       >
         <div className="flex flex-col h-full">
           <div className="p-4 border-b flex justify-between items-center">
@@ -77,7 +77,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </ScrollArea>
           
           {/* Color picker moved to bottom and made sticky */}
-          <div className="sticky bottom-0 bg-white border-t p-4 shadow-md">
+          <div className="sticky bottom-0 bg-white border-t p-4 shadow-md md:shadow-none md:border-t md:border-hero/30">
             <ColorPicker currentColor={activeColor} onColorChange={handleColorChange} />
           </div>
         </div>
