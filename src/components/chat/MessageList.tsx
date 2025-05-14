@@ -20,7 +20,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
           key={index}
           className={message.isUser 
             ? 'message-bubble-user' 
-            : 'message-bubble-other bg-hero text-hero-foreground'}
+            : 'message-bubble-other'}
         >
           {message.content}
         </div>

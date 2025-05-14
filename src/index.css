@@ -100,9 +100,9 @@
 }
 
 .message-bubble-user {
-  @apply bg-hero text-hero-foreground rounded-2xl rounded-br-sm py-2 px-4 max-w-[85%] self-end;
+  @apply bg-hero/20 text-hero rounded-2xl rounded-br-sm py-2 px-4 max-w-[85%] self-end;
 }
 
 .message-bubble-other {
-  @apply bg-gray-100 text-gray-800 rounded-2xl rounded-bl-sm py-2 px-4 max-w-[85%] self-start;
+  @apply bg-hero/10 text-hero rounded-2xl rounded-bl-sm py-2 px-4 max-w-[85%] self-start;
 }
