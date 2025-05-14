@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
-import { getOpenAIResponse } from '@/utils/openai';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
 interface ChatContextType {
@@ -9,31 +9,17 @@ interface ChatContextType {
   addMessage: (content: string, isUser: boolean) => void;
   heroColor: string;
   setHeroColor: (color: string) => void;
-  apiKey: string;
-  setApiKey: (key: string) => void;
   isWaitingForResponse: boolean;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
-
-const LOCAL_STORAGE_KEY = 'openai-api-key';
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [messages, setMessages] = useState<Message[]>([
     { content: "Hello! I'm powered by GPT-4o. How can I help you today?", isUser: false },
   ]);
   const [heroColor, setHeroColor] = useState<string>('#6366F1');
-  const [apiKey, setApiKey] = useState<string>(() => {
-    return localStorage.getItem(LOCAL_STORAGE_KEY) || '';
-  });
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
-
-  // Save API key to localStorage when it changes
-  useEffect(() => {
-    if (apiKey) {
-      localStorage.setItem(LOCAL_STORAGE_KEY, apiKey);
-    }
-  }, [apiKey]);
 
   // Update CSS variable when hero color changes
   useEffect(() => {
@@ -86,8 +72,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     
-    // If this is a user message, get response from OpenAI
-    if (isUser && apiKey) {
+    // If this is a user message, get response from the edge function
+    if (isUser) {
       setIsWaitingForResponse(true);
       
       try {
@@ -98,46 +84,52 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }));
         
         // Add the new user message
-        openaiMessages.push({ role: 'user', content });
+        openaiMessages.push({ role: 'user' as const, content });
         
         // Add system message at the beginning
         openaiMessages.unshift({ 
-          role: 'system', 
+          role: 'system' as const, 
           content: 'You are a helpful assistant. Provide friendly, concise responses.'
         });
         
-        // Get response from OpenAI
-        const response = await getOpenAIResponse(openaiMessages, apiKey);
+        // Call the Supabase edge function
+        const { data, error } = await supabase.functions.invoke('chat', {
+          body: { messages: openaiMessages }
+        });
+
+        if (error) {
+          throw new Error(error.message);
+        }
         
-        if (response) {
+        if (data && data.content) {
           // Add AI response to messages
           setMessages(prev => [
             ...prev,
-            { content: response, isUser: false, timestamp: new Date() }
+            { content: data.content, isUser: false, timestamp: new Date() }
           ]);
+        } else if (data && data.error) {
+          throw new Error(data.error);
         }
       } catch (error) {
-        console.error('Error getting response from OpenAI:', error);
+        console.error('Error getting response:', error);
         toast({
           title: "Error",
-          description: "Failed to get a response. Please check your API key.",
+          description: "Failed to get a response from the AI assistant. Please try again later.",
           variant: "destructive"
         });
-      } finally {
-        setIsWaitingForResponse(false);
-      }
-    } else if (isUser && !apiKey) {
-      // If no API key is set, add a message prompting the user to add one
-      setTimeout(() => {
+        
+        // Add an error message to the chat
         setMessages(prev => [
           ...prev,
           { 
-            content: "Please provide your OpenAI API key in the settings panel to enable GPT-4o responses.", 
+            content: "I'm sorry, I couldn't process your request. Please try again later.", 
             isUser: false, 
             timestamp: new Date() 
           }
         ]);
-      }, 500);
+      } finally {
+        setIsWaitingForResponse(false);
+      }
     }
   };
 
@@ -147,8 +139,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addMessage, 
       heroColor, 
       setHeroColor, 
-      apiKey, 
-      setApiKey,
       isWaitingForResponse 
     }}>
       {children}
