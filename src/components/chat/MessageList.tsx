@@ -18,7 +18,9 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
       {messages.map((message, index) => (
         <div
           key={index}
-          className={message.isUser ? 'message-bubble-user' : 'message-bubble-other'}
+          className={message.isUser 
+            ? 'message-bubble-user' 
+            : 'message-bubble-other bg-hero text-hero-foreground'}
         >
           {message.content}
         </div>
