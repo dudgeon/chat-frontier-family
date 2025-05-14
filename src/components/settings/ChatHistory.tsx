@@ -1,25 +1,41 @@
 
 import React from 'react';
+import { Clock, MessageCircle } from 'lucide-react';
+import { useChat } from '@/contexts/ChatContext';
+import { formatDistanceToNow } from 'date-fns';
 
 const ChatHistory: React.FC = () => {
-  // Sample history data - in a real app this would come from props or a context
-  const historyItems = [
-    { id: 1, title: 'Chat with Sarah', timestamp: '2 hours ago' },
-    { id: 2, title: 'Team discussion', timestamp: 'Yesterday' },
-    { id: 3, title: 'Project planning', timestamp: '3 days ago' },
-    { id: 4, title: 'Customer support', timestamp: 'Last week' },
-    { id: 5, title: 'Brainstorming session', timestamp: '2 weeks ago' },
-  ];
+  const { chatSessions, activeChatId, switchToChat } = useChat();
+  
+  if (chatSessions.length === 0) {
+    return (
+      <div className="text-center py-6 text-gray-500">
+        <MessageCircle className="mx-auto mb-2 text-gray-400" />
+        <p className="text-sm">No chat history yet</p>
+        <p className="text-xs">Start a new conversation to get started</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2">
-      {historyItems.map((item) => (
+      {chatSessions.map((session) => (
         <div
-          key={item.id}
-          className="p-3 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer"
+          key={session.id}
+          className={`p-3 rounded-md hover:bg-gray-100 cursor-pointer transition-colors ${
+            session.id === activeChatId ? 'bg-hero/10 hover:bg-hero/15 border-l-2 border-hero' : ''
+          }`}
+          onClick={() => switchToChat(session.id)}
         >
-          <h4 className="font-medium text-sm">{item.title}</h4>
-          <p className="text-xs text-gray-500">{item.timestamp}</p>
+          <h4 className="font-medium text-sm truncate">
+            {session.name || 'New chat'}
+          </h4>
+          <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+            <Clock size={12} />
+            {session.lastUpdated 
+              ? formatDistanceToNow(session.lastUpdated, { addSuffix: true }) 
+              : 'Just now'}
+          </p>
         </div>
       ))}
     </div>

@@ -25,8 +25,10 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ currentColor, onColorChange }
           <button
             key={color.value}
             className={cn(
-              "w-6 h-6 rounded-full border",
-              currentColor === color.value ? "border-gray-900 ring-1 ring-gray-400" : "border-transparent"
+              "w-8 h-8 rounded-full border transition-all",
+              currentColor === color.value 
+                ? "border-gray-900 ring-2 ring-hero/50 scale-110" 
+                : "border-transparent hover:scale-105"
             )}
             style={{ backgroundColor: color.value }}
             onClick={() => onColorChange(color.value)}

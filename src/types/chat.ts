@@ -1,4 +1,3 @@
-
 export interface Message {
   id?: string;
   content: string;
@@ -9,8 +8,7 @@ export interface Message {
 
 export interface ChatSession {
   id: string;
-  name: string;
+  name: string | null;
   messages: Message[];
-  createdAt: number;
-  updatedAt: number;
+  lastUpdated: number | null;
 }

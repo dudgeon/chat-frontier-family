@@ -97,8 +97,22 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Theme-affected elements */
+  button:focus-visible {
+    @apply ring-2 ring-hero/50 outline-none;
+  }
+
+  input:focus, textarea:focus {
+    @apply ring-2 ring-hero/30 border-hero/50 outline-none;
+  }
+
+  ::selection {
+    @apply bg-hero/30;
+  }
 }
 
+/* Message bubbles */
 .message-bubble-user {
   @apply bg-hero text-hero-foreground rounded-2xl rounded-br-sm py-2 px-4 max-w-[85%] self-end;
   white-space: pre-wrap;
@@ -107,5 +121,35 @@
 .message-bubble-other {
   @apply bg-hero/10 text-hero rounded-2xl rounded-bl-sm py-2 px-4 max-w-[85%] self-start;
   white-space: pre-wrap;
+}
+
+/* Active sidebar elements */
+.sidebar-active {
+  @apply bg-hero/10 border-l-2 border-hero text-hero;
+}
+
+/* Custom scrollbar */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+  }
+
+  .scrollbar-thin:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
 }
 
