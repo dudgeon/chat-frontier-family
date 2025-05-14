@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { X, Clock, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,22 +5,24 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import ColorPicker from './ColorPicker';
 import ChatHistory from './ChatHistory';
 import { useChat } from '@/contexts/ChatContext';
-
 interface SettingsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   onColorChange?: (color: string) => void;
   currentColor?: string;
 }
-
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
   isOpen,
   onClose,
   onColorChange,
-  currentColor,
+  currentColor
 }) => {
-  const { heroColor, setHeroColor, createNewChat } = useChat();
-  
+  const {
+    heroColor,
+    setHeroColor,
+    createNewChat
+  } = useChat();
+
   // Use the props if provided, otherwise use the context values
   const handleColorChange = (color: string) => {
     if (onColorChange) {
@@ -30,30 +31,15 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setHeroColor(color);
     }
   };
-
   const activeColor = currentColor || heroColor;
-  
-  return (
-    <>
+  return <>
       {/* Overlay for mobile when panel is open */}
-      {isOpen && (
-        <div 
-          className="md:hidden fixed inset-0 bg-black/20 z-10"
-          onClick={onClose}
-        />
-      )}
+      {isOpen && <div className="md:hidden fixed inset-0 bg-black/20 z-10" onClick={onClose} />}
       
-      <div
-        className={`fixed top-0 left-0 h-full w-72 bg-white shadow-lg z-20 transition-transform duration-300 ease-in-out
-          ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:relative md:z-auto md:shadow-none md:border-r md:border-hero/30`}
-      >
+      <div className={`fixed top-0 left-0 h-full w-72 bg-white shadow-lg z-20 transition-transform duration-300 ease-in-out
+          ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:relative md:z-auto md:shadow-none md:border-r md:border-hero/30`}>
         <div className="flex flex-col h-full">
-          <div className="p-4 border-b flex justify-between items-center">
-            <h2 className="font-handwritten text-2xl text-hero">frontier.family</h2>
-            <Button variant="ghost" size="icon" onClick={onClose} className="text-hero md:hidden">
-              <X size={20} />
-            </Button>
-          </div>
+          
           
           <ScrollArea className="flex-1 px-4">
             <div className="py-6">
@@ -62,12 +48,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <Clock size={16} />
                   Chat History
                 </h3>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="text-hero hover:bg-hero/10" 
-                  onClick={createNewChat}
-                >
+                <Button variant="ghost" size="sm" className="text-hero hover:bg-hero/10" onClick={createNewChat}>
                   <Plus size={16} className="mr-1" />
                   New Chat
                 </Button>
@@ -82,8 +63,6 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </div>
         </div>
       </div>
-    </>
-  );
+    </>;
 };
-
 export default SettingsPanel;
