@@ -1,21 +1,39 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
+import { getOpenAIResponse } from '@/utils/openai';
+import { toast } from '@/components/ui/use-toast';
 
 interface ChatContextType {
   messages: Message[];
   addMessage: (content: string, isUser: boolean) => void;
   heroColor: string;
   setHeroColor: (color: string) => void;
+  apiKey: string;
+  setApiKey: (key: string) => void;
+  isWaitingForResponse: boolean;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
+const LOCAL_STORAGE_KEY = 'openai-api-key';
+
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [messages, setMessages] = useState<Message[]>([
-    { content: "Hello! How can I help you today?", isUser: false },
+    { content: "Hello! I'm powered by GPT-4o. How can I help you today?", isUser: false },
   ]);
   const [heroColor, setHeroColor] = useState<string>('#6366F1');
+  const [apiKey, setApiKey] = useState<string>(() => {
+    return localStorage.getItem(LOCAL_STORAGE_KEY) || '';
+  });
+  const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
+
+  // Save API key to localStorage when it changes
+  useEffect(() => {
+    if (apiKey) {
+      localStorage.setItem(LOCAL_STORAGE_KEY, apiKey);
+    }
+  }, [apiKey]);
 
   // Update CSS variable when hero color changes
   useEffect(() => {
@@ -59,7 +77,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     root.style.setProperty('--hero', hexToHSL(heroColor));
   }, [heroColor]);
 
-  const addMessage = (content: string, isUser: boolean) => {
+  const addMessage = async (content: string, isUser: boolean) => {
     const newMessage: Message = {
       content,
       isUser,
@@ -68,25 +86,71 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     
-    // Simulate AI response after user messages
-    if (isUser) {
-      setTimeout(() => {
-        const responses = [
-          "I understand what you're asking.",
-          "That's an interesting question!",
-          "Let me think about that for a moment.",
-          "I can help you with that.",
-          "Could you provide more details?",
-        ];
+    // If this is a user message, get response from OpenAI
+    if (isUser && apiKey) {
+      setIsWaitingForResponse(true);
+      
+      try {
+        // Format messages for OpenAI API
+        const openaiMessages = messages.map(msg => ({
+          role: msg.isUser ? 'user' as const : 'assistant' as const,
+          content: msg.content
+        }));
         
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-        addMessage(randomResponse, false);
-      }, 1000);
+        // Add the new user message
+        openaiMessages.push({ role: 'user', content });
+        
+        // Add system message at the beginning
+        openaiMessages.unshift({ 
+          role: 'system', 
+          content: 'You are a helpful assistant. Provide friendly, concise responses.'
+        });
+        
+        // Get response from OpenAI
+        const response = await getOpenAIResponse(openaiMessages, apiKey);
+        
+        if (response) {
+          // Add AI response to messages
+          setMessages(prev => [
+            ...prev,
+            { content: response, isUser: false, timestamp: new Date() }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error getting response from OpenAI:', error);
+        toast({
+          title: "Error",
+          description: "Failed to get a response. Please check your API key.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsWaitingForResponse(false);
+      }
+    } else if (isUser && !apiKey) {
+      // If no API key is set, add a message prompting the user to add one
+      setTimeout(() => {
+        setMessages(prev => [
+          ...prev,
+          { 
+            content: "Please provide your OpenAI API key in the settings panel to enable GPT-4o responses.", 
+            isUser: false, 
+            timestamp: new Date() 
+          }
+        ]);
+      }, 500);
     }
   };
 
   return (
-    <ChatContext.Provider value={{ messages, addMessage, heroColor, setHeroColor }}>
+    <ChatContext.Provider value={{ 
+      messages, 
+      addMessage, 
+      heroColor, 
+      setHeroColor, 
+      apiKey, 
+      setApiKey,
+      isWaitingForResponse 
+    }}>
       {children}
     </ChatContext.Provider>
   );

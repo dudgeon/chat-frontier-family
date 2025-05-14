@@ -5,6 +5,7 @@ import Header from '@/components/chat/Header';
 import MessageList from '@/components/chat/MessageList';
 import MessageInput from '@/components/chat/MessageInput';
 import SettingsPanel from '@/components/settings/SettingsPanel';
+import APIKeyInput from '@/components/settings/APIKeyInput';
 
 const ChatInterface: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -33,6 +34,7 @@ const ChatInterface: React.FC = () => {
         onClose={() => setIsSettingsOpen(false)} 
         onColorChange={setHeroColor}
         currentColor={heroColor}
+        apiKeyComponent={<APIKeyInput />}
       />
       
       <Header toggleSettings={toggleSettings} />

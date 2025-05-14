@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useChat } from '@/contexts/ChatContext';
 
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
@@ -10,6 +11,7 @@ interface MessageInputProps {
 
 const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
   const [message, setMessage] = useState('');
+  const { isWaitingForResponse } = useChat();
 
   const handleSend = () => {
     if (message.trim()) {
@@ -32,14 +34,15 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={handleKeyDown}
         className="flex-1"
+        disabled={isWaitingForResponse}
       />
       <Button 
         className="bg-hero hover:bg-hero/90 text-white" 
         size="icon" 
         onClick={handleSend} 
-        disabled={!message.trim()}
+        disabled={!message.trim() || isWaitingForResponse}
       >
-        <Send size={18} />
+        {isWaitingForResponse ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
       </Button>
     </div>
   );
