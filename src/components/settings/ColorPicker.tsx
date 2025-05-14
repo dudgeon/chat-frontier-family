@@ -8,25 +8,25 @@ interface ColorPickerProps {
 }
 
 const ColorPicker: React.FC<ColorPickerProps> = ({ currentColor, onColorChange }) => {
-  // Predefined color options
+  // Predefined color options with the new color set
   const colorOptions = [
-    { value: '#6366F1', label: 'Indigo' },    // Default
-    { value: '#3B82F6', label: 'Blue' },
-    { value: '#10B981', label: 'Green' },
-    { value: '#F59E0B', label: 'Amber' },
-    { value: '#EF4444', label: 'Red' },
-    { value: '#8B5CF6', label: 'Purple' },
+    { value: '#E92F2F', label: 'Red' },
+    { value: '#F66737', label: 'Orange' },
+    { value: '#FDD85D', label: 'Yellow' },
+    { value: '#F699B3', label: 'Pink' },
+    { value: '#4C356B', label: 'Purple' },
+    { value: '#00A199', label: 'Teal' },
   ];
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-3">
+      <div className="flex gap-2">
         {colorOptions.map((color) => (
           <button
             key={color.value}
             className={cn(
-              "w-full aspect-square rounded-full border-2",
-              currentColor === color.value ? "border-gray-900" : "border-transparent"
+              "w-6 h-6 rounded-full border",
+              currentColor === color.value ? "border-gray-900 ring-1 ring-gray-400" : "border-transparent"
             )}
             style={{ backgroundColor: color.value }}
             onClick={() => onColorChange(color.value)}
