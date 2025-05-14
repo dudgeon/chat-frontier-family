@@ -19,15 +19,8 @@ const ChatInterface: React.FC = () => {
   };
 
   return (
-    <div className="relative h-screen flex flex-col bg-white">
-      {/* Overlay when settings is open on mobile */}
-      {isSettingsOpen && (
-        <div 
-          className="fixed inset-0 bg-black/20 z-10 md:hidden"
-          onClick={() => setIsSettingsOpen(false)}
-        />
-      )}
-      
+    <div className="relative h-screen flex flex-col md:flex-row bg-white">
+      {/* Settings panel - now part of the flex layout on desktop */}
       <SettingsPanel 
         isOpen={isSettingsOpen} 
         onClose={() => setIsSettingsOpen(false)} 
@@ -35,14 +28,17 @@ const ChatInterface: React.FC = () => {
         currentColor={heroColor}
       />
       
-      <Header toggleSettings={toggleSettings} />
-      
-      <main className="flex-1 overflow-hidden pt-14 pb-16 flex flex-col">
-        <MessageList messages={messages} />
-      </main>
-      
-      <div className="fixed bottom-0 left-0 right-0">
-        <MessageInput onSendMessage={handleSendMessage} />
+      {/* Main chat area */}
+      <div className="flex-1 flex flex-col h-full relative">
+        <Header toggleSettings={toggleSettings} />
+        
+        <main className="flex-1 overflow-hidden pt-14 pb-16 flex flex-col">
+          <MessageList messages={messages} />
+        </main>
+        
+        <div className="absolute bottom-0 left-0 right-0">
+          <MessageInput onSendMessage={handleSendMessage} />
+        </div>
       </div>
     </div>
   );
