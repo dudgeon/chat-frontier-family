@@ -1,13 +1,58 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
-const Index = () => {
+import React, { useState } from 'react';
+import { useChat, ChatProvider } from '@/contexts/ChatContext';
+import Header from '@/components/chat/Header';
+import MessageList from '@/components/chat/MessageList';
+import MessageInput from '@/components/chat/MessageInput';
+import SettingsPanel from '@/components/settings/SettingsPanel';
+
+const ChatInterface: React.FC = () => {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { messages, addMessage, heroColor, setHeroColor } = useChat();
+
+  const toggleSettings = () => {
+    setIsSettingsOpen(!isSettingsOpen);
+  };
+
+  const handleSendMessage = (message: string) => {
+    addMessage(message, true);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="relative h-screen flex flex-col bg-white">
+      {/* Overlay when settings is open on mobile */}
+      {isSettingsOpen && (
+        <div 
+          className="fixed inset-0 bg-black/20 z-10 md:hidden"
+          onClick={() => setIsSettingsOpen(false)}
+        />
+      )}
+      
+      <SettingsPanel 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+        onColorChange={setHeroColor}
+        currentColor={heroColor}
+      />
+      
+      <Header toggleSettings={toggleSettings} />
+      
+      <main className="flex-1 overflow-hidden pt-14 pb-16 flex flex-col">
+        <MessageList messages={messages} />
+      </main>
+      
+      <div className="fixed bottom-0 left-0 right-0">
+        <MessageInput onSendMessage={handleSendMessage} />
       </div>
     </div>
+  );
+};
+
+const Index: React.FC = () => {
+  return (
+    <ChatProvider>
+      <ChatInterface />
+    </ChatProvider>
   );
 };
 
