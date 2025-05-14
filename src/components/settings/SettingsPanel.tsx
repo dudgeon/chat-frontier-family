@@ -11,13 +11,15 @@ interface SettingsPanelProps {
   onClose: () => void;
   onColorChange: (color: string) => void;
   currentColor: string;
+  apiKeyComponent?: React.ReactNode;
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
   isOpen,
   onClose,
   onColorChange,
-  currentColor
+  currentColor,
+  apiKeyComponent
 }) => {
   return (
     <div
@@ -34,6 +36,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         </div>
         
         <ScrollArea className="flex-1 px-4">
+          {apiKeyComponent && (
+            <div className="py-6 border-b">
+              {apiKeyComponent}
+            </div>
+          )}
+          
           <div className="py-6 border-b">
             <h3 className="text-sm font-semibold mb-4 flex items-center">
               Theme Color
