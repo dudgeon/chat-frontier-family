@@ -20,7 +20,7 @@ serve(async (req) => {
       throw new Error('OpenAI API key is not configured');
     }
 
-    const { messages } = await req.json();
+    const { messages, model = 'gpt-4o', titleGeneration = false } = await req.json();
     
     if (!messages || !Array.isArray(messages)) {
       throw new Error('Invalid or missing messages array');
@@ -33,9 +33,10 @@ serve(async (req) => {
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: model,
         messages,
-        temperature: 0.7,
+        temperature: titleGeneration ? 0.5 : 0.7, // Lower temperature for more predictable titles
+        max_tokens: titleGeneration ? 20 : undefined, // Limit token count for titles
       })
     });
 

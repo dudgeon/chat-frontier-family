@@ -2,12 +2,15 @@
 import React from 'react';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useChat } from '@/contexts/ChatContext';
 
 interface HeaderProps {
   toggleSettings: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
+  const { messages, chatName } = useChat();
+  
   return (
     <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-100 h-14 flex items-center px-4 z-10">
       <Button 
@@ -18,7 +21,9 @@ const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
       >
         <Menu />
       </Button>
-      <h1 className="ml-4 font-medium text-gray-800">Chat</h1>
+      <h1 className="flex-1 text-center mr-10 font-medium text-gray-800">
+        {chatName || "New chat"}
+      </h1>
     </header>
   );
 };
