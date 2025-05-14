@@ -131,7 +131,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newMessage: Message = {
       content,
       isUser,
-      timestamp: new Date(),
+      timestamp: Date.now(),
     };
     
     setMessages((prevMessages) => [...prevMessages, newMessage]);
@@ -152,7 +152,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Add system message at the beginning
         openaiMessages.unshift({ 
-          role: 'system' as const, 
+          role: 'user' as const, // Changed from 'system' to 'user' as a workaround
           content: 'You are a helpful assistant. Provide friendly, concise responses.'
         });
         
@@ -169,7 +169,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Add AI response to messages
           setMessages(prev => [
             ...prev,
-            { content: data.content, isUser: false, timestamp: new Date() }
+            { content: data.content, isUser: false, timestamp: Date.now() }
           ]);
         } else if (data && data.error) {
           throw new Error(data.error);
@@ -188,7 +188,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           { 
             content: "I'm sorry, I couldn't process your request. Please try again later.", 
             isUser: false, 
-            timestamp: new Date() 
+            timestamp: Date.now() 
           }
         ]);
       } finally {
