@@ -22,6 +22,7 @@ export interface ChatContextType {
   createNewChat: () => void;
   switchToChat: (id: string) => void;
   updateChatName: (id: string, newName: string) => void;
+  deleteMessage: (messageId: string) => Promise<void>;
 }
 
 // Local storage keys

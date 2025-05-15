@@ -78,10 +78,35 @@ export const useMessageHandler = (initialMessages: Message[] = []) => {
     }
   };
 
+  // Delete message function
+  const deleteMessage = async (messageId: string) => {
+    try {
+      // Delete from database
+      const { error } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('id', messageId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update state if deletion was successful
+      setMessages(prevMessages => 
+        prevMessages.filter(message => message.id !== messageId)
+      );
+      
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      throw error;
+    }
+  };
+
   return { 
     messages, 
     setMessages,
     isWaitingForResponse, 
-    addMessage
+    addMessage,
+    deleteMessage
   };
 };

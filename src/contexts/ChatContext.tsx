@@ -37,7 +37,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     messages, 
     setMessages, 
     isWaitingForResponse, 
-    addMessage: handleMessage 
+    addMessage: handleMessage,
+    deleteMessage: handleDeleteMessage
   } = useMessageHandler(initialMessages);
 
   // Set messages when active session changes or loads
@@ -107,6 +108,20 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     handleMessage(content, isUser, apiKey);
   };
 
+  // Delete message wrapper 
+  const deleteMessage = async (messageId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to delete messages.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    await handleDeleteMessage(messageId);
+  };
+
   return (
     <ChatContext.Provider value={{ 
       messages, 
@@ -121,7 +136,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       activeChatId,
       createNewChat,
       switchToChat,
-      updateChatName
+      updateChatName,
+      deleteMessage
     }}>
       {children}
     </ChatContext.Provider>
