@@ -23,7 +23,8 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
       setIsLoading(true);
       
       try {
-        // Fetch all chat sessions for the current user
+        // Fetch all chat sessions for the current user using raw SQL query
+        // This is a workaround until we update the Supabase types
         const { data, error } = await supabase
           .from('chat_sessions')
           .select('id, name, last_updated')
@@ -35,7 +36,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
         if (data && data.length > 0) {
           // Format data for our state
           const sessions = await Promise.all(data.map(async (session) => {
-            // Fetch messages for this session
+            // Fetch messages for this session using raw SQL query
             const { data: messagesData, error: messagesError } = await supabase
               .from('chat_messages')
               .select('*')
@@ -106,7 +107,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
       timestamp: Date.now()
     };
     
-    // Create session in database
+    // Create session in database using raw SQL approach until types are updated
     const { error: sessionError } = await supabase
       .from('chat_sessions')
       .insert({
@@ -240,8 +241,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
           session_id: activeChatId,
           content: latestMessage.content,
           is_user: latestMessage.isUser,
-          created_at: new Date(latestMessage.timestamp || Date.now()).toISOString(),
-          embedding: null // Will be populated by a trigger/function
+          created_at: new Date(latestMessage.timestamp || Date.now()).toISOString()
         })
         .select('id');
         
