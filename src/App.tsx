@@ -19,28 +19,28 @@ const App = () => (
     <TooltipProvider>
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route 
-              path="/" 
-              element={
-                <AuthGuard>
-                  <ChatProvider>
+          <ChatProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route 
+                path="/" 
+                element={
+                  <AuthGuard>
                     <Index />
-                  </ChatProvider>
-                </AuthGuard>
-              } 
-            />
-            <Route 
-              path="/profile" 
-              element={
-                <AuthGuard>
-                  <Profile />
-                </AuthGuard>
-              } 
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+                  </AuthGuard>
+                } 
+              />
+              <Route 
+                path="/profile" 
+                element={
+                  <AuthGuard>
+                    <Profile />
+                  </AuthGuard>
+                } 
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </ChatProvider>
           <Toaster />
           <Sonner />
         </AuthProvider>
