@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useChat, ChatProvider } from '@/contexts/ChatContext';
+import { useChat } from '@/contexts/ChatContext';
 import Header from '@/components/chat/Header';
 import MessageList from '@/components/chat/MessageList';
 import MessageInput from '@/components/chat/MessageInput';
@@ -9,7 +9,7 @@ import VoiceMode from '@/components/chat/VoiceMode';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
-const ChatInterface: React.FC = () => {
+const Index: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isVoiceModeActive, setIsVoiceModeActive] = useState(false);
   const { messages, addMessage, heroColor, setHeroColor } = useChat();
@@ -63,21 +63,6 @@ const ChatInterface: React.FC = () => {
         </div>
       </div>
     </div>
-  );
-};
-
-const Index: React.FC = () => {
-  const { session } = useAuth();
-  
-  // Add another check at this level in case the ChatProvider has dependencies on the session
-  if (!session) {
-    return <Navigate to="/login" />;
-  }
-
-  return (
-    <ChatProvider>
-      <ChatInterface />
-    </ChatProvider>
   );
 };
 
