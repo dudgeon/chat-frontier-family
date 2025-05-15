@@ -6,11 +6,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useChat, ChatProvider } from '@/contexts/ChatContext';
+import { useChat } from '@/contexts/ChatContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-// Separate the Profile UI from the wrapper that provides the ChatProvider
-const ProfileUI: React.FC = () => {
+const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { heroColor } = useChat();
   
@@ -91,15 +90,6 @@ const ProfileUI: React.FC = () => {
         </div>
       </main>
     </div>
-  );
-};
-
-// Wrapper component that provides the ChatProvider
-const Profile: React.FC = () => {
-  return (
-    <ChatProvider>
-      <ProfileUI />
-    </ChatProvider>
   );
 };
 
