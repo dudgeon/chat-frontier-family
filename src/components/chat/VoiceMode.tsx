@@ -1,10 +1,12 @@
 
-import React, { useEffect, useState } from 'react';
-import { X, AlertCircle, Mic, InfoIcon } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import VoiceIndicator from './VoiceIndicator';
-import { useVoiceSession } from '@/hooks/useVoiceSession';
+import VoiceStatus from './VoiceStatus';
+import { useVoiceSession } from '@/hooks/voice';
+import { useVoicePermissions } from '@/hooks/useVoicePermissions';
 
 interface VoiceModeProps {
   onClose: () => void;
@@ -12,40 +14,22 @@ interface VoiceModeProps {
 
 const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
   const { session, startSession, endSession } = useVoiceSession(onClose);
-  const [permissionStatus, setPermissionStatus] = useState<string>('checking');
-  const [connectionAttempts, setConnectionAttempts] = useState(0);
-  const maxConnectionAttempts = 3;
+  const { 
+    permissionStatus, 
+    connectionAttempts, 
+    maxAttempts, 
+    handleRetry, 
+    initSession 
+  } = useVoicePermissions(
+    startSession,
+    session.isConnected,
+    session.isConnecting,
+    !!session.error,
+    3 // maxAttempts
+  );
 
   // Start session automatically when component mounts
   useEffect(() => {
-    const initSession = async () => {
-      try {
-        // Check for microphone permissions first
-        const hasPermission = await checkMicrophonePermission();
-        if (hasPermission) {
-          setPermissionStatus('granted');
-          await startSession();
-          setConnectionAttempts(prev => prev + 1);
-        } else {
-          setPermissionStatus('denied');
-          toast({
-            title: "Permission Required",
-            description: "Please allow microphone access to use voice mode",
-            variant: "destructive",
-          });
-          // Don't auto-close, let the user try to fix permissions
-        }
-      } catch (error) {
-        console.error('Error initializing session:', error);
-        setPermissionStatus('error');
-        toast({
-          title: "Voice Mode Error",
-          description: error instanceof Error ? error.message : "Failed to initialize voice mode",
-          variant: "destructive",
-        });
-      }
-    };
-    
     initSession();
     
     // Display help toast after a delay
@@ -73,86 +57,6 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
       });
     }
   }, [session.error]);
-  
-  // Auto-retry if we've not reached max attempts
-  useEffect(() => {
-    if (permissionStatus === 'granted' && !session.isConnected && !session.isConnecting && connectionAttempts < maxConnectionAttempts && !session.error) {
-      const retryTimer = setTimeout(() => {
-        console.log(`Auto-retrying connection (attempt ${connectionAttempts + 1}/${maxConnectionAttempts})`);
-        startSession();
-        setConnectionAttempts(prev => prev + 1);
-      }, 3000);
-      
-      return () => clearTimeout(retryTimer);
-    }
-  }, [session.isConnected, session.isConnecting, session.error, connectionAttempts, permissionStatus]);
-
-  // Try to reconnect if initial connection fails
-  const handleRetry = async () => {
-    try {
-      setConnectionAttempts(prev => prev + 1);
-      
-      if (permissionStatus === 'granted') {
-        await startSession();
-        toast({
-          title: "Reconnecting",
-          description: "Attempting to reconnect to voice service...",
-        });
-      } else {
-        const hasPermission = await checkMicrophonePermission();
-        if (hasPermission) {
-          setPermissionStatus('granted');
-          await startSession();
-        } else {
-          toast({
-            title: "Permission Required",
-            description: "Please allow microphone access in your browser settings",
-            variant: "destructive",
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error retrying session:', error);
-      toast({
-        title: "Reconnection Failed",
-        description: error instanceof Error ? error.message : "Failed to reconnect",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Helper function to check microphone permission
-  const checkMicrophonePermission = async (): Promise<boolean> => {
-    try {
-      console.log('Checking microphone permissions');
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // Stop the tracks immediately, we just needed to check permission
-      stream.getTracks().forEach(track => track.stop());
-      console.log('Microphone permission granted');
-      return true;
-    } catch (error) {
-      console.error('Microphone permission error:', error);
-      return false;
-    }
-  };
-
-  const renderStatus = () => {
-    if (session.error) {
-      return "Error: " + session.error;
-    }
-    if (session.isConnecting) return "Connecting to voice service...";
-    if (session.isSpeaking) return "Assistant is speaking...";
-    if (session.isListening) return "Listening to you...";
-    if (session.isConnected) return "Ready - tap to speak";
-    return "Starting voice mode...";
-  };
-
-  const getConnectionMessage = () => {
-    if (connectionAttempts >= maxConnectionAttempts && !session.isConnected) {
-      return "Unable to establish connection after multiple attempts";
-    }
-    return `Connection attempt ${connectionAttempts}/${maxConnectionAttempts}`;
-  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-md flex flex-col justify-center items-center z-50">
@@ -173,45 +77,12 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
           onClick={!session.isConnected && !session.isConnecting ? handleRetry : undefined} 
         />
         
-        <div className="flex items-center gap-2">
-          {session.error && <AlertCircle className="h-5 w-5 text-red-500" />}
-          <p className="text-white text-xl font-medium">
-            {renderStatus()}
-          </p>
-        </div>
-        
-        {session.isConnecting && (
-          <p className="text-white/60 text-sm">{getConnectionMessage()}</p>
-        )}
-        
-        {session.transcript && (
-          <div className="max-w-md w-full bg-white/10 rounded-lg p-4 mt-4 max-h-60 overflow-y-auto">
-            <p className="text-white">{session.transcript}</p>
-          </div>
-        )}
-        
-        <div className="text-white/70 text-sm mt-4 text-center max-w-md">
-          {session.isConnected && !session.isListening && !session.isSpeaking && (
-            <p>Say something to start the conversation</p>
-          )}
-          
-          {session.isConnecting && (
-            <div className="flex items-center justify-center gap-2 mt-4">
-              <InfoIcon className="h-4 w-4 text-blue-300" />
-              <p>If connection takes too long, try closing and reopening voice mode</p>
-            </div>
-          )}
-          
-          {(session.error || (connectionAttempts >= maxConnectionAttempts && !session.isConnected)) && (
-            <Button 
-              variant="outline" 
-              onClick={handleRetry}
-              className="mt-4 bg-white/10 hover:bg-white/20 text-white"
-            >
-              Try Again
-            </Button>
-          )}
-        </div>
+        <VoiceStatus 
+          session={session}
+          connectionAttempts={connectionAttempts}
+          maxAttempts={maxAttempts}
+          onRetry={handleRetry}
+        />
       </div>
     </div>
   );
