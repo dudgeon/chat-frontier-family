@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Message } from '@/types/chat';
 import { useChat } from '@/contexts/ChatContext';
@@ -20,13 +21,13 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   const { isWaitingForResponse, deleteMessage } = useChat();
   const { user } = useAuth();
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
-  const [isParentUser, setIsParentUser] = useState(false);
+  const [isAdultUser, setIsAdultUser] = useState(false);
 
-  // Check if user has parent role
+  // Check if user has adult role
   React.useEffect(() => {
     const checkUserRole = async () => {
       if (!user) {
-        setIsParentUser(false);
+        setIsAdultUser(false);
         return;
       }
 
@@ -39,14 +40,14 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
 
         if (error) {
           console.error('Error fetching user role:', error);
-          setIsParentUser(false);
+          setIsAdultUser(false);
           return;
         }
 
-        setIsParentUser(data.user_role === 'parent');
+        setIsAdultUser(data.user_role === 'adult');
       } catch (error) {
         console.error('Error checking user role:', error);
-        setIsParentUser(false);
+        setIsAdultUser(false);
       }
     };
 
@@ -75,7 +76,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
         >
           {message.content}
           
-          {isParentUser && hoveredMessageId === message.id && (
+          {isAdultUser && hoveredMessageId === message.id && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

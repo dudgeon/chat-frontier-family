@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
 import { ChatContextType } from '@/types/chatContext';
@@ -120,7 +119,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      // Check if user has parent role
+      // Check if user has adult role
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('user_role')
@@ -131,7 +130,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(profileError.message);
       }
 
-      if (profileData.user_role !== 'parent') {
+      if (profileData.user_role !== 'adult') {
         toast({
           title: "Permission denied",
           description: "You don't have permission to delete messages.",
