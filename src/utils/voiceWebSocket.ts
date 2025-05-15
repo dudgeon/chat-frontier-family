@@ -1,3 +1,4 @@
+
 import { toast } from '@/components/ui/use-toast';
 import { ServerEvent, VoiceSessionState } from '@/types/voiceSession';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,9 +17,9 @@ export const createVoiceWebSocket = async (
     // Update state to show connecting status
     setSession(prev => ({ ...prev, isConnecting: true }));
 
-    // Get the project ref from the Supabase URL
-    const supabaseUrl = new URL(supabase.supabaseUrl);
-    const projectRef = supabaseUrl.hostname.split('.')[0];
+    // Access the project reference from the SUPABASE_URL constant in the client file
+    // Instead of using supabase.supabaseUrl which is protected
+    const projectRef = "xrrauvcciuiaztzajmeq"; // Direct reference to the project ID
     
     if (!projectRef) {
       throw new Error('Could not determine Supabase project reference');
