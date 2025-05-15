@@ -6,9 +6,8 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { useAuth } from '@/contexts/AuthContext';
 import SignInForm from '@/components/auth/SignInForm';
 import SignUpForm from '@/components/auth/SignUpForm';
-import { differenceInYears } from "date-fns";
 
-const Auth: React.FC = () => {
+const Login: React.FC = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   
@@ -53,4 +52,4 @@ const Auth: React.FC = () => {
   );
 };
 
-export default Auth;
+export default Login;

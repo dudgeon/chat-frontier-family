@@ -16,21 +16,16 @@ export const createVoiceWebSocket = async (
     // Update state to show connecting status
     setSession(prev => ({ ...prev, isConnecting: true }));
 
-    // Get token from Supabase Edge Function
-    console.log('Requesting token from Edge Function');
-    const { data, error } = await supabase.functions.invoke('realtime-token');
+    // Get the project ref from the Supabase URL
+    const supabaseUrl = new URL(supabase.supabaseUrl);
+    const projectRef = supabaseUrl.hostname.split('.')[0];
     
-    if (error) {
-      throw new Error(`Failed to get token: ${error.message}`);
+    if (!projectRef) {
+      throw new Error('Could not determine Supabase project reference');
     }
 
-    if (!data) {
-      throw new Error('No token received from server');
-    }
-
-    // Get the full WebSocket URL for the Edge Function
-    const projectId = 'xrrauvcciuiaztzajmeq';
-    const wsUrl = `wss://${projectId}.supabase.co/functions/v1/realtime-chat`;
+    // Get full WebSocket URL for the Edge Function
+    const wsUrl = `wss://${projectRef}.supabase.co/functions/v1/realtime-chat`;
     
     console.log('Connecting to WebSocket:', wsUrl);
     const ws = new WebSocket(wsUrl);
@@ -46,7 +41,7 @@ export const createVoiceWebSocket = async (
           error: 'Connection timeout - please try again' 
         }));
       }
-    }, 10000); // 10 seconds timeout
+    }, 15000); // 15 seconds timeout (increased from 10)
 
     // WebSocket event handlers
     ws.onopen = () => {
@@ -110,11 +105,12 @@ export const createVoiceWebSocket = async (
     };
 
     // Implement ping/pong to keep connection alive
-    let pingInterval = setInterval(() => {
+    const pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
         console.log('Sending ping to keep connection alive');
         ws.send(JSON.stringify({ type: 'ping' }));
-      } else {
+      } else if (ws.readyState !== WebSocket.CONNECTING) {
+        // Clear interval if socket is closed or closing
         clearInterval(pingInterval);
       }
     }, 30000); // Send ping every 30 seconds

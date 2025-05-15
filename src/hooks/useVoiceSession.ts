@@ -27,6 +27,8 @@ export const useVoiceSession = (onClose: () => void) => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const recorderRef = useRef<AudioRecorder | null>(null);
   const sessionActiveRef = useRef<boolean>(false);
+  const reconnectAttemptsRef = useRef<number>(0);
+  const maxReconnectAttempts = 2;
 
   /**
    * Clean up resources when component unmounts
@@ -54,14 +56,19 @@ export const useVoiceSession = (onClose: () => void) => {
     // Close audio context if open
     if (audioContextRef.current) {
       console.log('Closing audio context');
-      audioContextRef.current.close();
+      audioContextRef.current.close().catch(err => {
+        console.warn('Error closing audio context:', err);
+      });
       audioContextRef.current = null;
     }
     
     // Close WebSocket connection if open
     if (wsRef.current) {
       console.log('Closing WebSocket connection');
-      wsRef.current.close();
+      if (wsRef.current.readyState === WebSocket.OPEN || 
+          wsRef.current.readyState === WebSocket.CONNECTING) {
+        wsRef.current.close();
+      }
       wsRef.current = null;
     }
     
@@ -114,6 +121,29 @@ export const useVoiceSession = (onClose: () => void) => {
           
           if (!sessionActiveRef.current) {
             console.log('Session no longer active, ignoring message');
+            return;
+          }
+
+          // Handle pong messages separately
+          if (data.type === 'pong') {
+            console.log('Received pong from server at:', data.time);
+            return;
+          }
+          
+          // Handle connection status messages
+          if (data.type === 'connection_status') {
+            console.log('Connection status update:', data.status);
+            if (data.status === 'connected_to_openai') {
+              console.log('Successfully connected to OpenAI through relay');
+            } else if (data.status === 'openai_disconnected') {
+              console.log('OpenAI connection closed:', data.code, data.reason);
+              if (data.code !== 1000 && data.code !== 1001) {
+                setSession(prev => ({ 
+                  ...prev, 
+                  error: `OpenAI connection ended: ${data.reason}` 
+                }));
+              }
+            }
             return;
           }
           
@@ -177,14 +207,36 @@ export const useVoiceSession = (onClose: () => void) => {
               description: "Please say something to test your microphone",
             });
           }
-        }, 3000);
+        }, 5000);
       } catch (error) {
         console.error('Error initializing audio recorder:', error);
         throw new Error('Failed to access microphone. Please check your permissions.');
       }
       
+      // Reset reconnect attempts after successful connection
+      reconnectAttemptsRef.current = 0;
+      
     } catch (error) {
       console.error('Error starting voice session:', error);
+      
+      // Try to reconnect if we haven't reached max attempts
+      if (reconnectAttemptsRef.current < maxReconnectAttempts) {
+        reconnectAttemptsRef.current++;
+        console.log(`Automatically retrying connection (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
+        
+        // Clean up any partially initialized resources
+        cleanupSession();
+        
+        // Retry after a delay
+        setTimeout(() => {
+          if (sessionActiveRef.current) {
+            startSession();
+          }
+        }, 1000);
+        
+        return;
+      }
+      
       setSession(prev => ({ 
         ...prev, 
         isConnecting: false, 

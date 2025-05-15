@@ -1,6 +1,6 @@
 
-import React, { useEffect } from 'react';
-import { X, AlertCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, AlertCircle, Mic, InfoIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import VoiceIndicator from './VoiceIndicator';
@@ -12,6 +12,7 @@ interface VoiceModeProps {
 
 const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
   const { session, startSession, endSession } = useVoiceSession(onClose);
+  const [permissionStatus, setPermissionStatus] = useState<string>('checking');
 
   // Start session automatically when component mounts
   useEffect(() => {
@@ -20,27 +21,43 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
         // Check for microphone permissions first
         const hasPermission = await checkMicrophonePermission();
         if (hasPermission) {
-          startSession();
+          setPermissionStatus('granted');
+          await startSession();
         } else {
+          setPermissionStatus('denied');
           toast({
             title: "Permission Required",
             description: "Please allow microphone access to use voice mode",
             variant: "destructive",
           });
-          onClose();
+          // Don't auto-close, let the user try to fix permissions
         }
       } catch (error) {
         console.error('Error initializing session:', error);
+        setPermissionStatus('error');
         toast({
           title: "Voice Mode Error",
-          description: "Failed to initialize voice mode",
+          description: error instanceof Error ? error.message : "Failed to initialize voice mode",
           variant: "destructive",
         });
-        onClose();
       }
     };
     
     initSession();
+    
+    // Display help toast after a delay
+    const helpTimer = setTimeout(() => {
+      if (!session.isConnected && !session.error) {
+        toast({
+          title: "Voice Connection",
+          description: "Establishing secure connection to voice service...",
+        });
+      }
+    }, 5000);
+    
+    return () => {
+      clearTimeout(helpTimer);
+    };
   }, []);
   
   // Handle errors in the session state
@@ -53,6 +70,38 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
       });
     }
   }, [session.error]);
+
+  // Try to reconnect if initial connection fails
+  const handleRetry = async () => {
+    try {
+      if (permissionStatus === 'granted') {
+        await startSession();
+        toast({
+          title: "Reconnecting",
+          description: "Attempting to reconnect to voice service...",
+        });
+      } else {
+        const hasPermission = await checkMicrophonePermission();
+        if (hasPermission) {
+          setPermissionStatus('granted');
+          await startSession();
+        } else {
+          toast({
+            title: "Permission Required",
+            description: "Please allow microphone access in your browser settings",
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error retrying session:', error);
+      toast({
+        title: "Reconnection Failed",
+        description: error instanceof Error ? error.message : "Failed to reconnect",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Helper function to check microphone permission
   const checkMicrophonePermission = async (): Promise<boolean> => {
@@ -94,7 +143,7 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
       <div className="flex flex-col items-center justify-center gap-6">
         <VoiceIndicator 
           session={session}
-          onClick={!session.isConnected && !session.isConnecting ? startSession : undefined} 
+          onClick={!session.isConnected && !session.isConnecting ? handleRetry : undefined} 
         />
         
         <div className="flex items-center gap-2">
@@ -110,9 +159,26 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
           </div>
         )}
         
-        <div className="text-white/70 text-sm mt-4">
+        <div className="text-white/70 text-sm mt-4 text-center max-w-md">
           {session.isConnected && !session.isListening && !session.isSpeaking && (
             <p>Say something to start the conversation</p>
+          )}
+          
+          {session.isConnecting && session.isConnecting && (
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <InfoIcon className="h-4 w-4 text-blue-300" />
+              <p>If connection takes too long, try closing and reopening voice mode</p>
+            </div>
+          )}
+          
+          {session.error && (
+            <Button 
+              variant="outline" 
+              onClick={handleRetry}
+              className="mt-4 bg-white/10 hover:bg-white/20 text-white"
+            >
+              Try Again
+            </Button>
           )}
         </div>
       </div>

@@ -15,8 +15,10 @@ serve(async (req) => {
   try {
     const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
     if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not set');
+      throw new Error('OPENAI_API_KEY is not set in environment variables');
     }
+    
+    console.log('Requesting OpenAI session token...');
     
     // Request a session for WebSockets
     const response = await fetch('https://api.openai.com/v1/realtime/sessions', {
@@ -32,15 +34,29 @@ serve(async (req) => {
       }),
     });
     
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API returned ${response.status}: ${errorText}`);
+    }
+    
     const data = await response.json();
-    console.log('Session created:', data);
+    console.log('Session created successfully', data);
+    
+    if (!data.client_secret?.value) {
+      throw new Error('No client secret received from OpenAI');
+    }
     
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('Error creating session:', error);
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      stack: error.stack, 
+      time: new Date().toISOString() 
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
