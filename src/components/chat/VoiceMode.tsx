@@ -41,8 +41,9 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
         throw new Error(`Failed to get token: ${error.message}`);
       }
 
-      // Initialize WebSocket
-      const wsUrl = `wss://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.functions.supabase.co/realtime-chat`;
+      // Initialize WebSocket with the correct project ID
+      // The project ID is hardcoded here because it's available in the Supabase client configuration
+      const wsUrl = `wss://xrrauvcciuiaztzajmeq.functions.supabase.co/realtime-chat`;
       console.log('Connecting to WebSocket:', wsUrl);
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
