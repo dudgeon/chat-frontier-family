@@ -8,7 +8,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
-import Auth from "./pages/Auth";
+import Login from "./pages/Login"; // Updated from Auth to Login
 import { ChatProvider } from "./contexts/ChatContext";
 import AuthGuard from "./components/auth/AuthGuard";
 
@@ -23,7 +23,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <Routes>
-              <Route path="/login" element={<Auth />} />
+              <Route path="/login" element={<Login />} />
               <Route 
                 path="/" 
                 element={

@@ -50,7 +50,7 @@ const Profile: React.FC = () => {
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate('/auth');
+      navigate('/login'); // Updated from '/auth' to '/login'
     } catch (error) {
       toast({
         title: "Error signing out",

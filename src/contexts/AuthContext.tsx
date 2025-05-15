@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    navigate('/login'); // Redirect to login page after sign out
+    navigate('/login'); // Updated from '/auth' to '/login'
   };
 
   const value = {
