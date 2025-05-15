@@ -1,11 +1,30 @@
 
 import React from 'react';
-import { Clock, MessageCircle } from 'lucide-react';
+import { Clock, MessageCircle, Loader2 } from 'lucide-react';
 import { useChat } from '@/contexts/ChatContext';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ChatHistory: React.FC = () => {
   const { chatSessions, activeChatId, switchToChat } = useChat();
+  const { user, loading: authLoading } = useAuth();
+  
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center py-6">
+        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return (
+      <div className="text-center py-6 text-gray-500">
+        <MessageCircle className="mx-auto mb-2 text-gray-400" />
+        <p className="text-sm">Sign in to see your chat history</p>
+      </div>
+    );
+  }
   
   if (chatSessions.length === 0) {
     return (
