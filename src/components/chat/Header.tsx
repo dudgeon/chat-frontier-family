@@ -48,15 +48,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
   };
 
   const handleNewChat = () => {
-    console.log("Header: Creating new chat session...");
-    try {
-      if (typeof createNewChat === 'function') {
-        createNewChat();
-      } else {
-        console.error("createNewChat function is not available:", createNewChat);
-      }
-    } catch (error) {
-      console.error("Error creating new chat from Header:", error);
+    if (typeof createNewChat === 'function') {
+      createNewChat();
+    } else {
+      console.error("createNewChat function is not available:", createNewChat);
     }
   };
 

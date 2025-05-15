@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Message } from '@/types/chat';
 import { ChatContextType } from '@/types/chatContext';
 import { useApiKey } from '@/hooks/useApiKey';
@@ -45,9 +45,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     if (activeSession && activeSession.messages) {
       setMessages(activeSession.messages);
-      setIsInitialized(true);
+      if (!isInitialized) {
+        setIsInitialized(true);
+      }
     }
-  }, [activeSession, setMessages]);
+  }, [activeSession, setMessages, isInitialized]);
 
   // Set up chat name generation
   useChatNameGenerator(
@@ -64,8 +66,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [messages, activeChatId, isInitialized, updateSessionMessages]);
 
-  // Create a new chat
-  const createNewChat = async () => {
+  // Create a new chat - use useCallback to prevent recreation on every render
+  const createNewChat = useCallback(async () => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -81,6 +83,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("ChatContext: New chat session created with messages:", initialMessages);
       
       if (initialMessages) {
+        // Reset messages to the initial state of the new chat
         setMessages(initialMessages);
         
         // Force a UI update with a toast notification
@@ -99,16 +102,16 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         variant: "destructive"
       });
     }
-  };
+  }, [user, createNewChatSession, setMessages]);
 
-  // Switch to a chat
-  const switchToChat = (id: string) => {
+  // Switch to a chat - use useCallback to prevent recreation on every render
+  const switchToChat = useCallback((id: string) => {
     const chatMessages = switchToChatSession(id);
     setMessages(chatMessages);
-  };
+  }, [switchToChatSession, setMessages]);
 
   // Wrapper for adding messages to maintain the same interface
-  const addMessage = (content: string, isUser: boolean) => {
+  const addMessage = useCallback((content: string, isUser: boolean) => {
     if (!user && isUser) {
       toast({
         title: "Authentication required",
@@ -119,10 +122,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     handleMessage(content, isUser, apiKey);
-  };
+  }, [user, handleMessage, apiKey]);
 
   // Delete a message from the chat
-  const deleteMessage = async (messageId: string) => {
+  const deleteMessage = useCallback(async (messageId: string) => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -184,7 +187,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         variant: "destructive"
       });
     }
-  };
+  }, [user, messages, activeChatId, setMessages, updateSessionMessages]);
 
   return (
     <ChatContext.Provider value={{ 
