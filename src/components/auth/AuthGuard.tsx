@@ -18,7 +18,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   if (!session) {
     // Redirect to the login page, but save the current location they were
     // trying to go to so we can send them there after logging in
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;

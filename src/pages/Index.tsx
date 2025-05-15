@@ -6,11 +6,19 @@ import MessageList from '@/components/chat/MessageList';
 import MessageInput from '@/components/chat/MessageInput';
 import SettingsPanel from '@/components/settings/SettingsPanel';
 import VoiceMode from '@/components/chat/VoiceMode';
+import { useAuth } from '@/contexts/AuthContext';
+import { Navigate } from 'react-router-dom';
 
 const ChatInterface: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isVoiceModeActive, setIsVoiceModeActive] = useState(false);
   const { messages, addMessage, heroColor, setHeroColor } = useChat();
+  const { session } = useAuth();
+
+  // Additional check to ensure the user is authenticated
+  if (!session) {
+    return <Navigate to="/login" />;
+  }
 
   const toggleSettings = () => {
     setIsSettingsOpen(!isSettingsOpen);
@@ -59,6 +67,13 @@ const ChatInterface: React.FC = () => {
 };
 
 const Index: React.FC = () => {
+  const { session } = useAuth();
+  
+  // Add another check at this level in case the ChatProvider has dependencies on the session
+  if (!session) {
+    return <Navigate to="/login" />;
+  }
+
   return (
     <ChatProvider>
       <ChatInterface />
