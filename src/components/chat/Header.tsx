@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Menu, User, Plus, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -47,7 +48,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
   };
 
   const handleNewChat = () => {
-    console.log("Creating new chat session...");
+    console.log("Header: Creating new chat session...");
     try {
       if (typeof createNewChat === 'function') {
         createNewChat();
@@ -55,13 +56,18 @@ const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
         console.error("createNewChat function is not available:", createNewChat);
       }
     } catch (error) {
-      console.error("Error creating new chat:", error);
+      console.error("Error creating new chat from Header:", error);
     }
   };
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-100 h-14 flex items-center px-4 z-10">
-      <Button variant="ghost" size="icon" className="text-hero md:hidden" onClick={toggleSettings}>
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="text-hero md:hidden" 
+        onClick={toggleSettings}
+      >
         <Menu />
       </Button>
       
@@ -106,6 +112,17 @@ const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
       )}
       
       <div className="flex items-center gap-2">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="text-hero"
+          onClick={handleNewChat}
+          aria-label="New Chat"
+          title="Create new chat"
+        >
+          <Plus />
+          <span className="sr-only">New Chat</span>
+        </Button>
         <Link to="/profile">
           <Button 
             variant="ghost" 
@@ -117,16 +134,6 @@ const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
             <span className="sr-only">Profile</span>
           </Button>
         </Link>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="text-hero"
-          onClick={handleNewChat}
-          aria-label="New Chat"
-        >
-          <Plus />
-          <span className="sr-only">New Chat</span>
-        </Button>
       </div>
     </header>
   );

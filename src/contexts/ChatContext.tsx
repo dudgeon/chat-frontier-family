@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Message } from '@/types/chat';
 import { ChatContextType } from '@/types/chatContext';
@@ -77,12 +78,19 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log("ChatContext: Creating new chat session...");
       const initialMessages = await createNewChatSession();
-      console.log("ChatContext: New chat session created, setting messages:", initialMessages);
-      setMessages(initialMessages || []);
-      toast({
-        title: "New chat created",
-        description: "Started a new conversation",
-      });
+      console.log("ChatContext: New chat session created with messages:", initialMessages);
+      
+      if (initialMessages) {
+        setMessages(initialMessages);
+        
+        // Force a UI update with a toast notification
+        toast({
+          title: "New chat created",
+          description: "Started a new conversation"
+        });
+      } else {
+        throw new Error("No initial messages returned from createNewChatSession");
+      }
     } catch (error) {
       console.error('Error creating new chat:', error);
       toast({

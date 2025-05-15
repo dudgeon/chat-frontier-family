@@ -24,8 +24,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
       setIsLoading(true);
       
       try {
-        // Fetch all chat sessions for the current user using raw SQL query
-        // This is a workaround until we update the Supabase types
+        // Fetch all chat sessions for the current user
         const { data, error } = await supabase
           .from('chat_sessions')
           .select('id, name, last_updated')
@@ -37,7 +36,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
         if (data && data.length > 0) {
           // Format data for our state
           const sessions = await Promise.all(data.map(async (session) => {
-            // Fetch messages for this session using raw SQL query
+            // Fetch messages for this session
             const { data: messagesData, error: messagesError } = await supabase
               .from('chat_messages')
               .select('*')
@@ -62,6 +61,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
             };
           }));
           
+          console.log("Loaded chat sessions:", sessions.length);
           setChatSessions(sessions);
           
           // Set active chat to the most recently updated one
@@ -73,6 +73,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
           setActiveChatId(validActiveId);
         } else {
           // No sessions, create a new default one
+          console.log("No existing sessions, creating a new one");
           const newSession = await createNewChatInDb();
           setChatSessions([newSession]);
           setActiveChatId(newSession.id);
@@ -111,7 +112,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
     
     try {
       console.log("Creating new session in database with ID:", newId);
-      // Create session in database using raw SQL approach until types are updated
+      // Create session in database
       const { error: sessionError } = await supabase
         .from('chat_sessions')
         .insert({
@@ -135,12 +136,15 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
         
       if (messageError) throw messageError;
       
-      return {
+      const newSession = {
         id: newId,
         name: null,
         messages: [welcomeMessage],
         lastUpdated: timestamp
       };
+      
+      console.log("Created new chat session:", newSession);
+      return newSession;
     } catch (error) {
       console.error("Error in createNewChatInDb:", error);
       throw error;
@@ -155,7 +159,13 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
       console.log("useChatSessions: New session created:", newSession);
       
       // Update state with the new session
-      setChatSessions(prev => [newSession, ...prev]);
+      setChatSessions(prev => {
+        // Ensure we don't add duplicate sessions
+        if (prev.some(session => session.id === newSession.id)) {
+          return prev;
+        }
+        return [newSession, ...prev];
+      });
       
       // Set this as the active chat
       setActiveChatId(newSession.id);
