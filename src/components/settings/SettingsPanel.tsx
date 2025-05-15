@@ -1,10 +1,13 @@
+
 import React from 'react';
-import { X, Clock, Plus } from 'lucide-react';
+import { X, Clock, Plus, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ColorPicker from './ColorPicker';
 import ChatHistory from './ChatHistory';
 import { useChat } from '@/contexts/ChatContext';
+import { Link } from 'react-router-dom';
+
 interface SettingsPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -48,10 +51,23 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <Clock size={16} />
                   Chat History
                 </h3>
-                <Button variant="ghost" size="sm" className="text-hero hover:bg-hero/10" onClick={createNewChat}>
-                  <Plus size={16} className="mr-1" />
-                  New Chat
-                </Button>
+                <div className="flex gap-2">
+                  <Link to="/profile">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="rounded-full"
+                      style={{ color: heroColor }}
+                    >
+                      <User />
+                      <span className="sr-only">Profile</span>
+                    </Button>
+                  </Link>
+                  <Button variant="ghost" size="sm" className="text-hero hover:bg-hero/10" onClick={createNewChat}>
+                    <Plus size={16} className="mr-1" />
+                    New Chat
+                  </Button>
+                </div>
               </div>
               <ChatHistory />
             </div>

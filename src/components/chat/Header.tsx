@@ -1,16 +1,17 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, Plus, Check, X } from 'lucide-react';
+import { Menu, Plus, Check, X, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useChat } from '@/contexts/ChatContext';
+import { Link } from 'react-router-dom';
 
 interface HeaderProps {
   toggleSettings: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
-  const { chatName, createNewChat, activeChatId, updateChatName } = useChat();
+  const { chatName, createNewChat, activeChatId, updateChatName, heroColor } = useChat();
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -92,14 +93,27 @@ const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
         </h1>
       )}
       
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className="text-hero"
-        onClick={createNewChat}
-      >
-        <Plus />
-      </Button>
+      <div className="flex items-center gap-2">
+        <Link to="/profile">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full"
+            style={{ color: heroColor }}
+          >
+            <User />
+            <span className="sr-only">Profile</span>
+          </Button>
+        </Link>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="text-hero"
+          onClick={createNewChat}
+        >
+          <Plus />
+        </Button>
+      </div>
     </header>
   );
 };
