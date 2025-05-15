@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
  * @returns WebSocket instance and connection status
  */
 export const createVoiceWebSocket = async (
-  setSession: (updater: (prev: VoiceSessionState) => VoiceSessionState) => void,
+  setSession: React.Dispatch<React.SetStateAction<VoiceSessionState>>,
   onClose: () => void
 ): Promise<WebSocket | null> => {
   try {

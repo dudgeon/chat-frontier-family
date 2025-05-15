@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Mic, Loader2, Volume2 } from 'lucide-react';
-import { VoiceSessionState } from '@/hooks/useVoiceSession';
+import { VoiceSessionState } from '@/types/voiceSession';
 
 interface VoiceIndicatorProps {
   session: VoiceSessionState;
