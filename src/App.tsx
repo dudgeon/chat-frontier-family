@@ -5,11 +5,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ChatProvider } from "./contexts/ChatContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
-import Login from "./pages/Login"; // Updated from Auth to Login
-import { ChatProvider } from "./contexts/ChatContext";
+import Login from "./pages/Login";
 import AuthGuard from "./components/auth/AuthGuard";
 
 const queryClient = new QueryClient();
@@ -19,31 +19,30 @@ const App = () => (
     <TooltipProvider>
       <BrowserRouter>
         <AuthProvider>
-          <ChatProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route 
-                path="/" 
-                element={
-                  <AuthGuard>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route 
+              path="/" 
+              element={
+                <AuthGuard>
+                  <ChatProvider>
                     <Index />
-                  </AuthGuard>
-                } 
-              />
-              <Route 
-                path="/profile" 
-                element={
-                  <AuthGuard>
-                    <Profile />
-                  </AuthGuard>
-                } 
-              />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </ChatProvider>
+                  </ChatProvider>
+                </AuthGuard>
+              } 
+            />
+            <Route 
+              path="/profile" 
+              element={
+                <AuthGuard>
+                  <Profile />
+                </AuthGuard>
+              } 
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
+          <Sonner />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
