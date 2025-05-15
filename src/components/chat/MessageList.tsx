@@ -2,15 +2,14 @@
 import React, { useState } from 'react';
 import { Message } from '@/types/chat';
 import { useChat } from '@/contexts/ChatContext';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Trash2, EyeOff } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 
 interface MessageListProps {
   messages: Message[];
@@ -19,40 +18,9 @@ interface MessageListProps {
 const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   const messageEndRef = React.useRef<HTMLDivElement>(null);
   const { isWaitingForResponse, deleteMessage } = useChat();
-  const { user } = useAuth();
+  const { canAccess } = useFeatureAccess();
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
-  const [isAdultUser, setIsAdultUser] = useState(false);
-
-  // Check if user has adult role
-  React.useEffect(() => {
-    const checkUserRole = async () => {
-      if (!user) {
-        setIsAdultUser(false);
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('user_role')
-          .eq('id', user.id)
-          .single();
-
-        if (error) {
-          console.error('Error fetching user role:', error);
-          setIsAdultUser(false);
-          return;
-        }
-
-        setIsAdultUser(data.user_role === 'adult');
-      } catch (error) {
-        console.error('Error checking user role:', error);
-        setIsAdultUser(false);
-      }
-    };
-
-    checkUserRole();
-  }, [user]);
+  const [hiddenMessageIds, setHiddenMessageIds] = useState<string[]>([]);
 
   React.useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -63,9 +31,17 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     deleteMessage(messageId);
   };
 
+  const handleHideMessage = (messageId?: string) => {
+    if (!messageId) return;
+    setHiddenMessageIds(prev => [...prev, messageId]);
+    // Future implementation: Save hidden state to user preferences
+  };
+
+  const visibleMessages = messages.filter(msg => !hiddenMessageIds.includes(msg.id || ''));
+
   return (
     <div className="flex flex-col gap-3 py-4 px-3 overflow-y-auto">
-      {messages.map((message, index) => (
+      {visibleMessages.map((message, index) => (
         <div
           key={index}
           className={message.isUser 
@@ -76,23 +52,46 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
         >
           {message.content}
           
-          {isAdultUser && hoveredMessageId === message.id && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => handleDelete(message.id)}
-                    className="absolute bottom-1 right-1 p-1 rounded-full bg-transparent hover:bg-red-100 transition-colors"
-                    aria-label="Delete message"
-                  >
-                    <Trash2 size={14} className="text-gray-400 hover:text-red-500" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Delete message</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+          {hoveredMessageId === message.id && (
+            <div className="absolute bottom-1 right-1 flex space-x-1">
+              {canAccess('hideMessages') && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => handleHideMessage(message.id)}
+                        className="p-1 rounded-full bg-transparent hover:bg-gray-100 transition-colors"
+                        aria-label="Hide message"
+                      >
+                        <EyeOff size={14} className="text-gray-400 hover:text-gray-500" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Hide message</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              
+              {canAccess('deleteMessages') && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => handleDelete(message.id)}
+                        className="p-1 rounded-full bg-transparent hover:bg-red-100 transition-colors"
+                        aria-label="Delete message"
+                      >
+                        <Trash2 size={14} className="text-gray-400 hover:text-red-500" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Delete message</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
           )}
         </div>
       ))}

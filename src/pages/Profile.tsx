@@ -10,14 +10,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import { Badge } from '@/components/ui/badge';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { heroColor } = useChat();
   const { user, signOut } = useAuth();
+  const { isPaid, isAdult, isFree, isChild } = useFeatureAccess();
   
   const [name, setName] = useState(user?.user_metadata?.name || 'User');
-  const [accountType, setAccountType] = useState('parent');
   const [loading, setLoading] = useState(false);
   
   // Fetch profile on load
@@ -28,7 +30,7 @@ const Profile: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('display_name, user_role')
+          .select('display_name, user_role, subscription_tier')
           .eq('id', user.id)
           .single();
         
@@ -36,7 +38,6 @@ const Profile: React.FC = () => {
         
         if (data) {
           setName(data.display_name || name);
-          setAccountType(data.user_role || 'parent');
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -49,7 +50,7 @@ const Profile: React.FC = () => {
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate('/login'); // Updated from '/auth' to '/login'
+      navigate('/login');
     } catch (error) {
       toast({
         title: "Error signing out",
@@ -110,6 +111,16 @@ const Profile: React.FC = () => {
           </Avatar>
           <h2 className="text-xl font-semibold">{name}</h2>
           <p className="text-sm text-muted-foreground">{user?.email}</p>
+          
+          <div className="flex mt-2 gap-2">
+            <Badge variant={isAdult ? "default" : "outline"}>
+              {isAdult ? "Adult" : "Child"}
+            </Badge>
+            <Badge variant={isPaid ? "default" : "outline"} 
+              className={isPaid ? "bg-emerald-600" : ""}>
+              {isPaid ? "Paid" : "Free"}
+            </Badge>
+          </div>
         </div>
         
         <div className="space-y-6">
@@ -126,7 +137,28 @@ const Profile: React.FC = () => {
           <div className="space-y-3">
             <Label>Account Type</Label>
             <div className="p-2 bg-gray-50 rounded-md border border-gray-200">
-              <p className="text-sm font-medium">{accountType === 'kid' ? 'Kid' : 'Parent'}</p>
+              <p className="text-sm font-medium">{isAdult ? 'Adult' : 'Child'}</p>
+              {isAdult && (
+                <p className="text-xs text-gray-500 mt-1">
+                  You can manage child accounts and delete messages
+                </p>
+              )}
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <Label>Subscription Tier</Label>
+            <div className="p-2 bg-gray-50 rounded-md border border-gray-200">
+              <p className="text-sm font-medium">{isPaid ? 'Paid' : 'Free'}</p>
+              {isPaid ? (
+                <p className="text-xs text-gray-500 mt-1">
+                  You have access to all premium features and models
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">
+                  Upgrade to access premium features and models
+                </p>
+              )}
             </div>
           </div>
           
