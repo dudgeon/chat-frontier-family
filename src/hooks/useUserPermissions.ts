@@ -48,11 +48,13 @@ export const useUserPermissions = (): {
           return;
         }
         
-        // Set user role from database (defaulting to 'adult' if not found)
-        setUserRole(profileData?.user_role as UserRole || 'adult');
-        
-        // Set subscription tier from database (defaulting to 'free' if not found)
-        setSubscriptionTier(profileData?.subscription_tier as SubscriptionTier || 'free');
+        if (profileData) {
+          // Set user role from database (defaulting to 'adult' if not found)
+          setUserRole(profileData.user_role as UserRole || 'adult');
+          
+          // Set subscription tier from database (defaulting to 'free' if not found)
+          setSubscriptionTier(profileData.subscription_tier as SubscriptionTier || 'free');
+        }
       } catch (error) {
         console.error('Error checking user permissions:', error);
       } finally {

@@ -14,6 +14,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          is_hidden: boolean
           is_user: boolean
           session_id: string
         }
@@ -21,6 +22,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          is_hidden?: boolean
           is_user?: boolean
           session_id: string
         }
@@ -28,6 +30,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          is_hidden?: boolean
           is_user?: boolean
           session_id?: string
         }
@@ -44,18 +47,21 @@ export type Database = {
       chat_sessions: {
         Row: {
           id: string
+          is_hidden: boolean
           last_updated: string
           name: string | null
           user_id: string
         }
         Insert: {
           id: string
+          is_hidden?: boolean
           last_updated?: string
           name?: string | null
           user_id: string
         }
         Update: {
           id?: string
+          is_hidden?: boolean
           last_updated?: string
           name?: string | null
           user_id?: string
@@ -69,6 +75,8 @@ export type Database = {
           date_of_birth: string | null
           display_name: string | null
           id: string
+          parent_id: string | null
+          subscription_tier: string
           updated_at: string
           user_role: string
         }
@@ -78,6 +86,8 @@ export type Database = {
           date_of_birth?: string | null
           display_name?: string | null
           id: string
+          parent_id?: string | null
+          subscription_tier?: string
           updated_at?: string
           user_role?: string
         }
@@ -87,10 +97,20 @@ export type Database = {
           date_of_birth?: string | null
           display_name?: string | null
           id?: string
+          parent_id?: string | null
+          subscription_tier?: string
           updated_at?: string
           user_role?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
