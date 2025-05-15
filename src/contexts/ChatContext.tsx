@@ -9,6 +9,7 @@ import { useChatSessions } from '@/hooks/useChatSessions';
 import { useChatNameGenerator } from '@/hooks/useChatNameGenerator';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
@@ -61,7 +62,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (activeChatId && messages.length > 0 && isInitialized) {
       updateSessionMessages(messages);
     }
-  }, [messages, activeChatId, isInitialized]);
+  }, [messages, activeChatId, isInitialized, updateSessionMessages]);
 
   // Create a new chat
   const createNewChat = async () => {
@@ -107,10 +108,76 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     handleMessage(content, isUser, apiKey);
   };
 
+  // Delete a message from the chat
+  const deleteMessage = async (messageId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to delete messages.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Check if user has parent role
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_role')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        throw new Error(profileError.message);
+      }
+
+      if (profileData.user_role !== 'parent') {
+        toast({
+          title: "Permission denied",
+          description: "You don't have permission to delete messages.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Delete from database
+      const { error } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('id', messageId);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // Delete from local state
+      const updatedMessages = messages.filter(msg => msg.id !== messageId);
+      setMessages(updatedMessages);
+      
+      // Update session with new messages
+      if (activeChatId) {
+        updateSessionMessages(updatedMessages);
+      }
+
+      toast({
+        title: "Message deleted",
+        description: "The message has been removed from the chat history."
+      });
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast({
+        title: "Error",
+        description: "Could not delete the message. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <ChatContext.Provider value={{ 
       messages, 
-      addMessage, 
+      addMessage,
+      deleteMessage,
       heroColor, 
       setHeroColor, 
       isWaitingForResponse,

@@ -11,6 +11,7 @@ export interface ChatSession {
 export interface ChatContextType {
   messages: Message[];
   addMessage: (content: string, isUser: boolean) => void;
+  deleteMessage: (messageId: string) => void;
   heroColor: string;
   setHeroColor: (color: string) => void;
   isWaitingForResponse: boolean;
