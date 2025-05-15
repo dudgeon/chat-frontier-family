@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Clock, Plus, User } from 'lucide-react';
+import { X, Plus, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ColorPicker from './ColorPicker';
@@ -45,12 +45,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           
           
           <ScrollArea className="flex-1 px-4">
-            <div className="py-6">
+            <div className="py-6 mt-4 md:mt-0">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold flex items-center gap-2">
-                  <Clock size={16} />
-                  Chat History
-                </h3>
                 <div className="flex gap-2">
                   <Link to="/profile">
                     <Button 
