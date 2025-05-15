@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -7,20 +7,89 @@ import { Label } from '@/components/ui/label';
 import { ArrowLeft, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useChat } from '@/contexts/ChatContext';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { heroColor } = useChat();
+  const { user, signOut } = useAuth();
   
-  // Mock user data - in a real app, this would come from authentication context
-  const [name, setName] = useState('Alex Johnson');
+  const [name, setName] = useState(user?.user_metadata?.name || 'User');
   const [accountType, setAccountType] = useState('parent');
+  const [loading, setLoading] = useState(false);
   
-  const handleLogout = () => {
-    // In a real app, this would clear authentication state
-    alert('User logged out');
-    navigate('/');
+  // Fetch profile on load
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('display_name, user_role')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data) {
+          setName(data.display_name || name);
+          setAccountType(data.user_role || 'parent');
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      }
+    };
+    
+    fetchProfile();
+  }, [user]);
+  
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/auth');
+    } catch (error) {
+      toast({
+        title: "Error signing out",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleProfileUpdate = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          display_name: name,
+          user_role: accountType,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully"
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        title: "Update failed",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
   
   return (
@@ -36,11 +105,13 @@ const Profile: React.FC = () => {
       <main className="pt-20 px-4 max-w-md mx-auto">
         <div className="flex flex-col items-center mb-8">
           <Avatar className="h-24 w-24 mb-4" style={{ backgroundColor: heroColor }}>
+            <AvatarImage src={user?.user_metadata?.avatar_url} />
             <AvatarFallback className="text-2xl text-white">
               {name.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <h2 className="text-xl font-semibold">{name}</h2>
+          <p className="text-sm text-muted-foreground">{user?.email}</p>
         </div>
         
         <div className="space-y-6">
@@ -74,9 +145,10 @@ const Profile: React.FC = () => {
               backgroundColor: heroColor,
               color: 'white' 
             }}
-            onClick={() => alert('Profile updated successfully')}
+            onClick={handleProfileUpdate}
+            disabled={loading}
           >
-            Save Changes
+            {loading ? "Saving..." : "Save Changes"}
           </Button>
           
           <Button 
