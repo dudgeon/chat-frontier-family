@@ -83,16 +83,16 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
         <ContextMenu key={index}>
           <ContextMenuTrigger>
             <div
-              className={message.isUser 
+              className={`${message.isUser 
                 ? 'message-bubble-user' 
-                : 'message-bubble-other'}
+                : 'message-bubble-other'} 
+                ${message.isUser ? 'self-end' : 'self-start'}`}
             >
               {message.content}
             </div>
           </ContextMenuTrigger>
-          {/* Only show context menu with delete option for adult users */}
-          <ContextMenuContent>
-            {userRole === 'parent' && (
+          {userRole === 'parent' && (
+            <ContextMenuContent className="min-w-[160px]">
               <ContextMenuItem 
                 onClick={() => handleDeleteMessage(message.id)}
                 className="text-red-600 focus:text-red-600 flex items-center gap-2"
@@ -100,13 +100,13 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
                 <Trash2 size={16} />
                 Delete Message
               </ContextMenuItem>
-            )}
-          </ContextMenuContent>
+            </ContextMenuContent>
+          )}
         </ContextMenu>
       ))}
       
       {isWaitingForResponse && (
-        <div className="message-bubble-other flex items-center space-x-2">
+        <div className="message-bubble-other self-start flex items-center space-x-2">
           <Loader2 size={16} className="animate-spin" />
           <span>Thinking...</span>
         </div>

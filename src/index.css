@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
 
 @tailwind base;
@@ -114,12 +113,12 @@
 
 /* Message bubbles */
 .message-bubble-user {
-  @apply bg-hero text-hero-foreground rounded-2xl rounded-br-sm py-2 px-4 max-w-[85%] self-end;
+  @apply bg-hero text-hero-foreground rounded-2xl rounded-br-sm py-2 px-4 max-w-[85%];
   white-space: pre-wrap;
 }
 
 .message-bubble-other {
-  @apply bg-hero/10 text-hero rounded-2xl rounded-bl-sm py-2 px-4 max-w-[85%] self-start;
+  @apply bg-hero/10 text-hero rounded-2xl rounded-bl-sm py-2 px-4 max-w-[85%];
   white-space: pre-wrap;
 }
 
@@ -152,4 +151,3 @@
     background-color: rgba(0, 0, 0, 0.3);
   }
 }
-
