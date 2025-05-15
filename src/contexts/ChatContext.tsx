@@ -25,6 +25,7 @@ interface ChatContextType {
   activeChatId: string;
   createNewChat: () => void;
   switchToChat: (id: string) => void;
+  updateChatName: (id: string, newName: string) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -124,6 +125,17 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Update a chat name
+  const updateChatName = (id: string, newName: string) => {
+    setChatSessions(prev => 
+      prev.map(session => 
+        session.id === id
+          ? { ...session, name: newName.trim() || null }
+          : session
+      )
+    );
+  };
+
   // Update CSS variable when hero color changes - updateCssVariable now handles localStorage
   useEffect(() => {
     updateCssVariable(heroColor);
@@ -196,7 +208,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       chatSessions,
       activeChatId,
       createNewChat,
-      switchToChat
+      switchToChat,
+      updateChatName
     }}>
       {children}
     </ChatContext.Provider>
