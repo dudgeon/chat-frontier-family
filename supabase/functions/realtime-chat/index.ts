@@ -93,43 +93,6 @@ serve(async (req) => {
     }
   }
   
-  // Create token endpoint for WebRTC
-  if (req.method === "POST" && new URL(req.url).pathname === "/realtime-token") {
-    try {
-      const openAIKey = Deno.env.get('OPENAI_API_KEY');
-      if (!openAIKey) {
-        throw new Error("OPENAI_API_KEY is not set");
-      }
-
-      // Request an ephemeral token from OpenAI
-      const tokenResponse = await fetch("https://api.openai.com/v1/realtime/sessions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openAIKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-realtime-preview-2024-10-01",
-          voice: "alloy",
-          instructions: "You are a helpful assistant who speaks in conversational language."
-        }),
-      });
-      
-      const data = await tokenResponse.json();
-      console.log("Token created:", data);
-      
-      return new Response(JSON.stringify(data), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    } catch (error) {
-      console.error("Token error:", error);
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
-    }
-  }
-  
-  // Fallback for all other requests
+  // Default response for non-WebSocket requests
   return new Response("Realtime Chat API - Use WebSocket connection", { headers: corsHeaders });
 });

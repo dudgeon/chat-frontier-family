@@ -140,8 +140,10 @@ export const useVoiceSession = (onClose: () => void) => {
         throw new Error(`Failed to get token: ${error.message}`);
       }
 
-      // Initialize WebSocket with the correct project ID
-      const wsUrl = `wss://xrrauvcciuiaztzajmeq.functions.supabase.co/realtime-chat`;
+      // Get the full WebSocket URL for the Edge Function
+      const projectId = 'xrrauvcciuiaztzajmeq';
+      const wsUrl = `wss://${projectId}.supabase.co/functions/v1/realtime-chat`;
+      
       console.log('Connecting to WebSocket:', wsUrl);
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
