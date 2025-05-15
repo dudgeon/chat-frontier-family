@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -69,7 +68,6 @@ const Profile: React.FC = () => {
         .from('profiles')
         .update({
           display_name: name,
-          user_role: accountType,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -127,16 +125,9 @@ const Profile: React.FC = () => {
           
           <div className="space-y-3">
             <Label>Account Type</Label>
-            <RadioGroup value={accountType} onValueChange={setAccountType} className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="parent" id="parent" />
-                <Label htmlFor="parent">Parent</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="kid" id="kid" />
-                <Label htmlFor="kid">Kid</Label>
-              </div>
-            </RadioGroup>
+            <div className="p-2 bg-gray-50 rounded-md border border-gray-200">
+              <p className="text-sm font-medium">{accountType === 'kid' ? 'Kid' : 'Parent'}</p>
+            </div>
           </div>
           
           <Button 
