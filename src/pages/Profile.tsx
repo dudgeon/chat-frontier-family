@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, LogOut, User } from 'lucide-react';
+import { ArrowLeft, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useChat } from '@/contexts/ChatContext';
+import { useChat, ChatProvider } from '@/contexts/ChatContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-const Profile: React.FC = () => {
+// Separate the Profile UI from the wrapper that provides the ChatProvider
+const ProfileUI: React.FC = () => {
   const navigate = useNavigate();
   const { heroColor } = useChat();
   
@@ -90,6 +91,15 @@ const Profile: React.FC = () => {
         </div>
       </main>
     </div>
+  );
+};
+
+// Wrapper component that provides the ChatProvider
+const Profile: React.FC = () => {
+  return (
+    <ChatProvider>
+      <ProfileUI />
+    </ChatProvider>
   );
 };
 
