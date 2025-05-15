@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { VoiceSessionState } from '@/types/voiceSession';
 import { initializeRecorder, type AudioRecorder } from '@/utils/audioUtils';
-import { createVoiceWebSocket, handleServerEvent, sendSessionUpdate } from '@/utils/voiceWebSocket';
+import { createVoiceWebSocket, handleServerEvent, sendSessionUpdate } from '@/utils/voice';
 import { encodeAudioData } from '@/utils/audioUtils';
 import { toast } from '@/components/ui/use-toast';
 
