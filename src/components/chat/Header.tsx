@@ -47,6 +47,10 @@ const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
     }
   };
 
+  const handleNewChat = () => {
+    createNewChat();
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-100 h-14 flex items-center px-4 z-10">
       <Button variant="ghost" size="icon" className="text-hero md:hidden" onClick={toggleSettings}>
@@ -94,6 +98,15 @@ const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
       )}
       
       <div className="flex items-center gap-2">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="text-hero"
+          onClick={handleNewChat}
+        >
+          <Plus />
+          <span className="sr-only">New Chat</span>
+        </Button>
         <Link to="/profile">
           <Button 
             variant="ghost" 
@@ -105,14 +118,6 @@ const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
             <span className="sr-only">Profile</span>
           </Button>
         </Link>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="text-hero"
-          onClick={createNewChat}
-        >
-          <Plus />
-        </Button>
       </div>
     </header>
   );
