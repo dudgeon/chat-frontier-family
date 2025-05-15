@@ -48,7 +48,12 @@ const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
   };
 
   const handleNewChat = () => {
-    createNewChat();
+    console.log("Creating new chat session...");
+    if (createNewChat) {
+      createNewChat();
+    } else {
+      console.error("createNewChat function is undefined");
+    }
   };
 
   return (
@@ -103,6 +108,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
           size="icon" 
           className="text-hero"
           onClick={handleNewChat}
+          aria-label="New Chat"
         >
           <Plus />
           <span className="sr-only">New Chat</span>
