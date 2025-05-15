@@ -1,7 +1,8 @@
 
-import React from 'react';
-import { X } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { X, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
 import VoiceIndicator from './VoiceIndicator';
 import { useVoiceSession } from '@/hooks/useVoiceSession';
 
@@ -12,11 +13,68 @@ interface VoiceModeProps {
 const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
   const { session, startSession, endSession } = useVoiceSession(onClose);
 
+  // Start session automatically when component mounts
+  useEffect(() => {
+    const initSession = async () => {
+      try {
+        // Check for microphone permissions first
+        const hasPermission = await checkMicrophonePermission();
+        if (hasPermission) {
+          startSession();
+        } else {
+          toast({
+            title: "Permission Required",
+            description: "Please allow microphone access to use voice mode",
+            variant: "destructive",
+          });
+          onClose();
+        }
+      } catch (error) {
+        console.error('Error initializing session:', error);
+        toast({
+          title: "Voice Mode Error",
+          description: "Failed to initialize voice mode",
+          variant: "destructive",
+        });
+        onClose();
+      }
+    };
+    
+    initSession();
+  }, []);
+  
+  // Handle errors in the session state
+  useEffect(() => {
+    if (session.error) {
+      toast({
+        title: "Voice Mode Error",
+        description: session.error,
+        variant: "destructive",
+      });
+    }
+  }, [session.error]);
+
+  // Helper function to check microphone permission
+  const checkMicrophonePermission = async (): Promise<boolean> => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Stop the tracks immediately, we just needed to check permission
+      stream.getTracks().forEach(track => track.stop());
+      return true;
+    } catch (error) {
+      console.error('Microphone permission error:', error);
+      return false;
+    }
+  };
+
   const renderStatus = () => {
-    if (session.isConnecting) return "Connecting...";
+    if (session.error) {
+      return "Error: " + session.error;
+    }
+    if (session.isConnecting) return "Connecting to voice service...";
     if (session.isSpeaking) return "Assistant is speaking...";
-    if (session.isListening) return "Listening...";
-    if (session.isConnected) return "Tap to speak";
+    if (session.isListening) return "Listening to you...";
+    if (session.isConnected) return "Ready - tap to speak";
     return "Starting voice mode...";
   };
 
@@ -39,15 +97,24 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
           onClick={!session.isConnected && !session.isConnecting ? startSession : undefined} 
         />
         
-        <p className="text-white text-xl font-medium">
-          {renderStatus()}
-        </p>
+        <div className="flex items-center gap-2">
+          {session.error && <AlertCircle className="h-5 w-5 text-red-500" />}
+          <p className="text-white text-xl font-medium">
+            {renderStatus()}
+          </p>
+        </div>
         
         {session.transcript && (
-          <div className="max-w-md w-full bg-white/10 rounded-lg p-4 mt-4">
+          <div className="max-w-md w-full bg-white/10 rounded-lg p-4 mt-4 max-h-60 overflow-y-auto">
             <p className="text-white">{session.transcript}</p>
           </div>
         )}
+        
+        <div className="text-white/70 text-sm mt-4">
+          {session.isConnected && !session.isListening && !session.isSpeaking && (
+            <p>Say something to start the conversation</p>
+          )}
+        </div>
       </div>
     </div>
   );

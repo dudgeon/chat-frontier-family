@@ -10,6 +10,7 @@
  * @property isListening - Whether the AI is currently listening (user speaking)
  * @property isSpeaking - Whether the AI is currently speaking
  * @property transcript - The current transcript of the AI's response
+ * @property error - Any error message from the voice session
  */
 export interface VoiceSessionState {
   isConnecting: boolean;
@@ -17,6 +18,7 @@ export interface VoiceSessionState {
   isListening: boolean;
   isSpeaking: boolean;
   transcript: string;
+  error?: string | null;
 }
 
 /**
@@ -25,5 +27,6 @@ export interface VoiceSessionState {
 export interface ServerEvent {
   type: string;
   delta?: string;
+  message?: string;
   [key: string]: any;
 }

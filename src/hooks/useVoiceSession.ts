@@ -4,6 +4,7 @@ import { VoiceSessionState } from '@/types/voiceSession';
 import { initializeRecorder, type AudioRecorder } from '@/utils/audioUtils';
 import { createVoiceWebSocket, handleServerEvent, sendSessionUpdate } from '@/utils/voiceWebSocket';
 import { encodeAudioData } from '@/utils/audioUtils';
+import { toast } from '@/components/ui/use-toast';
 
 /**
  * Custom hook for managing voice chat sessions with OpenAI
@@ -18,26 +19,60 @@ export const useVoiceSession = (onClose: () => void) => {
     isListening: false,
     isSpeaking: false,
     transcript: '',
+    error: null,
   });
 
   // References to maintain WebSocket connection and audio processing
   const wsRef = useRef<WebSocket | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const recorderRef = useRef<AudioRecorder | null>(null);
+  const sessionActiveRef = useRef<boolean>(false);
 
   /**
    * Clean up resources when component unmounts
    */
   useEffect(() => {
     return () => {
-      // Stop recording if active
-      if (recorderRef.current) recorderRef.current.stop();
-      // Close audio context if open
-      if (audioContextRef.current) audioContextRef.current.close();
-      // Close WebSocket connection if open
-      if (wsRef.current) wsRef.current.close();
+      cleanupSession();
     };
   }, []);
+
+  /**
+   * Helper function to clean up all resources
+   */
+  const cleanupSession = () => {
+    console.log('Cleaning up voice session resources');
+    sessionActiveRef.current = false;
+    
+    // Stop recording if active
+    if (recorderRef.current) {
+      console.log('Stopping recorder');
+      recorderRef.current.stop();
+      recorderRef.current = null;
+    }
+    
+    // Close audio context if open
+    if (audioContextRef.current) {
+      console.log('Closing audio context');
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    
+    // Close WebSocket connection if open
+    if (wsRef.current) {
+      console.log('Closing WebSocket connection');
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    
+    setSession(prev => ({
+      ...prev, 
+      isConnecting: false,
+      isConnected: false,
+      isListening: false,
+      isSpeaking: false
+    }));
+  };
 
   /**
    * Initiates a new voice session
@@ -45,9 +80,30 @@ export const useVoiceSession = (onClose: () => void) => {
    */
   const startSession = async () => {
     try {
+      console.log('Starting voice session');
+      sessionActiveRef.current = true;
+      
+      // Reset any previous error state
+      setSession(prev => ({ 
+        ...prev, 
+        isConnecting: true, 
+        error: null 
+      }));
+
       // Create WebSocket connection
-      wsRef.current = await createVoiceWebSocket(setSession, onClose);
-      if (!wsRef.current) return;
+      wsRef.current = await createVoiceWebSocket(
+        (updater) => {
+          // Only update state if session is still active
+          if (sessionActiveRef.current) {
+            setSession(updater);
+          }
+        }, 
+        onClose
+      );
+      
+      if (!wsRef.current) {
+        throw new Error('Failed to establish WebSocket connection');
+      }
 
       // Set up WebSocket message handler
       wsRef.current.onmessage = (event) => {
@@ -56,46 +112,94 @@ export const useVoiceSession = (onClose: () => void) => {
           const data = JSON.parse(event.data);
           console.log('Received WebSocket message:', data);
           
+          if (!sessionActiveRef.current) {
+            console.log('Session no longer active, ignoring message');
+            return;
+          }
+          
           handleServerEvent(data, setSession);
           
           // If session is created, send configuration
           if (data.type === 'session.created') {
+            console.log('Session created, sending configuration');
             sendSessionUpdate(wsRef.current);
           }
         } catch (e) {
           console.error('Error parsing WebSocket message:', e);
+          setSession(prev => ({ ...prev, error: 'Failed to process server response' }));
         }
       };
 
       // Initialize audio context with specific sample rate
-      const audioContext = new AudioContext({
-        sampleRate: 24000,
-      });
-      audioContextRef.current = audioContext;
+      try {
+        const audioContext = new AudioContext({
+          sampleRate: 24000,
+        });
+        audioContextRef.current = audioContext;
+        console.log('Audio context initialized with sample rate 24000Hz');
+      } catch (e) {
+        console.error('Failed to initialize audio context:', e);
+        throw new Error('Could not access audio system. Please check your browser permissions.');
+      }
       
       /**
        * Callback to handle audio data from the recorder
        * @param audioData - Float32Array containing audio samples
        */
       const handleAudioData = (audioData: Float32Array) => {
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          // Encode audio data to base64 format
-          const encodedAudio = encodeAudioData(audioData);
-          
-          // Send audio data to server
-          wsRef.current.send(JSON.stringify({
-            type: 'input_audio_buffer.append',
-            audio: encodedAudio
-          }));
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && sessionActiveRef.current) {
+          try {
+            // Encode audio data to base64 format
+            const encodedAudio = encodeAudioData(audioData);
+            
+            // Send audio data to server
+            wsRef.current.send(JSON.stringify({
+              type: 'input_audio_buffer.append',
+              audio: encodedAudio
+            }));
+          } catch (e) {
+            console.error('Error sending audio data:', e);
+          }
         }
       };
       
-      // Initialize audio recorder
-      recorderRef.current = initializeRecorder(handleAudioData);
+      // Initialize audio recorder with retry mechanism
+      try {
+        console.log('Initializing audio recorder');
+        recorderRef.current = initializeRecorder(handleAudioData);
+        
+        // Set a timeout to check if we're actually getting audio
+        setTimeout(() => {
+          if (sessionActiveRef.current && !session.isListening) {
+            console.log('Voice session started but no audio detected yet');
+            toast({
+              title: "Microphone Check",
+              description: "Please say something to test your microphone",
+            });
+          }
+        }, 3000);
+      } catch (error) {
+        console.error('Error initializing audio recorder:', error);
+        throw new Error('Failed to access microphone. Please check your permissions.');
+      }
       
     } catch (error) {
       console.error('Error starting voice session:', error);
-      setSession(prev => ({ ...prev, isConnecting: false }));
+      setSession(prev => ({ 
+        ...prev, 
+        isConnecting: false, 
+        error: error instanceof Error ? error.message : 'Unknown error starting voice session' 
+      }));
+      
+      // Clean up any partially initialized resources
+      cleanupSession();
+      
+      // Notify user
+      toast({
+        title: "Voice Mode Error",
+        description: error instanceof Error ? error.message : 'Failed to start voice session',
+        variant: "destructive",
+      });
     }
   };
 
@@ -103,23 +207,8 @@ export const useVoiceSession = (onClose: () => void) => {
    * Ends the current voice session and cleans up resources
    */
   const endSession = () => {
-    // Stop the audio recorder
-    if (recorderRef.current) {
-      recorderRef.current.stop();
-      recorderRef.current = null;
-    }
-    
-    // Close the audio context
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-    
-    // Close the WebSocket connection
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
+    console.log('Manually ending voice session');
+    cleanupSession();
     
     // Execute the onClose callback
     onClose();

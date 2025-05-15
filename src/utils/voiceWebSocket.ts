@@ -1,4 +1,3 @@
-
 import { toast } from '@/components/ui/use-toast';
 import { ServerEvent, VoiceSessionState } from '@/types/voiceSession';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
  * @returns WebSocket instance and connection status
  */
 export const createVoiceWebSocket = async (
-  setSession: React.Dispatch<React.SetStateAction<VoiceSessionState>>,
+  setSession: (updater: (prev: VoiceSessionState) => VoiceSessionState) => void,
   onClose: () => void
 ): Promise<WebSocket | null> => {
   try {
@@ -18,10 +17,15 @@ export const createVoiceWebSocket = async (
     setSession(prev => ({ ...prev, isConnecting: true }));
 
     // Get token from Supabase Edge Function
+    console.log('Requesting token from Edge Function');
     const { data, error } = await supabase.functions.invoke('realtime-token');
     
     if (error) {
       throw new Error(`Failed to get token: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new Error('No token received from server');
     }
 
     // Get the full WebSocket URL for the Edge Function
@@ -31,36 +35,94 @@ export const createVoiceWebSocket = async (
     console.log('Connecting to WebSocket:', wsUrl);
     const ws = new WebSocket(wsUrl);
 
+    // Increase connection timeout safety
+    const connectionTimeout = setTimeout(() => {
+      if (ws.readyState !== WebSocket.OPEN) {
+        console.error('WebSocket connection timeout');
+        ws.close();
+        setSession(prev => ({ 
+          ...prev, 
+          isConnecting: false,
+          error: 'Connection timeout - please try again' 
+        }));
+      }
+    }, 10000); // 10 seconds timeout
+
     // WebSocket event handlers
     ws.onopen = () => {
       // Connection established
       console.log('WebSocket connection opened');
+      clearTimeout(connectionTimeout);
       setSession(prev => ({ ...prev, isConnected: true, isConnecting: false }));
     };
 
     ws.onerror = (event) => {
       // Handle connection errors
       console.error('WebSocket error:', event);
+      clearTimeout(connectionTimeout);
       toast({
         title: 'Connection Error',
         description: 'Failed to establish voice connection',
         variant: 'destructive',
       });
-      setSession(prev => ({ ...prev, isConnecting: false }));
+      setSession(prev => ({ 
+        ...prev, 
+        isConnecting: false,
+        error: 'WebSocket connection error' 
+      }));
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
       // Reset state when connection closes
-      console.log('WebSocket connection closed');
-      setSession({
-        isConnecting: false,
-        isConnected: false,
-        isListening: false,
-        isSpeaking: false,
-        transcript: '',
+      console.log('WebSocket connection closed with code:', event.code, 'reason:', event.reason);
+      clearTimeout(connectionTimeout);
+      
+      setSession(prev => {
+        // Only show error toast if it wasn't a normal closure
+        if (event.code !== 1000 && event.code !== 1001) {
+          toast({
+            title: 'Connection Closed',
+            description: `Voice session ended: ${event.reason || 'Unknown reason'}`,
+            variant: 'default',
+          });
+          
+          return {
+            isConnecting: false,
+            isConnected: false,
+            isListening: false,
+            isSpeaking: false,
+            transcript: prev.transcript, // Preserve transcript
+            error: `Connection closed: ${event.reason || 'Unknown reason'}`
+          };
+        }
+        
+        return {
+          isConnecting: false,
+          isConnected: false,
+          isListening: false,
+          isSpeaking: false,
+          transcript: prev.transcript, // Preserve transcript
+          error: null
+        };
       });
+      
       onClose();
     };
+
+    // Implement ping/pong to keep connection alive
+    let pingInterval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        console.log('Sending ping to keep connection alive');
+        ws.send(JSON.stringify({ type: 'ping' }));
+      } else {
+        clearInterval(pingInterval);
+      }
+    }, 30000); // Send ping every 30 seconds
+
+    // Clean up interval on close
+    ws.addEventListener('close', () => {
+      clearInterval(pingInterval);
+    });
 
     return ws;
   } catch (error) {
@@ -71,7 +133,11 @@ export const createVoiceWebSocket = async (
       description: error instanceof Error ? error.message : 'Failed to start voice session',
       variant: 'destructive',
     });
-    setSession(prev => ({ ...prev, isConnecting: false }));
+    setSession(prev => ({ 
+      ...prev, 
+      isConnecting: false,
+      error: error instanceof Error ? error.message : 'Unknown connection error'
+    }));
     return null;
   }
 };
@@ -91,9 +157,11 @@ export const handleServerEvent = (event: ServerEvent, setSession: (updater: (pre
     setSession(prev => ({ ...prev, isListening: true }));
   } else if (event.type === 'input_audio_buffer.speech_started') {
     // User started speaking
+    console.log('User speech detected');
     setSession(prev => ({ ...prev, isListening: true }));
   } else if (event.type === 'input_audio_buffer.speech_stopped') {
     // User stopped speaking
+    console.log('User stopped speaking');
     setSession(prev => ({ ...prev, isListening: false }));
   } else if (event.type === 'response.audio_transcript.delta') {
     // Received partial transcript from AI response
@@ -104,7 +172,15 @@ export const handleServerEvent = (event: ServerEvent, setSession: (updater: (pre
     }));
   } else if (event.type === 'response.audio.done') {
     // AI finished speaking
-    setSession(prev => ({ ...prev, isSpeaking: false }));
+    console.log('AI finished speaking, ready for next input');
+    setSession(prev => ({ ...prev, isSpeaking: false, isListening: true }));
+  } else if (event.type === 'error') {
+    // Handle explicit error messages
+    console.error('Server sent error:', event);
+    setSession(prev => ({ 
+      ...prev, 
+      error: event.message || 'Server error' 
+    }));
   }
 };
 
@@ -114,7 +190,10 @@ export const handleServerEvent = (event: ServerEvent, setSession: (updater: (pre
  */
 export const sendSessionUpdate = (ws: WebSocket | null) => {
   // Ensure WebSocket is open before sending
-  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    console.error('Cannot send session update: WebSocket not open');
+    return;
+  }
 
   // Prepare session update configuration
   const sessionUpdateEvent = {
@@ -137,12 +216,12 @@ export const sendSessionUpdate = (ws: WebSocket | null) => {
         type: "server_vad",
         threshold: 0.5,
         prefix_padding_ms: 300,
-        silence_duration_ms: 1000
+        silence_duration_ms: 2000  // Increased from 1000 to 2000 for better turn handling
       }
     }
   };
 
   // Send configuration to the server
+  console.log('Sending session update to configure voice settings');
   ws.send(JSON.stringify(sessionUpdateEvent));
-  console.log('Sent session update event');
 };
