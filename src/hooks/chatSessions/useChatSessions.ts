@@ -1,21 +1,34 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Message } from '@/types/chat';
-import { ChatSession, SESSIONS_STORAGE_KEY, ACTIVE_SESSION_KEY, generateId } from '@/types/chatContext';
-import { supabase } from '@/integrations/supabase/client';
+import { ChatSession, ACTIVE_SESSION_KEY } from '@/types/chatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
+import { useChatDatabase } from './useChatDatabase';
+import { useActiveSession } from './useActiveSession';
 
 export const useChatSessions = (initialMessages: Message[] = []) => {
   const { user } = useAuth();
-  // Store sessions and active session ID
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
-  const [activeChatId, setActiveChatId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   
+  const { 
+    fetchUserSessions,
+    createNewChatInDb,
+    updateChatNameInDb,
+    updateSessionTimestampInDb,
+    saveMessageToDb
+  } = useChatDatabase();
+  
+  const {
+    activeChatId,
+    setActiveChatId,
+    activeSession
+  } = useActiveSession(chatSessions);
+
   // Load sessions from database when user is authenticated
   useEffect(() => {
-    const fetchUserSessions = async () => {
+    const loadSessions = async () => {
       if (!user) {
         setIsLoading(false);
         return;
@@ -24,43 +37,9 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
       setIsLoading(true);
       
       try {
-        // Fetch all chat sessions for the current user
-        const { data, error } = await supabase
-          .from('chat_sessions')
-          .select('id, name, last_updated')
-          .eq('user_id', user.id)
-          .order('last_updated', { ascending: false });
+        const sessions = await fetchUserSessions(user.id);
         
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          // Format data for our state
-          const sessions = await Promise.all(data.map(async (session) => {
-            // Fetch messages for this session
-            const { data: messagesData, error: messagesError } = await supabase
-              .from('chat_messages')
-              .select('*')
-              .eq('session_id', session.id)
-              .order('created_at', { ascending: true });
-            
-            if (messagesError) throw messagesError;
-            
-            // Convert to our Message format
-            const messages = messagesData.map(msg => ({
-              id: msg.id,
-              content: msg.content,
-              isUser: msg.is_user,
-              timestamp: new Date(msg.created_at).getTime()
-            }));
-            
-            return {
-              id: session.id,
-              name: session.name,
-              messages: messages,
-              lastUpdated: new Date(session.last_updated).getTime()
-            };
-          }));
-          
+        if (sessions && sessions.length > 0) {
           console.log("Loaded chat sessions:", sessions.length);
           setChatSessions(sessions);
           
@@ -75,7 +54,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
         } else {
           // No sessions, create a new default one
           console.log("No existing sessions, creating a new one");
-          const newSession = await createNewChatInDb();
+          const newSession = await createNewChatInDb(user.id);
           setChatSessions([newSession]);
           setActiveChatId(newSession.id);
           localStorage.setItem(ACTIVE_SESSION_KEY, newSession.id);
@@ -87,77 +66,18 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
       }
     };
     
-    fetchUserSessions();
-  }, [user]);
-
-  // Find the active chat session
-  const activeSession = chatSessions.find(s => s.id === activeChatId) || {
-    id: activeChatId,
-    name: null,
-    messages: [],
-    lastUpdated: null
-  };
+    loadSessions();
+  }, [user, fetchUserSessions, createNewChatInDb]);
   
-  // Create a new chat session in the database
-  const createNewChatInDb = async () => {
-    if (!user) {
-      throw new Error('User must be logged in to create a chat');
-    }
-    
-    const newId = generateId();
-    const timestamp = Date.now();
-    const welcomeMessage: Message = {
-      content: "Hello! I'm powered by GPT-4o. How can I help you today?",
-      isUser: false,
-      timestamp: timestamp
-    };
-    
-    try {
-      console.log("Creating new session in database with ID:", newId);
-      // Create session in database
-      const { error: sessionError } = await supabase
-        .from('chat_sessions')
-        .insert({
-          id: newId,
-          user_id: user.id,
-          name: null,
-          last_updated: new Date().toISOString()
-        });
-        
-      if (sessionError) throw sessionError;
-      
-      // Add welcome message
-      const { error: messageError } = await supabase
-        .from('chat_messages')
-        .insert({
-          session_id: newId,
-          content: welcomeMessage.content,
-          is_user: welcomeMessage.isUser,
-          created_at: new Date(timestamp).toISOString()
-        });
-        
-      if (messageError) throw messageError;
-      
-      const newSession = {
-        id: newId,
-        name: null,
-        messages: [welcomeMessage],
-        lastUpdated: timestamp
-      };
-      
-      console.log("Created new chat session:", newSession);
-      return newSession;
-    } catch (error) {
-      console.error("Error in createNewChatInDb:", error);
-      throw error;
-    }
-  };
-
   // Create a new chat session
   const createNewChat = useCallback(async () => {
     try {
+      if (!user) {
+        throw new Error('User must be logged in to create a chat');
+      }
+      
       console.log("useChatSessions: Creating new chat session...");
-      const newSession = await createNewChatInDb();
+      const newSession = await createNewChatInDb(user.id);
       console.log("useChatSessions: New session created:", newSession);
       
       // Update state with the new session
@@ -178,7 +98,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
       });
       
       // Fallback to local-only session if database fails
-      const newId = generateId();
+      const newId = Math.random().toString(36).substring(2, 15);
       const newSession = {
         id: newId,
         name: null,
@@ -194,7 +114,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
       setActiveChatId(newId);
       return newSession.messages;
     }
-  }, [user]);
+  }, [user, createNewChatInDb, setActiveChatId]);
 
   // Switch to an existing chat
   const switchToChat = useCallback((id: string) => {
@@ -205,7 +125,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
       return session.messages;
     }
     return activeSession.messages;
-  }, [chatSessions, activeSession]);
+  }, [chatSessions, activeSession, setActiveChatId]);
 
   // Update a chat name
   const updateChatName = useCallback(async (id: string, newName: string) => {
@@ -220,21 +140,9 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
     
     // Then update in database
     if (user) {
-      try {
-        const { error } = await supabase
-          .from('chat_sessions')
-          .update({ name: newName.trim() || null })
-          .eq('id', id)
-          .eq('user_id', user.id);
-          
-        if (error) {
-          console.error('Error updating chat name:', error);
-        }
-      } catch (error) {
-        console.error('Error updating chat name:', error);
-      }
+      await updateChatNameInDb(id, user.id, newName);
     }
-  }, [user]);
+  }, [user, updateChatNameInDb]);
 
   // Update messages for active chat
   const updateSessionMessages = useCallback(async (messages: Message[]) => {
@@ -251,15 +159,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
     
     try {
       // Update last_updated timestamp in the database
-      const { error: updateError } = await supabase
-        .from('chat_sessions')
-        .update({ last_updated: new Date().toISOString() })
-        .eq('id', activeChatId)
-        .eq('user_id', user.id);
-        
-      if (updateError) {
-        console.error('Error updating session timestamp:', updateError);
-      }
+      await updateSessionTimestampInDb(activeChatId, user.id);
       
       // Find the most recent message - assuming it's the one we need to add
       const latestMessage = messages[messages.length - 1];
@@ -268,26 +168,16 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
       // Check if this message already exists in the database by checking if it has an ID
       if (!latestMessage.id) {
         // It's a new message, add it to the database
-        const { data, error } = await supabase
-          .from('chat_messages')
-          .insert({
-            session_id: activeChatId,
-            content: latestMessage.content,
-            is_user: latestMessage.isUser,
-            created_at: new Date(latestMessage.timestamp || Date.now()).toISOString()
-          })
-          .select('id');
-          
-        if (error) {
-          console.error('Error saving message:', error);
-        } else if (data && data[0]) {
+        const newMessageId = await saveMessageToDb(activeChatId, latestMessage);
+        
+        if (newMessageId) {
           // Update the message in our state with the new ID
           setChatSessions(prevSessions => 
             prevSessions.map(session => {
               if (session.id === activeChatId) {
                 const updatedMessages = session.messages.map((msg, index) => {
                   if (index === messages.length - 1) {
-                    return { ...msg, id: data[0].id };
+                    return { ...msg, id: newMessageId };
                   }
                   return msg;
                 });
@@ -301,7 +191,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
     } catch (error) {
       console.error('Error updating session messages:', error);
     }
-  }, [activeChatId, user]);
+  }, [activeChatId, user, updateSessionTimestampInDb, saveMessageToDb]);
 
   return { 
     chatSessions, 

@@ -5,7 +5,7 @@ import { ChatContextType } from '@/types/chatContext';
 import { useApiKey } from '@/hooks/useApiKey';
 import { useMessageHandler } from '@/hooks/useMessageHandler';
 import { useHeroColor } from '@/hooks/useHeroColor';
-import { useChatSessions } from '@/hooks/useChatSessions';
+import { useChatSessions } from '@/hooks/chatSessions';
 import { useChatNameGenerator } from '@/hooks/useChatNameGenerator';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
