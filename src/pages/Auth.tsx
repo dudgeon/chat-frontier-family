@@ -11,9 +11,16 @@ import { toast } from '@/components/ui/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format, differenceInYears } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +31,27 @@ const Auth: React.FC = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [isOver18, setIsOver18] = useState(true);
   const [dateSelected, setDateSelected] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear() - 25);
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
+  
+  // Generate year options for the dropdown (from current year - 100 to current year)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
+  
+  // Month names for the dropdown
+  const months = [
+    "January", "February", "March", "April", "May", "June", 
+    "July", "August", "September", "October", "November", "December"
+  ];
+  
+  // Update actual date when year or month changes
+  useEffect(() => {
+    if (selectedYear && selectedMonth !== undefined) {
+      // Set to the 1st day of the month initially
+      const newDate = new Date(selectedYear, selectedMonth, 1);
+      setDate(newDate);
+    }
+  }, [selectedYear, selectedMonth]);
   
   // Redirect if already logged in
   useEffect(() => {
@@ -103,6 +131,13 @@ const Auth: React.FC = () => {
       });
       
       if (error) throw error;
+      
+      // Also save the user type as 'adult' in their profile
+      if (data?.user) {
+        await supabase.from('profiles').update({
+          user_role: 'adult'
+        }).eq('id', data.user.id);
+      }
       
       toast({
         title: "Account created",
@@ -205,34 +240,77 @@ const Auth: React.FC = () => {
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="date-of-birth" className="block text-sm font-medium">Date of Birth</label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          id="date-of-birth"
-                          variant={"outline"}
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !date && "text-muted-foreground"
-                          )}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Select
+                          value={selectedMonth.toString()}
+                          onValueChange={(value) => setSelectedMonth(parseInt(value))}
                         >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {date ? format(date, "PPP") : <span>Pick a date</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={date}
-                          onSelect={setDate}
-                          disabled={(date) => {
-                            // Disable future dates and dates more than 100 years ago
-                            return date > new Date() || date < new Date(new Date().setFullYear(new Date().getFullYear() - 100));
-                          }}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Month" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {months.map((month, index) => (
+                              <SelectItem key={index} value={index.toString()}>
+                                {month}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Select
+                          value={selectedYear.toString()}
+                          onValueChange={(value) => setSelectedYear(parseInt(value))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Year" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {years.map((year) => (
+                              <SelectItem key={year} value={year.toString()}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    {date && (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full justify-start text-left font-normal mt-2",
+                              !date && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {date ? format(date, "PPP") : <span>Select day</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={date}
+                            month={new Date(selectedYear, selectedMonth)}
+                            onSelect={setDate}
+                            disabled={(date) => {
+                              // Disable future dates and dates that don't match the selected year/month
+                              return (
+                                date > new Date() || 
+                                date.getFullYear() !== selectedYear || 
+                                date.getMonth() !== selectedMonth
+                              );
+                            }}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    )}
                   </div>
                   
                   {dateSelected && !isOver18 && (
