@@ -4,6 +4,7 @@ import { Message } from '@/types/chat';
 import { ChatSession, SESSIONS_STORAGE_KEY, ACTIVE_SESSION_KEY, generateId } from '@/types/chatContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/components/ui/use-toast';
 
 export const useChatSessions = (initialMessages: Message[] = []) => {
   const { user } = useAuth();
@@ -101,54 +102,75 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
     }
     
     const newId = generateId();
-    const welcomeMessage = {
+    const timestamp = Date.now();
+    const welcomeMessage: Message = {
       content: "Hello! I'm powered by GPT-4o. How can I help you today?",
       isUser: false,
-      timestamp: Date.now()
+      timestamp: timestamp
     };
     
-    // Create session in database using raw SQL approach until types are updated
-    const { error: sessionError } = await supabase
-      .from('chat_sessions')
-      .insert({
+    try {
+      console.log("Creating new session in database with ID:", newId);
+      // Create session in database using raw SQL approach until types are updated
+      const { error: sessionError } = await supabase
+        .from('chat_sessions')
+        .insert({
+          id: newId,
+          user_id: user.id,
+          name: null,
+          last_updated: new Date().toISOString()
+        });
+        
+      if (sessionError) throw sessionError;
+      
+      // Add welcome message
+      const { error: messageError } = await supabase
+        .from('chat_messages')
+        .insert({
+          session_id: newId,
+          content: welcomeMessage.content,
+          is_user: welcomeMessage.isUser,
+          created_at: new Date(timestamp).toISOString()
+        });
+        
+      if (messageError) throw messageError;
+      
+      return {
         id: newId,
-        user_id: user.id,
         name: null,
-        last_updated: new Date().toISOString()
-      });
-      
-    if (sessionError) throw sessionError;
-    
-    // Add welcome message
-    const { error: messageError } = await supabase
-      .from('chat_messages')
-      .insert({
-        session_id: newId,
-        content: welcomeMessage.content,
-        is_user: welcomeMessage.isUser,
-        created_at: new Date().toISOString()
-      });
-      
-    if (messageError) throw messageError;
-    
-    return {
-      id: newId,
-      name: null,
-      messages: [welcomeMessage],
-      lastUpdated: Date.now()
-    };
+        messages: [welcomeMessage],
+        lastUpdated: timestamp
+      };
+    } catch (error) {
+      console.error("Error in createNewChatInDb:", error);
+      throw error;
+    }
   };
 
   // Create a new chat session
   const createNewChat = async () => {
     try {
+      console.log("useChatSessions: Creating new chat session...");
       const newSession = await createNewChatInDb();
+      console.log("useChatSessions: New session created:", newSession);
+      
+      // Update state with the new session
       setChatSessions(prev => [newSession, ...prev]);
+      
+      // Set this as the active chat
       setActiveChatId(newSession.id);
       localStorage.setItem(ACTIVE_SESSION_KEY, newSession.id);
+      
       return newSession.messages;
     } catch (error) {
       console.error('Error creating new chat:', error);
+      // Show error toast
+      toast({
+        title: "Error",
+        description: "Failed to create a new chat session.",
+        variant: "destructive"
+      });
+      
       // Fallback to local-only session if database fails
       const newId = generateId();
       const newSession = {

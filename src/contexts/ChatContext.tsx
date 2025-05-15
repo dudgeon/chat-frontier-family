@@ -75,8 +75,14 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     try {
+      console.log("ChatContext: Creating new chat session...");
       const initialMessages = await createNewChatSession();
-      setMessages(initialMessages);
+      console.log("ChatContext: New chat session created, setting messages:", initialMessages);
+      setMessages(initialMessages || []);
+      toast({
+        title: "New chat created",
+        description: "Started a new conversation",
+      });
     } catch (error) {
       console.error('Error creating new chat:', error);
       toast({

@@ -7,6 +7,7 @@ import ColorPicker from './ColorPicker';
 import ChatHistory from './ChatHistory';
 import { useChat } from '@/contexts/ChatContext';
 import { Link } from 'react-router-dom';
+import { toast } from '@/components/ui/use-toast';
 
 interface SettingsPanelProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ interface SettingsPanelProps {
   onColorChange?: (color: string) => void;
   currentColor?: string;
 }
+
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
   isOpen,
   onClose,
@@ -34,15 +36,35 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       setHeroColor(color);
     }
   };
+  
   const activeColor = currentColor || heroColor;
-  return <>
+  
+  const handleNewChat = () => {
+    try {
+      console.log("SettingsPanel: Creating new chat session...");
+      if (typeof createNewChat === 'function') {
+        createNewChat();
+      } else {
+        console.error("createNewChat function is not available in SettingsPanel");
+        toast({
+          title: "Error",
+          description: "Could not create a new chat. Please refresh the page.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error creating new chat from SettingsPanel:", error);
+    }
+  };
+  
+  return (
+    <>
       {/* Overlay for mobile when panel is open */}
       {isOpen && <div className="md:hidden fixed inset-0 bg-black/20 z-10" onClick={onClose} />}
       
       <div className={`fixed top-0 left-0 h-full w-72 bg-white shadow-lg z-20 transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} md:relative md:z-auto md:shadow-none md:border-r md:border-hero/30`}>
         <div className="flex flex-col h-full">
-          
           
           <ScrollArea className="flex-1 px-4">
             <div className="py-6 mt-4 md:mt-0">
@@ -59,7 +81,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       <span className="sr-only">Profile</span>
                     </Button>
                   </Link>
-                  <Button variant="ghost" size="sm" className="text-hero hover:bg-hero/10" onClick={createNewChat}>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-hero hover:bg-hero/10" 
+                    onClick={handleNewChat}
+                  >
                     <Plus size={16} className="mr-1" />
                     New Chat
                   </Button>
@@ -75,6 +102,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </div>
         </div>
       </div>
-    </>;
+    </>
+  );
 };
+
 export default SettingsPanel;

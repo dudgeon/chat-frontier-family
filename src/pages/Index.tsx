@@ -8,11 +8,18 @@ import SettingsPanel from '@/components/settings/SettingsPanel';
 import VoiceMode from '@/components/chat/VoiceMode';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
+import { toast } from '@/components/ui/use-toast';
 
 const Index: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isVoiceModeActive, setIsVoiceModeActive] = useState(false);
-  const { messages, addMessage, heroColor, setHeroColor } = useChat();
+  const { 
+    messages, 
+    addMessage, 
+    heroColor, 
+    setHeroColor,
+    createNewChat // Ensure we're getting this from context
+  } = useChat();
   const { session } = useAuth();
 
   // Additional check to ensure the user is authenticated
@@ -30,6 +37,23 @@ const Index: React.FC = () => {
 
   const toggleVoiceMode = () => {
     setIsVoiceModeActive(!isVoiceModeActive);
+  };
+
+  const handleNewChat = () => {
+    try {
+      if (createNewChat) {
+        createNewChat();
+      } else {
+        console.error("createNewChat is not available in Index component");
+        toast({
+          title: "Error",
+          description: "Could not create a new chat. Please refresh the page.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error creating new chat from Index:", error);
+    }
   };
 
   return (

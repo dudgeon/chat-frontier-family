@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, Plus, Check, X, User } from 'lucide-react';
+import { Menu, User, Plus, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useChat } from '@/contexts/ChatContext';
@@ -49,10 +48,14 @@ const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
 
   const handleNewChat = () => {
     console.log("Creating new chat session...");
-    if (createNewChat) {
-      createNewChat();
-    } else {
-      console.error("createNewChat function is undefined");
+    try {
+      if (typeof createNewChat === 'function') {
+        createNewChat();
+      } else {
+        console.error("createNewChat function is not available:", createNewChat);
+      }
+    } catch (error) {
+      console.error("Error creating new chat:", error);
     }
   };
 
@@ -103,16 +106,6 @@ const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
       )}
       
       <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="text-hero"
-          onClick={handleNewChat}
-          aria-label="New Chat"
-        >
-          <Plus />
-          <span className="sr-only">New Chat</span>
-        </Button>
         <Link to="/profile">
           <Button 
             variant="ghost" 
@@ -124,6 +117,16 @@ const Header: React.FC<HeaderProps> = ({ toggleSettings }) => {
             <span className="sr-only">Profile</span>
           </Button>
         </Link>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="text-hero"
+          onClick={handleNewChat}
+          aria-label="New Chat"
+        >
+          <Plus />
+          <span className="sr-only">New Chat</span>
+        </Button>
       </div>
     </header>
   );
