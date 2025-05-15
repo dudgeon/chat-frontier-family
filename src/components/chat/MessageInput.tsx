@@ -1,15 +1,16 @@
 
 import React, { useState } from 'react';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useChat } from '@/contexts/ChatContext';
 
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
+  onVoiceButtonClick?: () => void;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
+const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onVoiceButtonClick }) => {
   const [message, setMessage] = useState('');
   const { isWaitingForResponse } = useChat();
 
@@ -36,6 +37,17 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
         className="flex-1"
         disabled={isWaitingForResponse}
       />
+      
+      <Button 
+        className="bg-hero/80 hover:bg-hero text-white" 
+        size="icon" 
+        onClick={onVoiceButtonClick}
+        disabled={isWaitingForResponse}
+        title="Start voice conversation"
+      >
+        <Mic size={18} />
+      </Button>
+      
       <Button 
         className="bg-hero hover:bg-hero/90 text-white" 
         size="icon" 

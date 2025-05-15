@@ -5,9 +5,11 @@ import Header from '@/components/chat/Header';
 import MessageList from '@/components/chat/MessageList';
 import MessageInput from '@/components/chat/MessageInput';
 import SettingsPanel from '@/components/settings/SettingsPanel';
+import VoiceMode from '@/components/chat/VoiceMode';
 
 const ChatInterface: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isVoiceModeActive, setIsVoiceModeActive] = useState(false);
   const { messages, addMessage, heroColor, setHeroColor } = useChat();
 
   const toggleSettings = () => {
@@ -18,8 +20,17 @@ const ChatInterface: React.FC = () => {
     addMessage(message, true);
   };
 
+  const toggleVoiceMode = () => {
+    setIsVoiceModeActive(!isVoiceModeActive);
+  };
+
   return (
     <div className="relative h-screen flex flex-col md:flex-row bg-white">
+      {/* Voice mode overlay */}
+      {isVoiceModeActive && (
+        <VoiceMode onClose={() => setIsVoiceModeActive(false)} />
+      )}
+      
       {/* Settings panel - now part of the flex layout on desktop */}
       <SettingsPanel 
         isOpen={isSettingsOpen} 
@@ -37,7 +48,10 @@ const ChatInterface: React.FC = () => {
         </main>
         
         <div className="absolute bottom-0 left-0 right-0">
-          <MessageInput onSendMessage={handleSendMessage} />
+          <MessageInput 
+            onSendMessage={handleSendMessage} 
+            onVoiceButtonClick={toggleVoiceMode}
+          />
         </div>
       </div>
     </div>
