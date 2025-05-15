@@ -8,6 +8,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format, differenceInYears } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
@@ -15,6 +21,9 @@ const Auth: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [isOver18, setIsOver18] = useState(true);
+  const [dateSelected, setDateSelected] = useState(false);
   
   // Redirect if already logged in
   useEffect(() => {
@@ -22,6 +31,17 @@ const Auth: React.FC = () => {
       navigate('/');
     }
   }, [session, navigate]);
+
+  // Check if user is over 18 when date changes
+  useEffect(() => {
+    if (date) {
+      const age = differenceInYears(new Date(), date);
+      setIsOver18(age >= 18);
+      setDateSelected(true);
+    } else {
+      setDateSelected(false);
+    }
+  }, [date]);
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,12 +70,36 @@ const Auth: React.FC = () => {
 
   const handleEmailSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!date) {
+      toast({
+        title: "Missing information",
+        description: "Please enter your date of birth.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!isOver18) {
+      toast({
+        title: "Age restriction",
+        description: "You must be over 18 years old to create an account.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            date_of_birth: date.toISOString().split('T')[0],
+          }
+        }
       });
       
       if (error) throw error;
@@ -159,12 +203,51 @@ const Auth: React.FC = () => {
                       required
                     />
                   </div>
+                  <div className="space-y-2">
+                    <label htmlFor="date-of-birth" className="block text-sm font-medium">Date of Birth</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="date-of-birth"
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {date ? format(date, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={date}
+                          onSelect={setDate}
+                          disabled={(date) => {
+                            // Disable future dates and dates more than 100 years ago
+                            return date > new Date() || date < new Date(new Date().setFullYear(new Date().getFullYear() - 100));
+                          }}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  {dateSelected && !isOver18 && (
+                    <Alert variant="destructive" className="mt-4">
+                      <AlertDescription>
+                        You must be over 18 years old to create an account. If you're under 18, please ask a parent or guardian to sign up first — they can create a child account for you.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </CardContent>
                 <CardFooter>
                   <Button 
                     type="submit" 
                     className="w-full bg-hero text-white" 
-                    disabled={loading}
+                    disabled={loading || !dateSelected || !isOver18}
                   >
                     {loading ? 'Creating Account...' : 'Sign Up'}
                   </Button>
