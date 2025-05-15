@@ -13,6 +13,8 @@ interface VoiceModeProps {
 const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
   const { session, startSession, endSession } = useVoiceSession(onClose);
   const [permissionStatus, setPermissionStatus] = useState<string>('checking');
+  const [connectionAttempts, setConnectionAttempts] = useState(0);
+  const maxConnectionAttempts = 3;
 
   // Start session automatically when component mounts
   useEffect(() => {
@@ -23,6 +25,7 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
         if (hasPermission) {
           setPermissionStatus('granted');
           await startSession();
+          setConnectionAttempts(prev => prev + 1);
         } else {
           setPermissionStatus('denied');
           toast({
@@ -70,10 +73,25 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
       });
     }
   }, [session.error]);
+  
+  // Auto-retry if we've not reached max attempts
+  useEffect(() => {
+    if (permissionStatus === 'granted' && !session.isConnected && !session.isConnecting && connectionAttempts < maxConnectionAttempts && !session.error) {
+      const retryTimer = setTimeout(() => {
+        console.log(`Auto-retrying connection (attempt ${connectionAttempts + 1}/${maxConnectionAttempts})`);
+        startSession();
+        setConnectionAttempts(prev => prev + 1);
+      }, 3000);
+      
+      return () => clearTimeout(retryTimer);
+    }
+  }, [session.isConnected, session.isConnecting, session.error, connectionAttempts, permissionStatus]);
 
   // Try to reconnect if initial connection fails
   const handleRetry = async () => {
     try {
+      setConnectionAttempts(prev => prev + 1);
+      
       if (permissionStatus === 'granted') {
         await startSession();
         toast({
@@ -106,9 +124,11 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
   // Helper function to check microphone permission
   const checkMicrophonePermission = async (): Promise<boolean> => {
     try {
+      console.log('Checking microphone permissions');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       // Stop the tracks immediately, we just needed to check permission
       stream.getTracks().forEach(track => track.stop());
+      console.log('Microphone permission granted');
       return true;
     } catch (error) {
       console.error('Microphone permission error:', error);
@@ -125,6 +145,13 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
     if (session.isListening) return "Listening to you...";
     if (session.isConnected) return "Ready - tap to speak";
     return "Starting voice mode...";
+  };
+
+  const getConnectionMessage = () => {
+    if (connectionAttempts >= maxConnectionAttempts && !session.isConnected) {
+      return "Unable to establish connection after multiple attempts";
+    }
+    return `Connection attempt ${connectionAttempts}/${maxConnectionAttempts}`;
   };
 
   return (
@@ -153,6 +180,10 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
           </p>
         </div>
         
+        {session.isConnecting && (
+          <p className="text-white/60 text-sm">{getConnectionMessage()}</p>
+        )}
+        
         {session.transcript && (
           <div className="max-w-md w-full bg-white/10 rounded-lg p-4 mt-4 max-h-60 overflow-y-auto">
             <p className="text-white">{session.transcript}</p>
@@ -164,14 +195,14 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
             <p>Say something to start the conversation</p>
           )}
           
-          {session.isConnecting && session.isConnecting && (
+          {session.isConnecting && (
             <div className="flex items-center justify-center gap-2 mt-4">
               <InfoIcon className="h-4 w-4 text-blue-300" />
               <p>If connection takes too long, try closing and reopening voice mode</p>
             </div>
           )}
           
-          {session.error && (
+          {(session.error || (connectionAttempts >= maxConnectionAttempts && !session.isConnected)) && (
             <Button 
               variant="outline" 
               onClick={handleRetry}

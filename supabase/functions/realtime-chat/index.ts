@@ -31,6 +31,32 @@ serve(async (req) => {
       const openAiUrl = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01";
       const openAISocket = new WebSocket(openAiUrl);
       let hasOpenAIConnection = false;
+      let connectionAttempts = 0;
+      const maxConnectionAttempts = 3;
+      
+      // Set up timeout for OpenAI connection
+      const openAIConnectTimeout = setTimeout(() => {
+        if (!hasOpenAIConnection && clientSocket.readyState === WebSocket.OPEN) {
+          console.log("Connection to OpenAI timed out");
+          clientSocket.send(JSON.stringify({
+            type: "error",
+            message: "Connection to OpenAI timed out"
+          }));
+          
+          // Try to reconnect if within attempts limit
+          if (connectionAttempts < maxConnectionAttempts) {
+            connectionAttempts++;
+            console.log(`Retrying OpenAI connection (attempt ${connectionAttempts}/${maxConnectionAttempts})`);
+            
+            // Close existing socket if needed
+            if (openAISocket.readyState !== WebSocket.CLOSED) {
+              openAISocket.close();
+            }
+            
+            // We don't need to recreate the socket here as the client will reconnect
+          }
+        }
+      }, 15000);
       
       // Handle messages from the client
       clientSocket.onmessage = (event) => {
@@ -83,6 +109,7 @@ serve(async (req) => {
       // Handle OpenAI socket events
       openAISocket.onopen = () => {
         console.log("OpenAI socket opened successfully");
+        clearTimeout(openAIConnectTimeout);
         hasOpenAIConnection = true;
         clientSocket.send(JSON.stringify({
           type: "connection_status",
@@ -102,6 +129,8 @@ serve(async (req) => {
       
       openAISocket.onclose = (e) => {
         console.log("OpenAI socket closed:", e.code, e.reason);
+        clearTimeout(openAIConnectTimeout);
+        
         if (clientSocket.readyState === WebSocket.OPEN) {
           clientSocket.send(JSON.stringify({
             type: "connection_status",
@@ -118,8 +147,14 @@ serve(async (req) => {
       };
       
       // Handle client socket events
+      clientSocket.onopen = () => {
+        console.log("Client socket opened");
+      };
+      
       clientSocket.onclose = (e) => {
         console.log("Client socket closed:", e.code, e.reason);
+        clearTimeout(openAIConnectTimeout);
+        
         if (openAISocket.readyState === WebSocket.OPEN || openAISocket.readyState === WebSocket.CONNECTING) {
           openAISocket.close(e.code, e.reason || "Client disconnected");
         }
@@ -129,22 +164,13 @@ serve(async (req) => {
         console.error("Client socket error:", e);
       };
       
-      // Connection timeout if OpenAI doesn't connect in 10 seconds
-      setTimeout(() => {
-        if (!hasOpenAIConnection && clientSocket.readyState === WebSocket.OPEN) {
-          clientSocket.send(JSON.stringify({
-            type: "error",
-            message: "Timed out waiting for OpenAI connection"
-          }));
-        }
-      }, 10000);
-      
       return response;
     } catch (error) {
       console.error("WebSocket setup error:", error);
       return new Response(JSON.stringify({ 
         error: error.message,
-        stack: error.stack 
+        stack: error.stack,
+        time: new Date().toISOString()
       }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" }

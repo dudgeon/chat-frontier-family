@@ -5,25 +5,41 @@ import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 const SignInForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigate = useNavigate();
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) throw error;
       
-      // The redirect will happen automatically via the session listener
+      if (data?.session) {
+        // Save session to localStorage for better persistence
+        localStorage.setItem('supabase-auth-session', JSON.stringify({
+          session: data.session,
+          timestamp: new Date().toISOString()
+        }));
+        
+        // Redirect after login
+        navigate('/');
+        
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+        });
+      }
     } catch (error) {
       console.error('Sign in error:', error);
       toast({

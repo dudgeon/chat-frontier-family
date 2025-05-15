@@ -3,6 +3,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { toast } from '@/components/ui/use-toast';
 
 interface AuthContextType {
   session: Session | null;
@@ -24,15 +25,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
   const navigate = useNavigate();
 
+  // Handle auth state changes
   useEffect(() => {
+    if (initialized) {
+      return; // Skip if already initialized to prevent infinite loops
+    }
+    
     console.log('Setting up auth state listener');
+    
+    // Set initializing flag to prevent duplicate initialization
+    setInitialized(true);
     
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         console.log('Auth state changed:', event);
+        
+        if (event === 'SIGNED_IN') {
+          // Store session in localStorage for persistence
+          if (currentSession) {
+            localStorage.setItem('supabase-auth-session', JSON.stringify({
+              session: currentSession,
+              timestamp: new Date().toISOString()
+            }));
+          }
+        }
+        
+        if (event === 'SIGNED_OUT') {
+          localStorage.removeItem('supabase-auth-session');
+        }
+        
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         setLoading(false);
@@ -40,12 +65,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      console.log('Existing session check:', currentSession ? 'Found session' : 'No session');
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      setLoading(false);
-    });
+    const initializeSession = async () => {
+      try {
+        // First try to get session from Supabase
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (currentSession) {
+          console.log('Session found through Supabase auth.getSession()');
+          setSession(currentSession);
+          setUser(currentSession.user);
+          setLoading(false);
+          return;
+        }
+        
+        // If no session from Supabase, check localStorage as fallback
+        const storedSession = localStorage.getItem('supabase-auth-session');
+        
+        if (storedSession) {
+          try {
+            const { session: localSession, timestamp } = JSON.parse(storedSession);
+            const sessionAge = new Date().getTime() - new Date(timestamp).getTime();
+            
+            // Only use localStorage session if it's less than 1 hour old
+            if (sessionAge < 3600000 && localSession) {
+              console.log('Using session from localStorage');
+              
+              // Try to refresh the session
+              const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession({
+                refresh_token: localSession.refresh_token,
+              });
+              
+              if (refreshData.session) {
+                console.log('Session refreshed successfully');
+                setSession(refreshData.session);
+                setUser(refreshData.session.user);
+              } else {
+                console.log('Failed to refresh session:', refreshError);
+                // Still use the stored session as fallback
+                setSession(localSession);
+                setUser(localSession.user);
+                
+                // Show toast about potential session issues
+                toast({
+                  title: "Session Warning",
+                  description: "Your session couldn't be refreshed. You may need to login again soon.",
+                  variant: "default",
+                });
+              }
+            } else {
+              console.log('Stored session too old or invalid');
+              localStorage.removeItem('supabase-auth-session');
+            }
+          } catch (e) {
+            console.error('Error parsing stored session:', e);
+            localStorage.removeItem('supabase-auth-session');
+          }
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Error initializing session:', error);
+        setLoading(false);
+      }
+    };
+
+    initializeSession();
 
     return () => {
       console.log('Cleaning up auth listener');
@@ -55,6 +139,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    // Remove session from localStorage
+    localStorage.removeItem('supabase-auth-session');
     navigate('/login');
   };
 

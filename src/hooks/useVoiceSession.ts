@@ -97,7 +97,18 @@ export const useVoiceSession = (onClose: () => void) => {
         error: null 
       }));
 
-      // Create WebSocket connection
+      // Create WebSocket connection with timeout
+      const connectTimeout = setTimeout(() => {
+        console.log('WebSocket connection timed out');
+        if (sessionActiveRef.current && !session.isConnected) {
+          setSession(prev => ({
+            ...prev,
+            isConnecting: false,
+            error: 'Connection timed out - please try again'
+          }));
+        }
+      }, 15000);
+
       wsRef.current = await createVoiceWebSocket(
         (updater) => {
           // Only update state if session is still active
@@ -107,6 +118,8 @@ export const useVoiceSession = (onClose: () => void) => {
         }, 
         onClose
       );
+      
+      clearTimeout(connectTimeout);
       
       if (!wsRef.current) {
         throw new Error('Failed to establish WebSocket connection');
@@ -135,8 +148,12 @@ export const useVoiceSession = (onClose: () => void) => {
             console.log('Connection status update:', data.status);
             if (data.status === 'connected_to_openai') {
               console.log('Successfully connected to OpenAI through relay');
+              
+              // Reset reconnect attempts on successful connection
+              reconnectAttemptsRef.current = 0;
             } else if (data.status === 'openai_disconnected') {
               console.log('OpenAI connection closed:', data.code, data.reason);
+              
               if (data.code !== 1000 && data.code !== 1001) {
                 setSession(prev => ({ 
                   ...prev, 
@@ -212,9 +229,6 @@ export const useVoiceSession = (onClose: () => void) => {
         console.error('Error initializing audio recorder:', error);
         throw new Error('Failed to access microphone. Please check your permissions.');
       }
-      
-      // Reset reconnect attempts after successful connection
-      reconnectAttemptsRef.current = 0;
       
     } catch (error) {
       console.error('Error starting voice session:', error);
