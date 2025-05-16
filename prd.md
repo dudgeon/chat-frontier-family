@@ -1,77 +1,77 @@
-
 # Product Requirements Document: AI Chat Application
 
 ## Overview
-This document outlines the specifications and functionality of our AI chat application, designed to provide users with a conversational interface powered by OpenAI's GPT-4o model.
+This document describes the current state of the AI chat application. The app provides a conversational interface powered by OpenAI's GPT‑4o model and uses Supabase for authentication, data storage and serverless functions. Users can chat via text or, when enabled, voice.
 
 ## Product Description
-The application is a web-based chat interface that allows users to have interactive conversations with an AI assistant. The app features a clean, modern design with customizable themes, API key management, and chat organization capabilities.
+The application is a web‑based chat platform with the following primary capabilities:
+
+- Secure sign‑up and sign‑in using Supabase Auth
+- Persistent chat sessions stored in a Supabase Postgres database
+- Optional voice conversation mode that connects to OpenAI's Realtime API
+- Customizable theme color and profile management
 
 ## Core Features
 
 ### 1. Chat Interface
-- **Messaging System**: Users can send text messages to the AI and receive responses in a conversational format
-- **Message Display**: Messages are displayed in a scrollable feed with distinct styling for user and AI messages
-- **Thinking Indicator**: A visual indication when the AI is processing a response
-- **Pre-wrap Formatting**: Messages maintain line breaks and formatting for improved readability
+- **Messaging System**: Users send text messages and receive AI responses in real time
+- **Message Display**: Distinct styling for user and assistant messages with thinking indicator
+- **Voice Mode**: When the voiceMode feature flag is enabled, users can speak to the assistant through a WebSocket connection
+- **Message Deletion**: Adult accounts can delete messages from the conversation history
+- **Chat Title Editing**: Chats are automatically named after a few exchanges and can be renamed
 
-### 2. API Integration
-- **OpenAI Connection**: Integration with OpenAI's GPT-4o model via Supabase Edge Functions
-- **API Key Management**: Users can securely store their OpenAI API key in the browser's local storage
-- **Error Handling**: Graceful error handling for API failures with user-friendly error messages
+### 2. Authentication & Profile
+- **Email/Password Auth**: Sign up requires a date of birth to verify users are over 18
+- **User Roles**: Accounts are labelled as adult or child. Only adults may delete messages or manage child accounts
+- **Profile Management**: Users can update display name, email and view subscription status
 
-### 3. UI/UX Features
-- **Customizable Theme**: Users can select from predefined color themes for the interface
-- **Responsive Design**: The application adapts to different screen sizes and devices
-- **Settings Panel**: Side panel for accessing application settings and chat history
-- **Auto-generated Chat Names**: Chat sessions are automatically named based on conversation content after the third AI response
+### 3. Chat Sessions & History
+- **Persistent Storage**: Sessions and messages are saved in Supabase so history is available across devices
+- **Chat History Panel**: Accessible from the settings sidebar to switch between conversations or start a new one
+- **New Chat Creation**: Users can create new sessions at any time from the sidebar or profile page
 
-### 4. Data Management
-- **Local Storage**: User preferences and API keys are stored in the browser's local storage
-- **Chat Session Management**: Framework for managing multiple chat sessions (implementation in progress)
+### 4. API Integration
+- **OpenAI via Edge Functions**: Supabase Edge Functions proxy requests to GPT‑4o for both text and voice
+- **API Key Storage**: The user's OpenAI API key is securely stored in local storage for text chat
+- **Error Handling**: Friendly notifications appear when API or connection issues occur
+
+### 5. UI/UX Features
+- **Customizable Theme**: A color picker lets users select a hero color which styles buttons and highlights
+- **Responsive Layout**: Works on mobile and desktop with a collapsible side panel
+- **Settings & Profile Links**: The sidebar provides quick access to profile settings and chat history
 
 ## Technical Architecture
 
 ### Frontend
-- **Framework**: React with TypeScript
-- **UI Components**: Custom components with Tailwind CSS styling
-- **State Management**: React Context API for application state
-- **Routing**: React Router for navigation
+- **Framework**: React with TypeScript and Shadcn UI components styled with Tailwind CSS
+- **State Management**: React Context and custom hooks for chat sessions, authentication and voice
+- **Routing**: React Router controls navigation between pages
+- **Feature Flags**: Optional functionality like voice mode is toggled via a simple flag system
 
 ### Backend
-- **Serverless Functions**: Supabase Edge Functions for secure API integrations
-- **API Handling**: Abstracted API calls with proper error handling
-
-### Modular Code Structure
-- **Contexts**: ChatContext for managing chat state
-- **Hooks**: 
-  - useApiKey: Handles API key storage and retrieval
-  - useMessageHandler: Manages message state and API interactions
-- **Utils**:
-  - chatNameGenerator: Generates chat names based on conversation content
-  - colorUtils: Manages theme color application
+- **Supabase Database**: Stores user profiles, chat sessions and messages
+- **Supabase Edge Functions**: Implement text chat completions and realtime voice WebSocket proxy
 
 ## User Flow
-1. User opens the application and sees the welcome message from the AI
-2. User configures their OpenAI API key in the settings panel
-3. User sends messages and receives AI responses in real-time
-4. After several exchanges, the chat is automatically named
-5. User can customize the interface color through the settings panel
-6. User can access previous chat sessions through the history panel (feature in progress)
+1. User visits the login page and creates an account (age 18+ required) or signs in
+2. After authentication a new chat session is created with a welcome message
+3. User sends messages or activates voice mode to speak with the assistant
+4. Chat titles are generated automatically and can be edited
+5. Settings sidebar provides chat history, theme selection and a link to the profile page
+6. Adults may delete messages from the chat
+7. Users can sign out from the profile page
 
 ## Future Enhancements
-- Multiple chat session management
-- User authentication and cloud storage of chat history
-- Additional AI model options
-- Voice input/output capabilities
-- Attachment and image support
-- Mobile application
+- Child account management and parental controls
+- Additional model options and paid subscription features
+- Image or file attachments in chat
+- Mobile application with push notifications
+- Stabilize voice mode and enable by default
 
 ## Technical Limitations
-- Currently relies on client-side API key storage
-- Limited to text-based interactions
-- No persistent storage beyond browser local storage
-- Single chat session at a time
+- The OpenAI API key is stored client‑side
+- Voice mode is experimental and disabled unless the feature flag is turned on
+- Some functionality, such as child account management, is not yet implemented
 
 ## Conclusion
-The AI Chat Application provides a functional, user-friendly interface for interacting with AI models. Its modular design allows for easy expansion and enhancement of features in future iterations.
+The application now includes authentication, persistent chat sessions and an experimental voice mode while retaining a simple text chat interface. Supabase integration provides a solid foundation for future enhancements and cross‑device access.
