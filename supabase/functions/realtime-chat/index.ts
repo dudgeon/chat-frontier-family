@@ -25,12 +25,38 @@ serve(async (req) => {
         // Connect to OpenAI's Realtime API
         const openAIKey = Deno.env.get('OPENAI_API_KEY');
         if (!openAIKey) {
-          throw new Error("OPENAI_API_KEY is not set in environment variables");
+          console.error("OPENAI_API_KEY is not set in environment variables");
+          
+          if (clientSocket.readyState === WebSocket.OPEN) {
+            clientSocket.send(JSON.stringify({
+              type: "error",
+              message: "OPENAI_API_KEY is missing in server configuration"
+            }));
+            
+            clientSocket.close(1011, "Server configuration error");
+          }
+          
+          return response;
         }
 
         console.log("Creating connection to OpenAI Realtime API");
-        const openAiUrl = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01";
-        const openAISocket = new WebSocket(openAiUrl);
+        const openAiUrl = "wss://api.openai.com/v1/realtime";
+        
+        // Create the URL and add query param for the model
+        const openAiUrlWithParams = new URL(openAiUrl);
+        openAiUrlWithParams.searchParams.append("model", "gpt-4o-realtime-preview-2024-10-01");
+        
+        // Log the URL we're connecting to
+        console.log(`Connecting to: ${openAiUrlWithParams.toString()}`);
+        
+        // Create headers object with Authorization for OpenAI
+        const headers = {
+          "Authorization": `Bearer ${openAIKey}`
+        };
+        
+        // Open connection with headers
+        const openAISocket = new WebSocket(openAiUrlWithParams.toString(), [], { headers });
+        
         let hasOpenAIConnection = false;
         let connectionAttempts = 0;
         const maxConnectionAttempts = 3;
@@ -51,9 +77,11 @@ serve(async (req) => {
               if (openAISocket.readyState !== WebSocket.CLOSED) {
                 openAISocket.close();
               }
+            } else {
+              clientSocket.close(1013, "Failed to connect to OpenAI after multiple attempts");
             }
           }
-        }, 30000); // Increased to 30 seconds timeout for better reliability
+        }, 30000); // 30 seconds timeout
         
         // Handle messages from the client
         clientSocket.onmessage = (event) => {
@@ -94,6 +122,11 @@ serve(async (req) => {
             try {
               const data = JSON.parse(event.data);
               console.log("Relayed message from OpenAI:", data.type || 'unknown type');
+              
+              // Detect error messages from OpenAI and log them
+              if (data.type === "error") {
+                console.error("Server sent error:", data);
+              }
             } catch {
               // Not JSON or couldn't parse, just relay it without logging details
               console.log("Relayed non-JSON data from OpenAI");

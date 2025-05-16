@@ -10,6 +10,8 @@ export const sendSessionUpdate = (ws: WebSocket | null) => {
     return;
   }
 
+  console.log('Sending session configuration update to OpenAI');
+  
   // Prepare session update configuration
   const sessionUpdateEvent = {
     type: "session.update",
