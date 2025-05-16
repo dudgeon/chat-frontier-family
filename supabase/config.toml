@@ -1,11 +1,7 @@
 
+# A string used as a secret key for this project
 project_id = "xrrauvcciuiaztzajmeq"
 
-[functions.chat]
-verify_jwt = false
-
+[functions]
 [functions.realtime-chat]
-verify_jwt = false
-
-[functions.realtime-token]
 verify_jwt = false

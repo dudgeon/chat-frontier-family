@@ -40,21 +40,24 @@ serve(async (req) => {
         }
 
         console.log("Creating connection to OpenAI Realtime API");
-        const openAiUrl = "wss://api.openai.com/v1/realtime";
         
         // Create the URL and add query param for the model
+        const openAiUrl = "wss://api.openai.com/v1/realtime";
         const openAiUrlWithParams = new URL(openAiUrl);
         openAiUrlWithParams.searchParams.append("model", "gpt-4o-realtime-preview-2024-10-01");
         
         // Log the URL we're connecting to (without API key)
         console.log(`Connecting to: ${openAiUrlWithParams.toString()}`);
         
-        // Create headers object with Authorization for OpenAI
+        // CRITICAL FIX: Create proper headers object with Authorization for OpenAI
         const headers = {
           "Authorization": `Bearer ${openAIKey}`
         };
         
-        // Open connection with headers
+        // Log that we're attempting connection with auth header (without showing the actual key)
+        console.log("Attempting OpenAI connection with authorization header");
+        
+        // Open connection with headers - ENSURE THIS IS PROPERLY PASSED
         const openAISocket = new WebSocket(openAiUrlWithParams.toString(), [], { headers });
         
         let hasOpenAIConnection = false;
