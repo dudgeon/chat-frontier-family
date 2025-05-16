@@ -20,7 +20,7 @@ serve(async (req) => {
       throw new Error('OpenAI API key is not configured');
     }
 
-    const { messages, model = 'gpt-4o', titleGeneration = false } = await req.json();
+    const { messages, model = Deno.env.get('OPENAI_MODEL') || 'gpt-4o', titleGeneration = false } = await req.json();
     
     if (!messages || !Array.isArray(messages)) {
       throw new Error('Invalid or missing messages array');
