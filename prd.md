@@ -70,7 +70,7 @@ The application is a web-based chat interface that allows users to have interact
 ## Technical Limitations
 - Currently relies on client-side API key storage
 - Limited to text-based interactions
-- No persistent storage beyond browser local storage
+- Chat history is persisted in Supabase
 - Single chat session at a time
 
 ## Conclusion
