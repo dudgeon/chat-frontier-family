@@ -16,6 +16,7 @@ export const useVoiceConnection = (
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttemptsRef = useRef<number>(0);
   const maxReconnectAttempts = 2;
+  const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   /**
    * Initializes WebSocket connection
@@ -23,8 +24,19 @@ export const useVoiceConnection = (
    */
   const initializeConnection = async (): Promise<WebSocket | null> => {
     try {
+      // Clean up any existing connection first
+      if (wsRef.current) {
+        cleanupConnection();
+      }
+      
+      // Clear any existing timeout
+      if (connectionTimeoutRef.current) {
+        clearTimeout(connectionTimeoutRef.current);
+        connectionTimeoutRef.current = null;
+      }
+
       // Create WebSocket connection with timeout
-      const connectTimeout = setTimeout(() => {
+      connectionTimeoutRef.current = setTimeout(() => {
         console.log('WebSocket connection timed out');
         if (wsRef.current && wsRef.current.readyState !== WebSocket.OPEN) {
           setSession(prev => ({
@@ -32,8 +44,13 @@ export const useVoiceConnection = (
             isConnecting: false,
             error: 'Connection timed out - please try again'
           }));
+          
+          // Cleanup if still connecting
+          if (wsRef.current && wsRef.current.readyState === WebSocket.CONNECTING) {
+            wsRef.current.close();
+          }
         }
-      }, 15000);
+      }, 20000); // 20 seconds timeout
 
       wsRef.current = await createVoiceWebSocket(
         (updater) => {
@@ -42,7 +59,10 @@ export const useVoiceConnection = (
         onClose
       );
       
-      clearTimeout(connectTimeout);
+      if (connectionTimeoutRef.current) {
+        clearTimeout(connectionTimeoutRef.current);
+        connectionTimeoutRef.current = null;
+      }
       
       if (!wsRef.current) {
         throw new Error('Failed to establish WebSocket connection');
@@ -98,6 +118,13 @@ export const useVoiceConnection = (
       return wsRef.current;
     } catch (error) {
       console.error('Error initializing connection:', error);
+      
+      // Clean up timeout if it exists
+      if (connectionTimeoutRef.current) {
+        clearTimeout(connectionTimeoutRef.current);
+        connectionTimeoutRef.current = null;
+      }
+      
       return null;
     }
   };
@@ -106,12 +133,22 @@ export const useVoiceConnection = (
    * Cleans up WebSocket connection
    */
   const cleanupConnection = () => {
+    // Clean up timeout if it exists
+    if (connectionTimeoutRef.current) {
+      clearTimeout(connectionTimeoutRef.current);
+      connectionTimeoutRef.current = null;
+    }
+    
     // Close WebSocket connection if open
     if (wsRef.current) {
       console.log('Closing WebSocket connection');
-      if (wsRef.current.readyState === WebSocket.OPEN || 
-          wsRef.current.readyState === WebSocket.CONNECTING) {
-        wsRef.current.close();
+      try {
+        if (wsRef.current.readyState === WebSocket.OPEN || 
+            wsRef.current.readyState === WebSocket.CONNECTING) {
+          wsRef.current.close();
+        }
+      } catch (error) {
+        console.error('Error closing WebSocket:', error);
       }
       wsRef.current = null;
     }

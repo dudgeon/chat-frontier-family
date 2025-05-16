@@ -30,19 +30,23 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
 
   // Start session automatically when component mounts
   useEffect(() => {
-    initSession();
+    // Add small delay before initializing to ensure component is fully mounted
+    const initTimer = setTimeout(() => {
+      initSession();
+    }, 300);
     
-    // Display help toast after a delay
+    // Display help toast after a delay if still connecting
     const helpTimer = setTimeout(() => {
-      if (!session.isConnected && !session.error) {
+      if (!session.isConnected && !session.error && session.isConnecting) {
         toast({
-          title: "Voice Connection",
-          description: "Establishing secure connection to voice service...",
+          title: "Establishing Connection",
+          description: "Secure connection to voice service in progress...",
         });
       }
     }, 5000);
     
     return () => {
+      clearTimeout(initTimer);
       clearTimeout(helpTimer);
     };
   }, []);
@@ -51,12 +55,20 @@ const VoiceMode: React.FC<VoiceModeProps> = ({ onClose }) => {
   useEffect(() => {
     if (session.error) {
       toast({
-        title: "Voice Mode Error",
+        title: "Voice Mode Issue",
         description: session.error,
         variant: "destructive",
       });
     }
   }, [session.error]);
+
+  // Handle cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Ensure session is properly ended when component unmounts
+      endSession();
+    };
+  }, [endSession]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-md flex flex-col justify-center items-center z-50">

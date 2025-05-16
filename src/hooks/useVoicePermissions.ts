@@ -16,9 +16,30 @@ export const useVoicePermissions = (
   const checkMicrophonePermission = async (): Promise<boolean> => {
     try {
       console.log('Checking microphone permissions');
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Request audio permissions with specific constraints
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      });
+      
+      // Verify we have at least one audio track
+      if (stream.getAudioTracks().length === 0) {
+        console.error('No audio tracks available');
+        return false;
+      }
+      
+      // Check track settings
+      const track = stream.getAudioTracks()[0];
+      console.log('Audio track enabled:', track.enabled);
+      console.log('Audio track settings:', track.getSettings());
+      
       // Stop the tracks immediately, we just needed to check permission
       stream.getTracks().forEach(track => track.stop());
+      
       console.log('Microphone permission granted');
       return true;
     } catch (error) {
@@ -34,13 +55,16 @@ export const useVoicePermissions = (
       const hasPermission = await checkMicrophonePermission();
       if (hasPermission) {
         setPermissionStatus('granted');
-        await startSession();
         setConnectionAttempts(prev => prev + 1);
+        
+        // Add slight delay before starting session to ensure permissions are properly registered
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await startSession();
       } else {
         setPermissionStatus('denied');
         toast({
-          title: "Permission Required",
-          description: "Please allow microphone access to use voice mode",
+          title: "Microphone Access Required",
+          description: "Please allow microphone access in your browser settings to use voice mode",
           variant: "destructive",
         });
       }
