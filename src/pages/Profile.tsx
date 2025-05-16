@@ -279,7 +279,7 @@ const Profile: React.FC = () => {
                     <TableCell>Not Available</TableCell>
                     <TableCell>Coming Soon</TableCell>
                   </TableRow>
-                  {isFeatureEnabled('documentUpload') && (
+                  {isEnabled('documentUpload') && (
                     <TableRow>
                       <TableCell className="font-medium">Document Upload</TableCell>
                       <TableCell>Limited (5/month)</TableCell>
