@@ -1,6 +1,7 @@
 
 import { toast } from '@/components/ui/use-toast';
 import { VoiceSessionState } from '@/types/voiceSession';
+import { SUPABASE_PROJECT_REF } from '@/config/env';
 
 /**
  * Creates a WebSocket connection to the OpenAI Realtime API via Supabase Edge Function
@@ -16,8 +17,8 @@ export const createVoiceWebSocket = async (
     // Update state to show connecting status
     setSession(prev => ({ ...prev, isConnecting: true }));
 
-    // Direct reference to the project ID
-    const projectRef = "xrrauvcciuiaztzajmeq"; 
+    // Use configurable project reference with a sensible fallback
+    const projectRef = SUPABASE_PROJECT_REF;
     
     if (!projectRef) {
       throw new Error('Could not determine Supabase project reference');

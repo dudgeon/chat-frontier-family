@@ -40,10 +40,13 @@ serve(async (req) => {
         }
 
         console.log("Creating connection to OpenAI Realtime API");
-        
+
+        // Determine which model to use
+        const openAIModel = Deno.env.get('OPENAI_MODEL') || 'gpt-4o';
+
         // Create the URL for OpenAI's Realtime API
         const openAiUrl = new URL("wss://api.openai.com/v1/realtime");
-        openAiUrl.searchParams.append("model", "gpt-4o-realtime-preview-2024-10-01");
+        openAiUrl.searchParams.append("model", openAIModel);
         
         console.log(`Connecting to: ${openAiUrl.toString()}`);
         

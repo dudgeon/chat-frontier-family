@@ -19,7 +19,9 @@ serve(async (req) => {
     }
     
     console.log('Requesting OpenAI session token...');
-    
+
+    const openAIModel = Deno.env.get('OPENAI_MODEL') || 'gpt-4o';
+
     // Request a session for WebSockets
     const response = await fetch('https://api.openai.com/v1/realtime/sessions', {
       method: 'POST',
@@ -28,7 +30,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-realtime-preview-2024-10-01',
+        model: openAIModel,
         voice: 'alloy',
         instructions: 'You are a helpful assistant who speaks in conversational language.'
       }),

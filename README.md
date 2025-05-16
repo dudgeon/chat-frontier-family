@@ -60,6 +60,19 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Configuration
+
+The application expects the following environment variables when running in the browser:
+
+```
+VITE_SUPABASE_PROJECT_REF=<your-supabase-project-id>
+VITE_OPENAI_MODEL=gpt-4o
+```
+
+`VITE_SUPABASE_PROJECT_REF` controls which Supabase project the realtime voice
+WebSocket connects to. `VITE_OPENAI_MODEL` sets the model used by the edge
+functions when contacting OpenAI.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/a746dae1-d079-4ba9-ad29-1a31653890b4) and click on Share -> Publish.

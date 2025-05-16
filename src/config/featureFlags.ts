@@ -12,7 +12,7 @@ export const featureFlags = {
   settings: true,
   
   // Voice features
-  voiceMode: false, // Disabled until WebSocket connection issues are resolved
+  voiceMode: true,
   
   // User management
   userProfiles: true,
