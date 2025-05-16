@@ -4,6 +4,7 @@ import { Message } from '@/types/chat';
 import { ChatSession } from '@/types/chatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatDatabase } from './useChatDatabase';
+import { toast } from '@/components/ui/use-toast';
 
 export const useMessageManagement = (
   chatSessions: ChatSession[],
@@ -59,6 +60,15 @@ export const useMessageManagement = (
       }
     } catch (error) {
       console.error('Error updating session messages:', error);
+      
+      // Show toast for persistent errors but not transient ones
+      if (error instanceof Error && error.message.includes('Failed to fetch')) {
+        toast({
+          title: 'Connection Issue',
+          description: 'Unable to save messages to database. Check your connection.',
+          variant: 'destructive'
+        });
+      }
     }
   }, [activeChatId, user, updateSessionTimestampInDb, saveMessageToDb, setChatSessions]);
   

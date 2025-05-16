@@ -43,20 +43,16 @@ serve(async (req) => {
             message: "Connection to OpenAI timed out"
           }));
           
-          // Try to reconnect if within attempts limit
           if (connectionAttempts < maxConnectionAttempts) {
             connectionAttempts++;
             console.log(`Retrying OpenAI connection (attempt ${connectionAttempts}/${maxConnectionAttempts})`);
             
-            // Close existing socket if needed
             if (openAISocket.readyState !== WebSocket.CLOSED) {
               openAISocket.close();
             }
-            
-            // We don't need to recreate the socket here as the client will reconnect
           }
         }
-      }, 15000);
+      }, 15000); // 15 seconds timeout
       
       // Handle messages from the client
       clientSocket.onmessage = (event) => {
