@@ -30,7 +30,7 @@ serve(async (req) => {
           if (clientSocket.readyState === WebSocket.OPEN) {
             clientSocket.send(JSON.stringify({
               type: "error",
-              message: "OPENAI_API_KEY is missing in server configuration"
+              message: "Server configuration error: API key missing"
             }));
             
             clientSocket.close(1011, "Server configuration error");
@@ -46,7 +46,7 @@ serve(async (req) => {
         const openAiUrlWithParams = new URL(openAiUrl);
         openAiUrlWithParams.searchParams.append("model", "gpt-4o-realtime-preview-2024-10-01");
         
-        // Log the URL we're connecting to
+        // Log the URL we're connecting to (without API key)
         console.log(`Connecting to: ${openAiUrlWithParams.toString()}`);
         
         // Create headers object with Authorization for OpenAI
