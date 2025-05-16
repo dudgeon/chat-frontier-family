@@ -41,24 +41,28 @@ serve(async (req) => {
 
         console.log("Creating connection to OpenAI Realtime API");
         
-        // Create the URL and add query param for the model
-        const openAiUrl = "wss://api.openai.com/v1/realtime";
-        const openAiUrlWithParams = new URL(openAiUrl);
-        openAiUrlWithParams.searchParams.append("model", "gpt-4o-realtime-preview-2024-10-01");
+        // Create the URL for OpenAI's Realtime API
+        const openAiUrl = new URL("wss://api.openai.com/v1/realtime");
+        openAiUrl.searchParams.append("model", "gpt-4o-realtime-preview-2024-10-01");
         
-        // Log the URL we're connecting to (without API key)
-        console.log(`Connecting to: ${openAiUrlWithParams.toString()}`);
+        console.log(`Connecting to: ${openAiUrl.toString()}`);
         
-        // CRITICAL FIX: Create proper headers object with Authorization for OpenAI
-        const headers = {
-          "Authorization": `Bearer ${openAIKey}`
-        };
+        // CRITICAL FIX: Create a properly formatted authorization header
+        // Directly create a headers object using the Headers API (better cross-platform support)
+        const authHeaders = new Headers();
+        authHeaders.set("Authorization", `Bearer ${openAIKey}`);
         
         // Log that we're attempting connection with auth header (without showing the actual key)
-        console.log("Attempting OpenAI connection with authorization header");
+        console.log("Attempting OpenAI connection with authorization header:", authHeaders.has("Authorization"));
         
-        // Open connection with headers - ENSURE THIS IS PROPERLY PASSED
-        const openAISocket = new WebSocket(openAiUrlWithParams.toString(), [], { headers });
+        // Create WebSocket with authentication headers
+        // Note: Using protocol array with empty string as first element is a special pattern
+        // that works better with Deno WebSockets when sending headers
+        const openAISocket = new WebSocket(openAiUrl.toString(), [""], {
+          headers: {
+            "Authorization": `Bearer ${openAIKey}`
+          }
+        });
         
         let hasOpenAIConnection = false;
         let connectionAttempts = 0;
