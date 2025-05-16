@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.node.json",
+  "compilerOptions": {
+    "types": ["vitest"]
+  },
+  "include": [
+    "vitest.config.ts",
+    "src/**/*.test.ts"
+  ]
+}
