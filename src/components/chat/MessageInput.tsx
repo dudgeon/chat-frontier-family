@@ -8,9 +8,14 @@ import { useChat } from '@/contexts/ChatContext';
 interface MessageInputProps {
   onSendMessage: (message: string) => void;
   onVoiceButtonClick?: () => void;
+  showVoiceButton?: boolean;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onVoiceButtonClick }) => {
+const MessageInput: React.FC<MessageInputProps> = ({ 
+  onSendMessage, 
+  onVoiceButtonClick, 
+  showVoiceButton = true 
+}) => {
   const [message, setMessage] = useState('');
   const { isWaitingForResponse } = useChat();
 
@@ -38,15 +43,18 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onVoiceButto
         disabled={isWaitingForResponse}
       />
       
-      <Button 
-        className="bg-hero/80 hover:bg-hero text-white" 
-        size="icon" 
-        onClick={onVoiceButtonClick}
-        disabled={isWaitingForResponse}
-        title="Start voice conversation"
-      >
-        <Mic size={18} />
-      </Button>
+      {/* Only show the voice button if the feature is enabled */}
+      {showVoiceButton && onVoiceButtonClick && (
+        <Button 
+          className="bg-hero/80 hover:bg-hero text-white" 
+          size="icon" 
+          onClick={onVoiceButtonClick}
+          disabled={isWaitingForResponse}
+          title="Start voice conversation"
+        >
+          <Mic size={18} />
+        </Button>
+      )}
       
       <Button 
         className="bg-hero hover:bg-hero/90 text-white" 

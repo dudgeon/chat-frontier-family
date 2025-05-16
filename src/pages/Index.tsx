@@ -9,6 +9,7 @@ import VoiceMode from '@/components/chat/VoiceMode';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 const Index: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -18,9 +19,10 @@ const Index: React.FC = () => {
     addMessage, 
     heroColor, 
     setHeroColor,
-    createNewChat // Ensure we're getting this from context
+    createNewChat
   } = useChat();
   const { session } = useAuth();
+  const { isEnabled } = useFeatureFlags();
 
   // Additional check to ensure the user is authenticated
   if (!session) {
@@ -36,6 +38,15 @@ const Index: React.FC = () => {
   };
 
   const toggleVoiceMode = () => {
+    // If voice mode is disabled, show a toast and don't activate
+    if (!isEnabled('voiceMode')) {
+      toast({
+        title: "Feature Unavailable",
+        description: "Voice mode is currently disabled. We're working on improving it.",
+      });
+      return;
+    }
+    
     setIsVoiceModeActive(!isVoiceModeActive);
   };
 
@@ -58,8 +69,8 @@ const Index: React.FC = () => {
 
   return (
     <div className="relative h-screen flex flex-col md:flex-row bg-white">
-      {/* Voice mode overlay */}
-      {isVoiceModeActive && (
+      {/* Voice mode overlay - only render when feature is enabled and active */}
+      {isEnabled('voiceMode') && isVoiceModeActive && (
         <VoiceMode onClose={() => setIsVoiceModeActive(false)} />
       )}
       
@@ -83,6 +94,7 @@ const Index: React.FC = () => {
           <MessageInput 
             onSendMessage={handleSendMessage} 
             onVoiceButtonClick={toggleVoiceMode}
+            showVoiceButton={isEnabled('voiceMode')}
           />
         </div>
       </div>
