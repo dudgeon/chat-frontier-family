@@ -63,16 +63,16 @@ const SignUpForm: React.FC = () => {
       
       if (error) throw error;
       
-      // Also save the user type as 'adult' in their profile
+      // Ensure a matching profile exists for the new user
       if (data?.user) {
         await supabase
           .from('profiles')
-          .update({
+          .upsert({
+            id: data.user.id,
             user_role: 'adult',
             system_message:
               'You are a helpful assistant. Provide friendly, concise responses.'
-          })
-          .eq('id', data.user.id);
+          });
       }
       
       toast({
