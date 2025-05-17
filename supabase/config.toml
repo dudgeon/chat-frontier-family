@@ -5,3 +5,5 @@ project_id = "xrrauvcciuiaztzajmeq"
 [functions]
 [functions.realtime-chat]
 verify_jwt = true
+[functions.create-child-account]
+verify_jwt = true
