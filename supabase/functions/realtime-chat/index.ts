@@ -45,10 +45,10 @@ serve(async (req) => {
         const openAIModel = Deno.env.get('OPENAI_MODEL') || 'gpt-4o';
 
         // Create the URL for OpenAI's Realtime API
-        const openAiUrl = new URL("wss://api.openai.com/v1/realtime");
-        openAiUrl.searchParams.append("model", openAIModel);
-        
-        console.log(`Connecting to: ${openAiUrl.toString()}`);
+        const openAIUrl = new URL("wss://api.openai.com/v1/realtime");
+        openAIUrl.searchParams.append("model", openAIModel);
+
+        console.log(`Connecting to: ${openAIUrl.toString()}`);
         
         // CRITICAL FIX: Create a properly formatted authorization header
         // Directly create a headers object using the Headers API (better cross-platform support)
@@ -61,7 +61,7 @@ serve(async (req) => {
         // Create WebSocket with authentication headers
         // Note: Using protocol array with empty string as first element is a special pattern
         // that works better with Deno WebSockets when sending headers
-        const openAISocket = new WebSocket(openAiUrl.toString(), [""], {
+        const openAISocket = new WebSocket(openAIUrl.toString(), [""], {
           headers: {
             "Authorization": `Bearer ${openAIKey}`
           }
