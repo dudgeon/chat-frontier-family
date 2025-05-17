@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
+import ReactMarkdown from 'react-markdown';
 
 interface MessageListProps {
   messages: Message[];
@@ -46,11 +47,17 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
           key={index}
           className={message.isUser 
             ? 'message-bubble-user relative' 
-            : 'message-bubble-other relative'}
+            : 'message-bot relative px-4 py-2 max-w-[85%] self-start text-foreground'}
           onMouseEnter={() => setHoveredMessageId(message.id || null)}
           onMouseLeave={() => setHoveredMessageId(null)}
         >
-          {message.content}
+          {message.isUser ? (
+            message.content
+          ) : (
+            <ReactMarkdown className="prose prose-sm dark:prose-invert">
+              {message.content}
+            </ReactMarkdown>
+          )}
           
           {hoveredMessageId === message.id && (
             <div className="absolute bottom-1 right-1 flex space-x-1">
@@ -97,7 +104,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
       ))}
       
       {isWaitingForResponse && (
-        <div className="message-bubble-other flex items-center space-x-2">
+        <div className="message-bot px-4 py-2 max-w-[85%] self-start text-foreground flex items-center space-x-2">
           <Loader2 size={16} className="animate-spin" />
           <span>Thinking...</span>
         </div>

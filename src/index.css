@@ -118,9 +118,72 @@
   white-space: pre-wrap;
 }
 
-.message-bubble-other {
-  @apply bg-hero/10 text-hero rounded-2xl rounded-bl-sm py-2 px-4 max-w-[85%] self-start;
+/* Bot message styling (no bubble) */
+.message-bot {
   white-space: pre-wrap;
+}
+
+/* Bot message markdown styling */
+.message-bot .prose {
+  @apply text-current;
+}
+
+.message-bot .prose pre {
+  @apply bg-gray-100 dark:bg-gray-800 rounded p-2 overflow-x-auto;
+}
+
+.message-bot .prose code {
+  @apply bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-sm;
+}
+
+.message-bot .prose h1,
+.message-bot .prose h2,
+.message-bot .prose h3,
+.message-bot .prose h4,
+.message-bot .prose h5,
+.message-bot .prose h6 {
+  @apply font-semibold mb-2 mt-4;
+}
+
+.message-bot .prose h1 {
+  @apply text-2xl;
+}
+
+.message-bot .prose h2 {
+  @apply text-xl;
+}
+
+.message-bot .prose h3 {
+  @apply text-lg;
+}
+
+.message-bot .prose p {
+  @apply my-2;
+}
+
+.message-bot .prose ul {
+  @apply list-disc pl-5 my-2;
+}
+
+.message-bot .prose ol {
+  @apply list-decimal pl-5 my-2;
+}
+
+.message-bot .prose blockquote {
+  @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic;
+}
+
+.message-bot .prose a {
+  @apply text-hero underline hover:text-hero/80;
+}
+
+.message-bot .prose table {
+  @apply border-collapse my-4;
+}
+
+.message-bot .prose th,
+.message-bot .prose td {
+  @apply border border-gray-300 dark:border-gray-600 px-2 py-1;
 }
 
 /* Active sidebar elements */
@@ -155,12 +218,12 @@
 
 /* Message delete button */
 .message-bubble-user .message-delete-btn,
-.message-bubble-other .message-delete-btn {
+.message-bot .message-delete-btn {
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
 }
 
 .message-bubble-user:hover .message-delete-btn,
-.message-bubble-other:hover .message-delete-btn {
+.message-bot:hover .message-delete-btn {
   opacity: 1;
 }
