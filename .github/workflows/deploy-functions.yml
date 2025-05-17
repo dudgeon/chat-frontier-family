@@ -24,12 +24,7 @@ jobs:
         run: supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
 
       - name: Deploy Edge Functions
-        run: |
-          supabase functions deploy \
-            --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}" \
-            --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
+        run: supabase functions deploy --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
 
       - name: List deployed functions
-        run: supabase functions list \
-          --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}" \
-          --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
+        run: supabase functions list --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
