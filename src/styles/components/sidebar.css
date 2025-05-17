@@ -1,0 +1,5 @@
+
+/* Active sidebar elements */
+.sidebar-active {
+  @apply bg-hero/10 border-l-2 border-hero text-hero;
+}

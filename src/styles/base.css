@@ -1,0 +1,27 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Theme-affected elements */
+  button:focus-visible {
+    @apply ring-2 ring-hero/50 outline-none;
+  }
+
+  input:focus, textarea:focus {
+    @apply ring-2 ring-hero/30 border-hero/50 outline-none;
+  }
+
+  ::selection {
+    @apply bg-hero/30;
+  }
+}
