@@ -22,14 +22,14 @@ serve(async (req) => {
     if (upgradeHeader.toLowerCase() === "websocket") {
       try {
         console.log("Upgrading to WebSocket connection");
-        const { socket: clientSocket, response } = Deno.upgradeWebSocket(req);
+        const { socket: clientWs, response } = Deno.upgradeWebSocket(req);
         
         // Connect to OpenAI's Realtime API
-        const openAIKey = Deno.env.get('OPENAI_API_KEY');
-        if (!openAIKey) {
+        const OPENAI_KEY = Deno.env.get('OPENAI_API_KEY');
+        if (!OPENAI_KEY) {
           console.error("OPENAI_API_KEY is not set in environment variables");
-          if (clientSocket.readyState === WebSocket.OPEN) {
-            clientSocket.close(1011, "OPENAI key not set");
+          if (clientWs.readyState === WebSocket.OPEN) {
+            clientWs.close(1011, "OPENAI key not set");
           }
           return response;
         }
@@ -37,34 +37,31 @@ serve(async (req) => {
         console.log("Creating connection to OpenAI Realtime API");
 
         // Determine which model to use
-        const openAIModel = Deno.env.get('OPENAI_MODEL') || 'gpt-4o';
+        const openaiModel = Deno.env.get('OPENAI_MODEL') || 'gpt-4o';
 
         // Create the URL for OpenAI's Realtime API
-        const openAIUrl = new URL("wss://api.openai.com/v1/realtime");
-        openAIUrl.searchParams.append("model", openAIModel);
+        const openaiUrl = new URL("wss://api.openai.com/v1/realtime");
+        openaiUrl.searchParams.append("model", openaiModel);
 
-        console.log(`Connecting to: ${openAIUrl.toString()}`);
-        
-        const openaiResp = await fetch(openAIUrl, {
-          headers: { Authorization: `Bearer ${openAIKey}` },
+        console.log(`Connecting to: ${openaiUrl.toString()}`);
+
+        const openaiResp = await fetch(openaiUrl, {
+          headers: { Authorization: `Bearer ${OPENAI_KEY}` },
         });
 
         if (!openaiResp.ok || !openaiResp.webSocket) {
-          clientSocket.close(
-            1011,
-            `OpenAI WS handshake failed: ${openaiResp.status}`,
-          );
+          clientWs.close(1011, `OpenAI handshake failed`);
           return response;
         }
 
-        const openAISocket = openaiResp.webSocket;
-        await openAISocket.accept();
+        const openaiWs = openaiResp.webSocket;
+        await openaiWs.accept();
 
-        openAISocket.onmessage = (e) => clientSocket.send(e.data);
-        clientSocket.onmessage = (e) => openAISocket.send(e.data);
+        openaiWs.onmessage = (e) => clientWs.send(e.data);
+        clientWs.onmessage = (e) => openaiWs.send(e.data);
 
-        openAISocket.onclose = (e) => clientSocket.close(e.code, e.reason);
-        clientSocket.onclose = (e) => openAISocket.close(e.code, e.reason);
+        openaiWs.onclose = (e) => clientWs.close(e.code, e.reason);
+        clientWs.onclose = (e) => openaiWs.close(e.code, e.reason);
 
         return response;
       } catch (error) {
