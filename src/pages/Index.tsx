@@ -68,7 +68,8 @@ const Index: React.FC = () => {
   };
 
   return (
-    <div className="relative h-[100dvh] overflow-hidden flex flex-col md:flex-row bg-white">
+    <div className="fixed inset-0 h-[100dvh] overflow-hidden flex flex-col md:flex-row bg-white">
+
       {/* Voice mode overlay - only render when feature is enabled and active */}
       {isEnabled('voiceMode') && isVoiceModeActive && (
         <VoiceMode onClose={() => setIsVoiceModeActive(false)} />
