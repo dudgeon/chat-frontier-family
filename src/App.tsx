@@ -9,6 +9,7 @@ import { ChatProvider } from "./contexts/ChatContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
+import ChildChatHistory from "./pages/ChildChatHistory";
 import Login from "./pages/Login";
 import AuthGuard from "./components/auth/AuthGuard";
 
@@ -30,13 +31,21 @@ const App = () => (
                   </AuthGuard>
                 } 
               />
-              <Route 
-                path="/profile" 
+              <Route
+                path="/profile"
                 element={
                   <AuthGuard>
                     <Profile />
                   </AuthGuard>
-                } 
+                }
+              />
+              <Route
+                path="/child-history/:childId"
+                element={
+                  <AuthGuard>
+                    <ChildChatHistory />
+                  </AuthGuard>
+                }
               />
               <Route path="*" element={<NotFound />} />
             </Routes>

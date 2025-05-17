@@ -6,13 +6,22 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const useChatDatabase = () => {
   // Fetch all sessions for a user
-  const fetchUserSessions = useCallback(async (userId: string) => {
+  const fetchUserSessions = useCallback(async (userId?: string) => {
     try {
-      // Fetch all chat sessions for the current user
+      let targetId = userId;
+      if (!targetId) {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        targetId = userData?.user?.id;
+      }
+
+      if (!targetId) return [];
+
+      // Fetch all chat sessions for the user
       const { data, error } = await supabase
         .from('chat_sessions')
         .select('id, name, last_updated')
-        .eq('user_id', userId)
+        .eq('user_id', targetId)
         .order('last_updated', { ascending: false });
       
       if (error) throw error;
