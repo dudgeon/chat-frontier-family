@@ -169,6 +169,14 @@
   @apply list-decimal pl-5 my-2;
 }
 
+.message-bot .prose li {
+  @apply my-0.5;
+}
+
+.message-bot .prose li > p {
+  @apply my-0 inline;
+}
+
 .message-bot .prose blockquote {
   @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic;
 }

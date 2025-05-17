@@ -55,7 +55,24 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
             message.content
           ) : (
             <div className="prose prose-sm dark:prose-invert">
-              <ReactMarkdown>
+              <ReactMarkdown components={{
+                // Remove unnecessary line breaks in list items
+                li: ({node, className, children, ...props}) => {
+                  return <li {...props}>{children}</li>;
+                },
+                // Fix line breaks in paragraphs
+                p: ({node, className, children, ...props}) => {
+                  return <p {...props} className="whitespace-normal">{children}</p>;
+                },
+                // Fix line breaks in ordered list items
+                ol: ({node, className, children, ...props}) => {
+                  return <ol {...props} className="space-y-1">{children}</ol>;
+                },
+                // Fix line breaks in unordered list items
+                ul: ({node, className, children, ...props}) => {
+                  return <ul {...props} className="space-y-1">{children}</ul>;
+                }
+              }}>
                 {message.content}
               </ReactMarkdown>
             </div>
