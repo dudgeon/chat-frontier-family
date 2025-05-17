@@ -70,8 +70,10 @@ VITE_OPENAI_MODEL=gpt-4o
 ```
 
 `VITE_SUPABASE_PROJECT_REF` controls which Supabase project the realtime voice
-WebSocket connects to. `VITE_OPENAI_MODEL` sets the model used by the edge
-functions when contacting OpenAI.
+WebSocket connects to. If this variable is omitted, the app now falls back to a
+relative `/functions/v1/realtime-chat` path which works in preview deployments.
+`VITE_OPENAI_MODEL` sets the model used by the edge functions when contacting
+OpenAI.
 
 ## How can I deploy this project?
 
