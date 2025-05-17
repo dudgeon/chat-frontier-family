@@ -2,8 +2,7 @@ name: Run Supabase Migrations
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
     paths:
       - 'supabase/migrations/**'
   workflow_dispatch:
@@ -12,8 +11,7 @@ jobs:
   migrate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Install Supabase CLI
         uses: supabase/setup-cli@v1
@@ -21,8 +19,13 @@ jobs:
           version: latest
 
       - name: Apply database migrations
-        # We pass in the full DB URL so no interactive prompt is required
-        run: supabase db push --db-url "${{ secrets.SUPABASE_DB_URL }}"
+        run: |
+          supabase db push \
+            --db-url "${{ secrets.SUPABASE_DB_URL }}" \
+            --dns-resolver https
 
       - name: Show migration status
-        run: supabase db status --db-url "${{ secrets.SUPABASE_DB_URL }}"
+        run: |
+          supabase db status \
+            --db-url "${{ secrets.SUPABASE_DB_URL }}" \
+            --dns-resolver https
