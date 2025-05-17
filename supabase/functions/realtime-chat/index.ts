@@ -1,8 +1,8 @@
 
-// Skip JWT checks – we’ll auth on the OpenAI side instead.
-// Run: supabase functions deploy realtime-chat --no-verify-jwt
+// Voice relay function with manual JWT verification.
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,10 +12,28 @@ const corsHeaders = {
 serve(async (req) => {
   try {
     const upgradeHeader = req.headers.get("upgrade") || "";
-    
+
+    // Check Authorization header for JWT
+    const authHeader = req.headers.get("authorization") || "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.replace("Bearer ", "") : null;
+
     // Handle CORS preflight requests
     if (req.method === "OPTIONS") {
       return new Response(null, { headers: corsHeaders });
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnon = Deno.env.get('SUPABASE_ANON_KEY');
+
+    if (!token || !supabaseUrl || !supabaseAnon) {
+      return new Response("Unauthorized", { status: 401, headers: corsHeaders });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnon);
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+
+    if (userError || !userData?.user) {
+      return new Response("Unauthorized", { status: 401, headers: corsHeaders });
     }
     
     // Handle WebSocket upgrade

@@ -4,4 +4,4 @@ project_id = "xrrauvcciuiaztzajmeq"
 
 [functions]
 [functions.realtime-chat]
-verify_jwt = false
+verify_jwt = true
