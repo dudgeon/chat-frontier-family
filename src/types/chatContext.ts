@@ -15,6 +15,7 @@ export interface ChatContextType {
   heroColor: string;
   setHeroColor: (color: string) => void;
   isWaitingForResponse: boolean;
+  systemMessage: string;
   chatName: string | null;
   chatSessions: ChatSession[];
   activeChatId: string;

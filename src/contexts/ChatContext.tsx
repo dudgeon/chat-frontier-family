@@ -16,6 +16,32 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { heroColor, setHeroColor } = useHeroColor();
   const { user } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
+  const [systemMessage, setSystemMessage] = useState(
+    'You are a helpful assistant. Provide friendly, concise responses.'
+  );
+
+  useEffect(() => {
+    const fetchSystemMessage = async () => {
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('system_message')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching system message:', error);
+        return;
+      }
+
+      if (data && data.system_message) {
+        setSystemMessage(data.system_message);
+      }
+    };
+
+    fetchSystemMessage();
+  }, [user]);
   
   const { 
     chatSessions, 
@@ -32,12 +58,12 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const initialMessages = activeSession?.messages || [];
   
   // Message handler for the active chat
-  const { 
-    messages, 
-    setMessages, 
-    isWaitingForResponse, 
-    addMessage: handleMessage 
-  } = useMessageHandler(initialMessages);
+  const {
+    messages,
+    setMessages,
+    isWaitingForResponse,
+    addMessage: handleMessage
+  } = useMessageHandler(initialMessages, systemMessage);
 
   // Set messages when active session changes or loads
   useEffect(() => {
@@ -192,9 +218,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       messages, 
       addMessage,
       deleteMessage,
-      heroColor, 
-      setHeroColor, 
+      heroColor,
+      setHeroColor,
       isWaitingForResponse,
+      systemMessage,
       chatName: activeSession.name,
       chatSessions,
       activeChatId,
