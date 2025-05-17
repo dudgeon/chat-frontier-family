@@ -24,8 +24,9 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          echo "Testing connection..."
+          echo "Testing connection…"
           psql "$DATABASE_URL" -c '\conninfo'
+          
           for f in supabase/migrations/*.sql; do
             echo "Applying $f"
             psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
