@@ -68,7 +68,7 @@ const Index: React.FC = () => {
   };
 
   return (
-    <div className="relative h-screen flex flex-col md:flex-row bg-white">
+    <div className="relative h-[100dvh] overflow-hidden flex flex-col md:flex-row bg-white">
       {/* Voice mode overlay - only render when feature is enabled and active */}
       {isEnabled('voiceMode') && isVoiceModeActive && (
         <VoiceMode onClose={() => setIsVoiceModeActive(false)} />
@@ -90,7 +90,7 @@ const Index: React.FC = () => {
           <MessageList messages={messages} />
         </main>
         
-        <div className="absolute bottom-0 left-0 right-0">
+        <div className="fixed bottom-0 left-0 right-0">
           <MessageInput 
             onSendMessage={handleSendMessage} 
             onVoiceButtonClick={toggleVoiceMode}
