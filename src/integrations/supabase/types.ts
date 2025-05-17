@@ -76,6 +76,7 @@ export type Database = {
           display_name: string | null
           id: string
           parent_id: string | null
+          system_message: string | null
           subscription_tier: string
           updated_at: string
           user_role: string
@@ -87,6 +88,7 @@ export type Database = {
           display_name?: string | null
           id: string
           parent_id?: string | null
+          system_message?: string | null
           subscription_tier?: string
           updated_at?: string
           user_role?: string
@@ -98,6 +100,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           parent_id?: string | null
+          system_message?: string | null
           subscription_tier?: string
           updated_at?: string
           user_role?: string
