@@ -103,3 +103,25 @@ This project uses GitHub Actions to automatically deploy Supabase Edge Functions
   3. Authenticates with your service role key  
   4. Deploys all functions in `functions/`  
 - **To manually run:** Go to **Actions ➔ Deploy Supabase Edge Functions** and click **Run workflow**.
+
+## Database Migrations
+
+![Migrations](https://github.com/<you>/<repo>/actions/workflows/run-migrations.yml/badge.svg)
+
+Migration SQL files live in `supabase/migrations/`.
+
+This repository includes a workflow that automatically applies migrations when changes are pushed or the workflow is manually triggered.
+
+- **Workflow file:** `.github/workflows/run-migrations.yml`
+- **Triggers:**
+  - Push to the `main` branch affecting `supabase/migrations/**`
+  - Manual dispatch via the **Actions** tab
+- **Required repository secrets:**
+  - `SUPABASE_ACCESS_TOKEN` – Your Supabase Service Role Key
+  - `SUPABASE_PROJECT_ID` – Your Supabase Project Reference
+- **What happens:**
+  1. Checks out the repo
+  2. Installs the Supabase CLI
+  3. Authenticates with your service role key
+  4. Applies migrations with `supabase db push`
+  5. Shows migration status
