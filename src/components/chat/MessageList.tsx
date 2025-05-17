@@ -54,9 +54,11 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
           {message.isUser ? (
             message.content
           ) : (
-            <ReactMarkdown className="prose prose-sm dark:prose-invert">
-              {message.content}
-            </ReactMarkdown>
+            <div className="prose prose-sm dark:prose-invert">
+              <ReactMarkdown>
+                {message.content}
+              </ReactMarkdown>
+            </div>
           )}
           
           {hoveredMessageId === message.id && (
