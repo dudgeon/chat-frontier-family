@@ -20,14 +20,9 @@ jobs:
         with:
           version: latest
 
-      - name: Authenticate Supabase CLI
-        run: supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
-
-      - name: Link to your Supabase project
-        run: supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
-
       - name: Apply database migrations
-        run: supabase db push
+        # We pass in the full DB URL so no interactive prompt is required
+        run: supabase db push --db-url "${{ secrets.SUPABASE_DB_URL }}"
 
       - name: Show migration status
-        run: supabase db status
+        run: supabase db status --db-url "${{ secrets.SUPABASE_DB_URL }}"
