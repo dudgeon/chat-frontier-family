@@ -7,11 +7,13 @@ import { VoiceSessionState } from '@/types/voiceSession';
  * Custom hook for managing WebSocket connections in voice sessions
  * @param setSession Function to update session state
  * @param onClose Callback for when session ends
+ * @param handleAudioChunk Callback for binary audio data
  * @returns Object containing WebSocket reference and connection functions
  */
 export const useVoiceConnection = (
   setSession: (updater: (prev: VoiceSessionState) => VoiceSessionState) => void,
-  onClose: () => void
+  onClose: () => void,
+  handleAudioChunk: (chunk: ArrayBuffer) => void
 ) => {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttemptsRef = useRef<number>(0);
@@ -70,8 +72,11 @@ export const useVoiceConnection = (
 
       // Set up WebSocket message handler
       wsRef.current.onmessage = (event) => {
+        if (typeof event.data !== 'string') {
+          handleAudioChunk(event.data as ArrayBuffer);
+          return;
+        }
         try {
-          // Parse and handle incoming WebSocket messages
           const data = JSON.parse(event.data);
           console.log('Received WebSocket message:', data);
           

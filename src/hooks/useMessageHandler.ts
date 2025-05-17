@@ -8,7 +8,7 @@ export const useMessageHandler = (initialMessages: Message[] = []) => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
 
-  const addMessage = async (content: string, isUser: boolean, apiKey: string) => {
+  const addMessage = async (content: string, isUser: boolean) => {
     const newMessage: Message = {
       content,
       isUser,

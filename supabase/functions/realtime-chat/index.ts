@@ -95,15 +95,21 @@ serve(async (req) => {
         
         // Handle messages from the client
         clientSocket.onmessage = (event) => {
-          if (openAISocket.readyState === WebSocket.OPEN) {
+          if (openAISocket.readyState !== WebSocket.OPEN) {
+            console.log("OpenAI socket not open, current state:", openAISocket.readyState);
+            clientSocket.send(JSON.stringify({
+              type: "error",
+              message: "Connection to OpenAI not ready, please try again"
+            }));
+            return;
+          }
+
+          if (typeof event.data === "string") {
             try {
-              // Parse the message to check if it's a special command or regular message
               const message = JSON.parse(event.data);
               if (message.type === 'ping') {
-                // Respond to ping with pong
                 clientSocket.send(JSON.stringify({ type: 'pong', time: new Date().toISOString() }));
               } else {
-                // Forward other messages to OpenAI
                 openAISocket.send(event.data);
                 console.log("Forwarded message to OpenAI:", message.type || 'unknown type');
               }
@@ -115,11 +121,7 @@ serve(async (req) => {
               }));
             }
           } else {
-            console.log("OpenAI socket not open, current state:", openAISocket.readyState);
-            clientSocket.send(JSON.stringify({
-              type: "error",
-              message: "Connection to OpenAI not ready, please try again"
-            }));
+            openAISocket.send(event.data);
           }
         };
         
