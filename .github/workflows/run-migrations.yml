@@ -2,18 +2,32 @@ name: Run Supabase Migrations
 
 on:
   push:
-    branches: [ main ]
-    paths: ['supabase/migrations/**']
-  workflow_dispatch: {}
+    branches:
+      - main
+    paths:
+      - 'supabase/migrations/**'
+  workflow_dispatch:
 
 jobs:
   migrate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
         with:
           version: latest
-      - run: supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
-      - run: supabase db push --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
-      - run: supabase db status --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+
+      - name: Authenticate Supabase CLI
+        run: supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
+
+      - name: Link to your Supabase project
+        run: supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
+
+      - name: Apply database migrations
+        run: supabase db push
+
+      - name: Show migration status
+        run: supabase db status
