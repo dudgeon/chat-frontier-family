@@ -50,21 +50,18 @@ serve(async (req) => {
         });
 
         if (!openaiResp.ok || !openaiResp.webSocket) {
-          clientSocket.close(
-            1011,
-            `OpenAI WS handshake failed: ${openaiResp.status}`,
-          );
+          clientSocket.close(1011, `OpenAI handshake failed`);
           return response;
         }
 
-        const openAISocket = openaiResp.webSocket;
-        await openAISocket.accept();
+        const openaiWs = openaiResp.webSocket;
+        await openaiWs.accept();
 
-        openAISocket.onmessage = (e) => clientSocket.send(e.data);
-        clientSocket.onmessage = (e) => openAISocket.send(e.data);
+        openaiWs.onmessage = (e) => clientSocket.send(e.data);
+        clientSocket.onmessage = (e) => openaiWs.send(e.data);
 
-        openAISocket.onclose = (e) => clientSocket.close(e.code, e.reason);
-        clientSocket.onclose = (e) => openAISocket.close(e.code, e.reason);
+        openaiWs.onclose = (e) => clientSocket.close(e.code, e.reason);
+        clientSocket.onclose = (e) => openaiWs.close(e.code, e.reason);
 
         return response;
       } catch (error) {
