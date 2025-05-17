@@ -103,3 +103,8 @@ This project uses GitHub Actions to automatically deploy Supabase Edge Functions
   3. Authenticates with your service role key  
   4. Deploys all functions in `functions/`  
 - **To manually run:** Go to **Actions ➔ Deploy Supabase Edge Functions** and click **Run workflow**.
+
+## Database Schema
+
+The Supabase database schema used by this project is provided in
+[`schema.json`](schema.json) for reference.

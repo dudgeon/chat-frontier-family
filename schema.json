@@ -1,0 +1,142 @@
+[
+  {
+    "table_name": "chat_messages",
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "chat_messages",
+    "column_name": "session_id",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "chat_messages",
+    "column_name": "content",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "chat_messages",
+    "column_name": "is_user",
+    "data_type": "boolean",
+    "is_nullable": "NO",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "chat_messages",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "chat_messages",
+    "column_name": "is_hidden",
+    "data_type": "boolean",
+    "is_nullable": "NO",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "chat_sessions",
+    "column_name": "id",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "chat_sessions",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "chat_sessions",
+    "column_name": "name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "chat_sessions",
+    "column_name": "last_updated",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "chat_sessions",
+    "column_name": "is_hidden",
+    "data_type": "boolean",
+    "is_nullable": "NO",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "profiles",
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "profiles",
+    "column_name": "user_role",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "profiles",
+    "column_name": "display_name",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "profiles",
+    "column_name": "avatar_url",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "profiles",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "profiles",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "profiles",
+    "column_name": "date_of_birth",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "profiles",
+    "column_name": "subscription_tier",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "character_maximum_length": null
+  },
+  {
+    "table_name": "profiles",
+    "column_name": "parent_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "character_maximum_length": null
+  }
+]
