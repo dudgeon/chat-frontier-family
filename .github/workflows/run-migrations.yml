@@ -2,7 +2,8 @@ name: Run Supabase Migrations
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
     paths:
       - 'supabase/migrations/**'
   workflow_dispatch:
@@ -11,21 +12,21 @@ jobs:
   migrate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Install Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Apply database migrations
+      - name: Install Postgres client
         run: |
-          supabase db push \
-            --db-url "${{ secrets.SUPABASE_DB_URL }}" \
-            --dns-resolver https
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
 
-      - name: Show migration status
+      - name: Apply SQL migrations via psql
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          supabase db status \
-            --db-url "${{ secrets.SUPABASE_DB_URL }}" \
-            --dns-resolver https
+          echo "Testing connection..."
+          psql "$DATABASE_URL" -c '\conninfo'
+          for f in supabase/migrations/*.sql; do
+            echo "Applying $f"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+          done
