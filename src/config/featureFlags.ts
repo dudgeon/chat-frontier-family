@@ -12,7 +12,7 @@ export const featureFlags = {
   settings: true,
   
   // Voice features
-  voiceMode: true,
+  voiceMode: false,
   
   // User management
   userProfiles: true,
