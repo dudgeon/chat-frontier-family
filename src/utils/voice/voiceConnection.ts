@@ -17,13 +17,14 @@ export const createVoiceWebSocket = async (
     // Update state to show connecting status
     setSession(prev => ({ ...prev, isConnecting: true }));
 
-    // Use configurable project reference with a sensible fallback. When the
-    // default placeholder project ID is in use, fall back to a relative URL so
-    // previews can still access the edge function without DNS setup.
+    // Use configurable project reference with a sensible fallback. If no project
+    // reference is provided (e.g. during local development), fall back to a
+    // relative URL so previews can still access the edge function without DNS
+    // setup.
     const projectRef = SUPABASE_PROJECT_REF;
 
     let wsUrl: string;
-    if (projectRef && projectRef !== 'xrrauvcciuiaztzajmeq') {
+    if (projectRef) {
       wsUrl = `wss://${projectRef}.supabase.co/functions/v1/realtime-chat`;
     } else {
       const base = window.location.origin.replace(/^http/i, 'ws');
