@@ -46,8 +46,8 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
         <div
           key={index}
           className={message.isUser 
-            ? 'message-bubble-user relative' 
-            : 'message-bot relative px-4 py-2 max-w-[85%] self-start text-foreground'}
+            ? 'message-bubble-user relative'
+            : 'message-bot relative px-4 py-2 max-w-[90%] self-start text-foreground'}
           onMouseEnter={() => setHoveredMessageId(message.id || null)}
           onMouseLeave={() => setHoveredMessageId(null)}
         >
@@ -123,7 +123,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
       ))}
       
       {isWaitingForResponse && (
-        <div className="message-bot px-4 py-2 max-w-[85%] self-start text-foreground flex items-center space-x-2">
+        <div className="message-bot px-4 py-2 max-w-[90%] self-start text-foreground flex items-center space-x-2">
           <Loader2 size={16} className="animate-spin" />
           <span>Thinking...</span>
         </div>
