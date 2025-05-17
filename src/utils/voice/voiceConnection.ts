@@ -1,7 +1,6 @@
 
 import { toast } from '@/components/ui/use-toast';
 import { VoiceSessionState } from '@/types/voiceSession';
-import { SUPABASE_PROJECT_REF } from '@/config/env';
 
 /**
  * Creates a WebSocket connection to the OpenAI Realtime API via Supabase Edge Function
@@ -17,19 +16,9 @@ export const createVoiceWebSocket = async (
     // Update state to show connecting status
     setSession(prev => ({ ...prev, isConnecting: true }));
 
-    // Use configurable project reference with a sensible fallback. If no project
-    // reference is provided (e.g. during local development), fall back to a
-    // relative URL so previews can still access the edge function without DNS
-    // setup.
-    const projectRef = SUPABASE_PROJECT_REF;
-
-    let wsUrl: string;
-    if (projectRef) {
-      wsUrl = `wss://${projectRef}.supabase.co/functions/v1/realtime-chat`;
-    } else {
-      const base = window.location.origin.replace(/^http/i, 'ws');
-      wsUrl = `${base}/functions/v1/realtime-chat`;
-    }
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
+    const anon = import.meta.env.VITE_SUPABASE_ANON_KEY!;
+    const wsUrl = `${supabaseUrl}/functions/v1/realtime-chat?apikey=${anon}`;
 
     console.log('Connecting to WebSocket:', wsUrl);
 

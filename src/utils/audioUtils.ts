@@ -6,7 +6,7 @@
 export interface AudioRecorder {
   stream: MediaStream | null;
   audioContext: AudioContext | null;
-  processor: ScriptProcessorNode | null;
+  worklet: AudioWorkletNode | null;
   source: MediaStreamAudioSourceNode | null;
   stop: () => void;
 }
@@ -16,10 +16,10 @@ export interface AudioRecorder {
  * @param onAudioData Callback function that receives audio data
  * @returns AudioRecorder object with stop method
  */
-export const initializeRecorder = (onAudioData: (data: Float32Array) => void): AudioRecorder => {
+export const initializeRecorder = (onAudioData: (data: ArrayBuffer) => void): AudioRecorder => {
   let stream: MediaStream | null = null;
   let audioContext: AudioContext | null = null;
-  let processor: ScriptProcessorNode | null = null;
+  let worklet: AudioWorkletNode | null = null;
   let source: MediaStreamAudioSourceNode | null = null;
   let isActive = true;
 
@@ -44,38 +44,17 @@ export const initializeRecorder = (onAudioData: (data: Float32Array) => void): A
       // Log actual sample rate (might differ from requested)
       console.log('Actual audio context sample rate:', audioContext.sampleRate);
       
+      await audioContext.audioWorklet.addModule('/audio-capture-worklet.js');
+
       source = audioContext.createMediaStreamSource(stream);
-      
-      // Create processor with appropriate buffer size for real-time processing
-      // Use larger buffer size for more stable processing
-      processor = audioContext.createScriptProcessor(4096, 1, 1);
-      
-      let consecutiveZeros = 0;
-      const maxConsecutiveZeros = 5; // Number of silent buffers before logging warning
-      
-      processor.onaudioprocess = (e) => {
+      worklet = new AudioWorkletNode(audioContext, 'capture-processor');
+
+      worklet.port.onmessage = (e) => {
         if (!isActive) return;
-        
-        const inputData = e.inputBuffer.getChannelData(0);
-        
-        // Simple silence detection for debugging
-        const isAllZeros = inputData.every(val => Math.abs(val) < 0.001);
-        if (isAllZeros) {
-          consecutiveZeros++;
-          if (consecutiveZeros >= maxConsecutiveZeros) {
-            console.warn('Possible audio input issue: multiple silent buffers detected');
-            consecutiveZeros = 0; // Reset counter to avoid log spam
-          }
-        } else {
-          consecutiveZeros = 0; // Reset counter when audio is detected
-        }
-        
-        // Send the audio data even if it's silence - the server handles VAD
-        onAudioData(new Float32Array(inputData));
+        onAudioData(e.data as ArrayBuffer);
       };
-      
-      source.connect(processor);
-      processor.connect(audioContext.destination);
+
+      source.connect(worklet);
       
       console.log('Audio recording successfully initialized');
       
@@ -92,7 +71,7 @@ export const initializeRecorder = (onAudioData: (data: Float32Array) => void): A
   return {
     stream,
     audioContext,
-    processor,
+    worklet,
     source,
     stop: () => {
       isActive = false;
@@ -106,11 +85,11 @@ export const initializeRecorder = (onAudioData: (data: Float32Array) => void): A
         }
       }
       
-      if (processor) {
+      if (worklet) {
         try {
-          processor.disconnect();
+          worklet.disconnect();
         } catch (e) {
-          console.warn('Error disconnecting processor:', e);
+          console.warn('Error disconnecting worklet:', e);
         }
       }
       

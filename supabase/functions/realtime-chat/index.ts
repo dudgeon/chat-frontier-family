@@ -1,4 +1,6 @@
 
+// Skip JWT checks – we’ll auth on the OpenAI side instead.
+// Run: supabase functions deploy realtime-chat --no-verify-jwt
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -26,16 +28,9 @@ serve(async (req) => {
         const openAIKey = Deno.env.get('OPENAI_API_KEY');
         if (!openAIKey) {
           console.error("OPENAI_API_KEY is not set in environment variables");
-          
           if (clientSocket.readyState === WebSocket.OPEN) {
-            clientSocket.send(JSON.stringify({
-              type: "error",
-              message: "Server configuration error: API key missing"
-            }));
-            
-            clientSocket.close(1011, "Server configuration error");
+            clientSocket.close(1011, "OPENAI key not set");
           }
-          
           return response;
         }
 
