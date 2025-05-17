@@ -137,7 +137,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Check if user has adult role
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('user_role')
+        .select('user_role, system_message')
         .eq('id', user.id)
         .single();
 

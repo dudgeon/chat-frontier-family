@@ -38,7 +38,7 @@ export const useUserPermissions = (): {
       try {
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('user_role, subscription_tier')
+          .select('user_role, subscription_tier, system_message')
           .eq('id', user.id)
           .single();
 

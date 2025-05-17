@@ -19,6 +19,9 @@ const Profile: React.FC = () => {
   
   const [name, setName] = useState(user?.user_metadata?.name || 'User');
   const [email, setEmail] = useState(user?.email || '');
+  const [systemMessage, setSystemMessage] = useState(
+    'You are a helpful assistant. Provide friendly, concise responses.'
+  );
   const [loading, setLoading] = useState(false);
   
   // Fetch profile on load
@@ -29,7 +32,7 @@ const Profile: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('display_name, user_role, subscription_tier')
+          .select('display_name, user_role, subscription_tier, system_message')
           .eq('id', user.id)
           .single();
         
@@ -37,6 +40,10 @@ const Profile: React.FC = () => {
         
         if (data) {
           setName(data.display_name || name);
+          setSystemMessage(
+            data.system_message ||
+              'You are a helpful assistant. Provide friendly, concise responses.'
+          );
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -76,6 +83,7 @@ const Profile: React.FC = () => {
         .from('profiles')
         .update({
           display_name: name,
+          system_message: systemMessage,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
