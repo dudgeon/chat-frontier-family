@@ -12,6 +12,7 @@ import UserInfoSection from '@/components/profile/UserInfoSection';
 import AccountTypeSection from '@/components/profile/AccountTypeSection';
 import SubscriptionSection from '@/components/profile/SubscriptionSection';
 import LogoutButton from '@/components/profile/LogoutButton';
+import ChildAccountsSection from '@/components/profile/ChildAccountsSection';
 
 const Profile: React.FC = () => {
   const { heroColor } = useChat();
@@ -125,7 +126,9 @@ const Profile: React.FC = () => {
         
         <div className="space-y-6">
           <AccountTypeSection />
-          
+
+          <ChildAccountsSection />
+
           <SubscriptionSection />
           
           <LogoutButton />
