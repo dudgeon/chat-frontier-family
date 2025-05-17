@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
 import EditableField from './EditableField';
 import { Link } from 'react-router-dom';
+import { createChildAccount } from '@/utils/createChildAccount';
 
 interface ChildProfile {
   id: string;
@@ -56,15 +57,7 @@ const ChildAccountsSection: React.FC = () => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke(
-        'create-child-account',
-        {
-          body: { email, password, system_message: newMessage }
-        }
-      );
-      if (error || (data && data.error)) {
-        throw new Error(error?.message || data?.error);
-      }
+      await createChildAccount(email, password);
       toast({ title: 'Child account created' });
       setEmail('');
       setPassword('');
