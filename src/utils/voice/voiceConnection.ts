@@ -1,5 +1,4 @@
 
-import { SUPABASE_PROJECT_REF, OPENAI_MODEL } from '@/config/env';
 import { VoiceSessionState } from '@/types/voiceSession';
 
 /**
@@ -13,8 +12,11 @@ export const createVoiceWebSocket = async (
   onClose?: () => void
 ): Promise<WebSocket | null> => {
   try {
-    // Use the Supabase edge function to establish the WebSocket connection
-    const supabaseRealtimeEndpoint = `wss://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/realtime-chat`;
+    // Build the WebSocket URL from Supabase env vars
+    const http = import.meta.env.VITE_SUPABASE_URL;
+    const wsBase = http.replace(/^https?/, 'wss');
+    const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseRealtimeEndpoint = `${wsBase}/functions/v1/realtime-chat?apikey=${anon}`;
     
     console.log('Creating WebSocket connection to:', supabaseRealtimeEndpoint);
     
