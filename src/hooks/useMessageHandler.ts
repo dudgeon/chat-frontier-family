@@ -4,7 +4,10 @@ import { Message } from '@/types/chat';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
-export const useMessageHandler = (initialMessages: Message[] = []) => {
+export const useMessageHandler = (
+  initialMessages: Message[] = [],
+  systemMessage: string = 'You are a helpful assistant. Provide friendly, concise responses.'
+) => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
 
@@ -32,9 +35,9 @@ export const useMessageHandler = (initialMessages: Message[] = []) => {
         openaiMessages.push({ role: 'user' as const, content });
         
         // Add system message at the beginning
-        openaiMessages.unshift({ 
+        openaiMessages.unshift({
           role: 'user' as const, // Changed from 'system' to 'user' as a workaround
-          content: 'You are a helpful assistant. Provide friendly, concise responses.'
+          content: systemMessage
         });
         
         // Call the Supabase edge function
