@@ -1,7 +1,7 @@
 
 /* Message bubbles */
 .message-bubble-user {
-  @apply bg-hero text-hero-foreground rounded-2xl rounded-br-sm py-2 px-4 max-w-[85%] self-end;
+  @apply bg-hero text-hero-foreground rounded-2xl rounded-br-sm py-2 px-4 max-w-[90%] self-end;
   white-space: pre-wrap;
 }
 
