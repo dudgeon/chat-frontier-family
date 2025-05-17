@@ -2,6 +2,7 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { useVoiceState } from './voice/useVoiceState';
 import { useAudioRecorder } from './voice/useAudioRecorder';
+import { useAudioPlayer } from './voice/useAudioPlayer';
 import { useVoiceConnection } from './voice/useVoiceConnection';
 
 /**
@@ -26,23 +27,24 @@ export const useVoiceSession = (onClose: () => void) => {
   const startAttemptRef = useRef<number>(0);
   const maxStartAttempts = 2;
   
+  const { init: initPlayer, playChunk, cleanup: cleanupPlayer } = useAudioPlayer();
+
   // Initialize voice connection
-  const { 
-    wsRef, 
+  const {
+    wsRef,
     maxReconnectAttempts,
     initializeConnection, 
     cleanupConnection, 
     getReconnectAttempts,
     incrementReconnectAttempts,
     isMaxReconnectAttemptsReached
-  } = useVoiceConnection(setSession, onClose);
-  
+  } = useVoiceConnection(setSession, onClose, playChunk);
+
   // Initialize audio recorder
-  const { 
+  const {
     audioContextRef,
-    recorderRef,
-    initializeAudio, 
-    cleanupAudio 
+    initializeAudio,
+    cleanupAudio
   } = useAudioRecorder(wsRef, sessionActiveRef, setError);
   
   /**
@@ -75,6 +77,8 @@ export const useVoiceSession = (onClose: () => void) => {
       // Add delay before initializing audio to ensure connection is stable
       await new Promise(resolve => setTimeout(resolve, 500));
       
+      await initPlayer();
+
       // Initialize audio recording
       await initializeAudio();
       
@@ -107,6 +111,7 @@ export const useVoiceSession = (onClose: () => void) => {
     
     // Clean up resources
     cleanupAudio();
+    cleanupPlayer();
     cleanupConnection();
     resetSession();
     
@@ -115,7 +120,7 @@ export const useVoiceSession = (onClose: () => void) => {
     
     // Call the onClose callback
     onClose();
-  }, [cleanupAudio, cleanupConnection, resetSession, onClose]);
+  }, [cleanupAudio, cleanupPlayer, cleanupConnection, resetSession, onClose]);
   
   // Clean up on unmount
   useEffect(() => {

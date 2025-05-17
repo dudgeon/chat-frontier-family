@@ -2,7 +2,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Message } from '@/types/chat';
 import { ChatContextType } from '@/types/chatContext';
-import { useApiKey } from '@/hooks/useApiKey';
 import { useMessageHandler } from '@/hooks/useMessageHandler';
 import { useHeroColor } from '@/hooks/useHeroColor';
 import { useChatSessions } from '@/hooks/chatSessions';
@@ -14,7 +13,6 @@ import { supabase } from '@/integrations/supabase/client';
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { apiKey, setApiKey } = useApiKey();
   const { heroColor, setHeroColor } = useHeroColor();
   const { user } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
@@ -121,8 +119,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    handleMessage(content, isUser, apiKey);
-  }, [user, handleMessage, apiKey]);
+    handleMessage(content, isUser);
+  }, [user, handleMessage]);
 
   // Delete a message from the chat
   const deleteMessage = useCallback(async (messageId: string) => {
@@ -197,8 +195,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       heroColor, 
       setHeroColor, 
       isWaitingForResponse,
-      apiKey,
-      setApiKey,
       chatName: activeSession.name,
       chatSessions,
       activeChatId,
