@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
+import ChildHistory from "./pages/ChildHistory";
 import AuthGuard from "./components/auth/AuthGuard";
 
 const queryClient = new QueryClient();
@@ -30,13 +31,21 @@ const App = () => (
                   </AuthGuard>
                 } 
               />
-              <Route 
-                path="/profile" 
+              <Route
+                path="/profile"
                 element={
                   <AuthGuard>
                     <Profile />
                   </AuthGuard>
-                } 
+                }
+              />
+              <Route
+                path="/child-history/:childId"
+                element={
+                  <AuthGuard>
+                    <ChildHistory />
+                  </AuthGuard>
+                }
               />
               <Route path="*" element={<NotFound />} />
             </Routes>

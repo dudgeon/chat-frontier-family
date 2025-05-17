@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
 import EditableField from './EditableField';
+import { Link } from 'react-router-dom';
 
 interface ChildProfile {
   id: string;
@@ -124,6 +125,12 @@ const ChildAccountsSection: React.FC = () => {
               inputClassName="max-w-[250px] border-gray-300"
               buttonClassName="h-7 w-7 text-gray-500 hover:text-gray-700"
             />
+            <Link
+              to={`/child-history/${child.id}`}
+              className="text-xs text-blue-600 hover:underline"
+            >
+              View history
+            </Link>
           </div>
         ))}
       </div>

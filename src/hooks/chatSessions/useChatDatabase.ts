@@ -5,8 +5,19 @@ import { ChatSession } from '@/types/chatContext';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useChatDatabase = () => {
-  // Fetch all sessions for a user
-  const fetchUserSessions = useCallback(async (userId: string) => {
+  // Fetch all sessions for a user. If no userId is provided, use the
+  // currently authenticated user.
+  const fetchUserSessions = useCallback(async (userId?: string) => {
+    if (!userId) {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+      if (error || !user) {
+        throw error || new Error('Unable to determine user');
+      }
+      userId = user.id;
+    }
     try {
       // Fetch all chat sessions for the current user
       const { data, error } = await supabase
