@@ -7,7 +7,7 @@
 
 /* Bot message styling (no bubble) */
 .message-bot {
-  white-space: pre-wrap;
+  white-space: normal;
 }
 
 /* Bot message markdown styling */
