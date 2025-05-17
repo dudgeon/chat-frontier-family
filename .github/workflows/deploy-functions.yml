@@ -23,7 +23,15 @@ jobs:
         with:
           version: latest
 
+     - name: Login to Supabase
+       run: supabase login --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
+
       - name: Deploy Edge Functions
         run: |
-          supabase login --service-role $SUPABASE_ACCESS_TOKEN
-          supabase functions deploy --project-ref $SUPABASE_PROJECT_ID
+          supabase functions deploy \
+            --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}" \
+            --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
+
+      - name: List deployed functions
+        run: supabase functions list --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}" \
+                                    --token "${{ secrets.SUPABASE_ACCESS_TOKEN }}"
