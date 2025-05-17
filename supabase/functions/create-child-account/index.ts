@@ -2,6 +2,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const DEFAULT_CHILD_SYSTEM_MESSAGE =
+  "You are a friendly assistant for children. Keep responses safe and age-appropriate.";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -61,7 +64,7 @@ serve(async (req) => {
       });
     }
 
-    const { email, password, system_message } = await req.json();
+    const { email, password } = await req.json();
 
     if (!email || !password) {
       return new Response(JSON.stringify({ error: 'Email and password required' }), {
@@ -87,7 +90,7 @@ serve(async (req) => {
       id: childUserId,
       parent_id: userId,
       user_role: 'child',
-      system_message: system_message ?? null,
+      system_message: DEFAULT_CHILD_SYSTEM_MESSAGE,
     });
 
     if (insertError) {
