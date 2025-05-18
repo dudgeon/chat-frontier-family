@@ -30,9 +30,9 @@ serve(async (req) => {
       titleGeneration = false,
     } = await req.json();
 
-    const finalInput = input || { messages };
+    const finalInput = input || messages;
 
-    if (!finalInput?.messages || !Array.isArray(finalInput.messages)) {
+    if (!finalInput || !Array.isArray(finalInput)) {
       throw new Error('Invalid or missing messages array');
     }
 
