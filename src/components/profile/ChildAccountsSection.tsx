@@ -87,7 +87,8 @@ const ChildAccountsSection: React.FC = () => {
     }
   };
 
-  if (!isAdult) return null;
+  // Show the section for adult accounts or any user that has children
+  if (!isAdult && children.length === 0 && !loading) return null;
 
   return (
     <div className="space-y-3">
@@ -99,25 +100,31 @@ const ChildAccountsSection: React.FC = () => {
         {children.map((child) => (
           <div key={child.id} className="space-y-1">
             <p className="text-sm font-medium">{child.display_name || child.id}</p>
-            <EditableField
-              value={child.system_message || ''}
-              onChange={(val) =>
-                setChildren((prev) =>
-                  prev.map((c) =>
-                    c.id === child.id ? { ...c, system_message: val } : c
+            {isAdult ? (
+              <EditableField
+                value={child.system_message || ''}
+                onChange={(val) =>
+                  setChildren((prev) =>
+                    prev.map((c) =>
+                      c.id === child.id ? { ...c, system_message: val } : c
+                    )
                   )
-                )
-              }
-              onSave={() =>
-                handleUpdateMessage(
-                  child.id,
-                  children.find((c) => c.id === child.id)?.system_message || ''
-                )
-              }
-              className="text-sm text-muted-foreground"
-              inputClassName="max-w-[250px] border-gray-300"
-              buttonClassName="h-7 w-7 text-gray-500 hover:text-gray-700"
-            />
+                }
+                onSave={() =>
+                  handleUpdateMessage(
+                    child.id,
+                    children.find((c) => c.id === child.id)?.system_message || ''
+                  )
+                }
+                className="text-sm text-muted-foreground"
+                inputClassName="max-w-[250px] border-gray-300"
+                buttonClassName="h-7 w-7 text-gray-500 hover:text-gray-700"
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {child.system_message}
+              </p>
+            )}
             <Link
               to={`/child-history/${child.id}`}
               className="text-xs text-blue-600 hover:underline"
@@ -128,31 +135,33 @@ const ChildAccountsSection: React.FC = () => {
         ))}
       </div>
 
-      <form onSubmit={handleCreateChild} className="space-y-2 pt-4">
-        <Input
-          type="email"
-          placeholder="Child email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <Input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <Input
-          type="text"
-          placeholder="System message"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-        />
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? 'Creating...' : 'Create Child Account'}
-        </Button>
-      </form>
+      {isAdult && (
+        <form onSubmit={handleCreateChild} className="space-y-2 pt-4">
+          <Input
+            type="email"
+            placeholder="Child email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <Input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <Input
+            type="text"
+            placeholder="System message"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+          />
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? 'Creating...' : 'Create Child Account'}
+          </Button>
+        </form>
+      )}
     </div>
   );
 };
