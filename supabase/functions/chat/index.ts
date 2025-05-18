@@ -23,9 +23,16 @@ serve(async (req) => {
     const url = new URL(req.url);
     const streamRequested = url.searchParams.get('stream') === 'true';
 
-    const { messages, model = Deno.env.get('OPENAI_MODEL') || 'gpt-4o', titleGeneration = false } = await req.json();
-    
-    if (!messages || !Array.isArray(messages)) {
+    const {
+      input,
+      messages,
+      model = Deno.env.get('OPENAI_MODEL') || 'gpt-4o',
+      titleGeneration = false,
+    } = await req.json();
+
+    const finalInput = input || { messages };
+
+    if (!finalInput?.messages || !Array.isArray(finalInput.messages)) {
       throw new Error('Invalid or missing messages array');
     }
 
@@ -37,7 +44,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: model,
-        messages,
+        input: finalInput,
         temperature: titleGeneration ? 0.5 : 0.7, // Lower temperature for more predictable titles
         max_tokens: titleGeneration ? 20 : undefined, // Limit token count for titles
         stream: streamRequested,

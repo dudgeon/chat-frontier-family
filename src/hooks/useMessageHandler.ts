@@ -71,7 +71,7 @@ export const useMessageHandler = (
               apikey: anon,
               ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
             },
-            body: JSON.stringify({ messages: openaiMessages }),
+            body: JSON.stringify({ input: { messages: openaiMessages } }),
             signal: controller.signal
           }
         );
