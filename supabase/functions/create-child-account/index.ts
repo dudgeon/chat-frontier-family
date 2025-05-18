@@ -100,18 +100,23 @@ serve(async (req) => {
     );
   }
 
-  /* 5: Insert child profile */
-  const { error: insertErr } = await supabaseAdmin.from('profiles').insert({
-    id: newUser.user.id,
-    parent_id: parentId,
-    user_role: 'child',
-    system_message: DEFAULT_CHILD_SYSTEM_MESSAGE
-  });
-  if (insertErr) {
-    console.error('Insert profile error:', insertErr);
+  /* 5: Update the auto-created child profile */
+  const { error: updateErr } = await supabaseAdmin
+    .from('profiles')
+    .update({
+      parent_id: parentId,
+      user_role: 'child',
+      system_message: DEFAULT_CHILD_SYSTEM_MESSAGE
+    })
+    .eq('id', newUser.user.id);
+  if (updateErr) {
+    console.error('Update profile error:', updateErr);
     return new Response(
-      JSON.stringify({ error: 'Failed to insert child profile' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Failed to update child profile' }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
     );
   }
 
