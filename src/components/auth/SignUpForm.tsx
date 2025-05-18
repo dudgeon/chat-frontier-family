@@ -69,9 +69,7 @@ const SignUpForm: React.FC = () => {
           .from('profiles')
           .upsert({
             id: data.user.id,
-            user_role: 'adult',
-            system_message:
-              'You are a helpful assistant. Provide friendly, concise responses.'
+            user_role: 'adult'
           });
       }
       

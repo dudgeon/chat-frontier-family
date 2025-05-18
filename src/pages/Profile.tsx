@@ -5,6 +5,7 @@ import { useChat } from '@/contexts/ChatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { DEFAULT_ADULT_SYSTEM_MESSAGE, getDefaultSystemMessage } from '@/config/systemMessages';
 
 // Import refactored components
 import ProfileHeader from '@/components/profile/ProfileHeader';
@@ -21,7 +22,7 @@ const Profile: React.FC = () => {
   const [name, setName] = useState(user?.user_metadata?.name || 'User');
   const [email, setEmail] = useState(user?.email || '');
   const [systemMessage, setSystemMessage] = useState(
-    'You are a helpful assistant. Provide friendly, concise responses.'
+    DEFAULT_ADULT_SYSTEM_MESSAGE
   );
   const [loading, setLoading] = useState(false);
   
@@ -43,7 +44,9 @@ const Profile: React.FC = () => {
           setName(data.display_name || name);
           setSystemMessage(
             data.system_message ||
-              'You are a helpful assistant. Provide friendly, concise responses.'
+              getDefaultSystemMessage(
+                (data.user_role === 'child' ? 'child' : 'adult') as 'child' | 'adult'
+              )
           );
         }
       } catch (error) {
