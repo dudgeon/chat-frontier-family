@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Message } from '@/types/chat';
 import { ChatContextType } from '@/types/chatContext';
 import { useMessageHandler } from '@/hooks/useMessageHandler';
@@ -77,10 +77,18 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addMessage: handleMessage
   } = useMessageHandler(initialMessages, systemMessage);
 
-  // Set messages when active session changes or loads
+  // Track the previously active chat ID to detect chat switches
+  const prevChatIdRef = useRef<string | null>(null);
+
+  // Set messages when the active session first loads or when switching chats
   useEffect(() => {
-    if (activeSession && activeSession.messages) {
+    if (!activeSession || !activeSession.messages) return;
+
+    // Only override messages on initial load or when switching chat sessions
+    if (!isInitialized || prevChatIdRef.current !== activeSession.id) {
       setMessages(activeSession.messages);
+      prevChatIdRef.current = activeSession.id;
+
       if (!isInitialized) {
         setIsInitialized(true);
       }
