@@ -6,12 +6,13 @@ import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import DateOfBirthPicker from './DateOfBirthPicker';
+import DateOfBirthInput from './DateOfBirthInput';
 
 const SignUpForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [isOver18, setIsOver18] = useState(true);
   const [dateSelected, setDateSelected] = useState(false);
@@ -57,6 +58,7 @@ const SignUpForm: React.FC = () => {
         options: {
           data: {
             date_of_birth: date.toISOString().split('T')[0],
+            name: name || undefined,
           }
         }
       });
@@ -69,7 +71,8 @@ const SignUpForm: React.FC = () => {
           .from('profiles')
           .upsert({
             id: data.user.id,
-            user_role: 'adult'
+            user_role: 'adult',
+            display_name: name || null
           });
       }
       
@@ -104,6 +107,16 @@ const SignUpForm: React.FC = () => {
           />
         </div>
         <div className="space-y-2">
+          <label htmlFor="signup-name" className="block text-sm font-medium">Name (optional)</label>
+          <Input
+            id="signup-name"
+            type="text"
+            placeholder="Your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
           <label htmlFor="signup-password" className="block text-sm font-medium">Password</label>
           <Input
             id="signup-password"
@@ -114,7 +127,7 @@ const SignUpForm: React.FC = () => {
             required
           />
         </div>
-        <DateOfBirthPicker 
+        <DateOfBirthInput
           date={date}
           setDate={setDate}
           isOver18={isOver18}
