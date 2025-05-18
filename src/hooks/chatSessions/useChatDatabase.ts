@@ -32,9 +32,9 @@ export const useChatDatabase = () => {
         // Format data for our state
         const sessions = await Promise.all(data.map(async (session) => {
           // Fetch messages for this session
-          const { data: messagesData, error: messagesError } = await supabase
+        const { data: messagesData, error: messagesError } = await supabase
             .from('chat_messages')
-            .select('*')
+            .select('id, content, is_user, created_at, session_id')
             .eq('session_id', session.id)
             .order('created_at', { ascending: true });
           
