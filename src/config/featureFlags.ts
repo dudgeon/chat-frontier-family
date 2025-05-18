@@ -16,6 +16,9 @@ export const featureFlags = {
   
   // User management
   userProfiles: true,
+
+  // Subscription features
+  subscriptionTier: false,
   
   // Future features
   imageGeneration: false,
