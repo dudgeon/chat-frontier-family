@@ -96,10 +96,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Set up chat name generation
   useChatNameGenerator(
-    messages, 
-    activeSession.name, 
-    activeChatId, 
-    updateChatName
+    messages,
+    activeSession.name,
+    activeChatId,
+    updateChatName,
+    isWaitingForResponse
   );
 
   // Store the updated message list in the chat sessions
