@@ -104,10 +104,21 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Store the updated message list in the chat sessions
   useEffect(() => {
-    if (activeChatId && messages.length > 0 && isInitialized) {
+    if (
+      activeChatId &&
+      messages.length > 0 &&
+      isInitialized &&
+      !isWaitingForResponse
+    ) {
       updateSessionMessages(messages);
     }
-  }, [messages, activeChatId, isInitialized, updateSessionMessages]);
+  }, [
+    messages,
+    activeChatId,
+    isInitialized,
+    isWaitingForResponse,
+    updateSessionMessages,
+  ]);
 
   // Create a new chat - use useCallback to prevent recreation on every render
   const createNewChat = useCallback(async () => {
