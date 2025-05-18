@@ -1,5 +1,5 @@
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Message } from '@/types/chat';
 import { ChatSession } from '@/types/chatContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,6 +14,11 @@ export const useMessageManagement = (
 ) => {
   const { user } = useAuth();
   const { updateSessionTimestampInDb, saveMessageToDb, initializeSessionName } = useChatDatabase();
+
+  const chatSessionsRef = useRef(chatSessions);
+  useEffect(() => {
+    chatSessionsRef.current = chatSessions;
+  }, [chatSessions]);
 
   // Update messages for active chat
   const updateSessionMessages = useCallback(async (messages: Message[]) => {
@@ -59,7 +64,7 @@ export const useMessageManagement = (
           );
 
           // If session has no name yet and this is the first user message, set a name
-          const session = chatSessions.find(s => s.id === activeChatId);
+          const session = chatSessionsRef.current.find(s => s.id === activeChatId);
           if (session && !session.name && latestMessage.isUser) {
             const newName = generateSessionName(latestMessage.content);
             await initializeSessionName(activeChatId, newName);
@@ -90,7 +95,6 @@ export const useMessageManagement = (
     saveMessageToDb,
     initializeSessionName,
     setChatSessions,
-    chatSessions,
   ]);
   
   return { updateSessionMessages };
