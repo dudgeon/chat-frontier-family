@@ -14,10 +14,12 @@ import AccountTypeSection from '@/components/profile/AccountTypeSection';
 import SubscriptionSection from '@/components/profile/SubscriptionSection';
 import LogoutButton from '@/components/profile/LogoutButton';
 import ChildAccountsSection from '@/components/profile/ChildAccountsSection';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 const Profile: React.FC = () => {
   const { heroColor } = useChat();
   const { user } = useAuth();
+  const { isEnabled } = useFeatureFlags();
   
   const [name, setName] = useState(user?.user_metadata?.name || 'User');
   const [email, setEmail] = useState(user?.email || '');
@@ -132,7 +134,9 @@ const Profile: React.FC = () => {
 
           <ChildAccountsSection />
 
-          <SubscriptionSection />
+          {isEnabled('subscriptionTier') && (
+            <SubscriptionSection />
+          )}
 
           <LogoutButton />
         </div>
