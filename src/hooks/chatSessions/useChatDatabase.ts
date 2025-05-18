@@ -144,6 +144,22 @@ export const useChatDatabase = () => {
     }
   }, []);
 
+  // Set the initial chat name using a SECURITY DEFINER function
+  const initializeSessionName = useCallback(async (chatId: string, name: string) => {
+    try {
+      const { error } = await supabase.rpc('set_session_name', {
+        _session_id: chatId,
+        _name: name
+      });
+
+      if (error) {
+        console.error('Error initializing chat name:', error);
+      }
+    } catch (error) {
+      console.error('Error initializing chat name:', error);
+    }
+  }, []);
+
   // Update session timestamp in the database
   const updateSessionTimestampInDb = useCallback(async (chatId: string, userId: string) => {
     try {
@@ -192,6 +208,7 @@ export const useChatDatabase = () => {
     fetchUserSessions,
     createNewChatInDb,
     updateChatNameInDb,
+    initializeSessionName,
     updateSessionTimestampInDb,
     saveMessageToDb
   };

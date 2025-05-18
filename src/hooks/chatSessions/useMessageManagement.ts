@@ -4,6 +4,7 @@ import { Message } from '@/types/chat';
 import { ChatSession } from '@/types/chatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChatDatabase } from './useChatDatabase';
+import { generateSessionName } from '@/utils/generateSessionName';
 import { toast } from '@/components/ui/use-toast';
 
 export const useMessageManagement = (
@@ -12,7 +13,7 @@ export const useMessageManagement = (
   activeChatId: string
 ) => {
   const { user } = useAuth();
-  const { updateSessionTimestampInDb, saveMessageToDb } = useChatDatabase();
+  const { updateSessionTimestampInDb, saveMessageToDb, initializeSessionName } = useChatDatabase();
 
   // Update messages for active chat
   const updateSessionMessages = useCallback(async (messages: Message[]) => {
@@ -39,10 +40,10 @@ export const useMessageManagement = (
       if (!latestMessage.id) {
         // It's a new message, add it to the database
         const newMessageId = await saveMessageToDb(activeChatId, latestMessage);
-        
+
         if (newMessageId) {
           // Update the message in our state with the new ID
-          setChatSessions(prevSessions => 
+          setChatSessions(prevSessions =>
             prevSessions.map(session => {
               if (session.id === activeChatId) {
                 const updatedMessages = session.messages.map((msg, index) => {
@@ -56,6 +57,18 @@ export const useMessageManagement = (
               return session;
             })
           );
+
+          // If session has no name yet and this is the first user message, set a name
+          const session = chatSessions.find(s => s.id === activeChatId);
+          if (session && !session.name && latestMessage.isUser) {
+            const newName = generateSessionName(latestMessage.content);
+            await initializeSessionName(activeChatId, newName);
+            setChatSessions(prevSessions =>
+              prevSessions.map(s =>
+                s.id === activeChatId ? { ...s, name: newName } : s
+              )
+            );
+          }
         }
       }
     } catch (error) {
@@ -70,7 +83,15 @@ export const useMessageManagement = (
         });
       }
     }
-  }, [activeChatId, user, updateSessionTimestampInDb, saveMessageToDb, setChatSessions]);
+  }, [
+    activeChatId,
+    user,
+    updateSessionTimestampInDb,
+    saveMessageToDb,
+    initializeSessionName,
+    setChatSessions,
+    chatSessions,
+  ]);
   
   return { updateSessionMessages };
 };
