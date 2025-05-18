@@ -9,6 +9,10 @@ import { useChatNameGenerator } from '@/hooks/useChatNameGenerator';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  DEFAULT_ADULT_SYSTEM_MESSAGE,
+  getDefaultSystemMessage
+} from '@/config/systemMessages';
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
@@ -17,7 +21,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { user } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
   const [systemMessage, setSystemMessage] = useState(
-    'You are a helpful assistant. Provide friendly, concise responses.'
+    DEFAULT_ADULT_SYSTEM_MESSAGE
   );
 
   useEffect(() => {
@@ -26,7 +30,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('system_message')
+        .select('system_message, user_role')
         .eq('id', user.id)
         .single();
 
@@ -35,8 +39,16 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      if (data && data.system_message) {
-        setSystemMessage(data.system_message);
+      if (data) {
+        if (data.system_message) {
+          setSystemMessage(data.system_message);
+        } else {
+          setSystemMessage(
+            getDefaultSystemMessage(
+              (data.user_role === 'child' ? 'child' : 'adult') as 'child' | 'adult'
+            )
+          );
+        }
       }
     };
 

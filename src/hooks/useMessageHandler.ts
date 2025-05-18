@@ -1,15 +1,21 @@
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Message } from '@/types/chat';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
+import { DEFAULT_ADULT_SYSTEM_MESSAGE } from '@/config/systemMessages';
 
 export const useMessageHandler = (
   initialMessages: Message[] = [],
-  systemMessage: string = 'You are a helpful assistant. Provide friendly, concise responses.'
+  systemMessage: string = DEFAULT_ADULT_SYSTEM_MESSAGE
 ) => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
+  const systemMessageRef = useRef(systemMessage);
+
+  useEffect(() => {
+    systemMessageRef.current = systemMessage;
+  }, [systemMessage]);
 
   const addMessage = async (content: string, isUser: boolean) => {
     const newMessage: Message = {
@@ -37,7 +43,7 @@ export const useMessageHandler = (
         // Add system message at the beginning
         openaiMessages.unshift({
           role: 'user' as const, // Changed from 'system' to 'user' as a workaround
-          content: systemMessage
+          content: systemMessageRef.current
         });
         
         // Call the Supabase edge function
