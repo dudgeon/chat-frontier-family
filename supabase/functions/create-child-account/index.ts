@@ -92,8 +92,31 @@ serve(async (req) => {
     password,
     email_confirm: true
   });
-  if (createErr || !newUser?.user) {
+  if (createErr) {
+    const msg   = (createErr.message || '').toLowerCase();
+    const isDup =
+      msg.includes('already registered') ||
+      msg.includes('user already')      ||
+      msg.includes('duplicate')         ||
+      msg.includes('23505');
+    if (isDup) {
+      // duplicate email → conflict
+      return new Response(
+        JSON.stringify({ error: 'Email already in use' }),
+        {
+          status: 409,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    // all other auth failures
     console.error('Create user error:', createErr);
+    return new Response(
+      JSON.stringify({ error: 'Failed to create child user' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  if (!newUser?.user) {
     return new Response(
       JSON.stringify({ error: 'Failed to create child user' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
