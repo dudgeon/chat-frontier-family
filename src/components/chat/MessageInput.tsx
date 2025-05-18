@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Send, Loader2, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,18 +17,23 @@ const MessageInput: React.FC<MessageInputProps> = ({
   showVoiceButton = true 
 }) => {
   const [message, setMessage] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const { isWaitingForResponse } = useChat();
 
   const handleSend = () => {
     if (message.trim()) {
       onSendMessage(message);
       setMessage('');
+      // Keep focus on the text entry for follow-up messages
+      inputRef.current?.focus();
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && message.trim()) {
       handleSend();
+      // Keep focus after sending with Enter
+      inputRef.current?.focus();
     }
   };
 
@@ -41,6 +46,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         onKeyDown={handleKeyDown}
         className="flex-1"
         disabled={isWaitingForResponse}
+        ref={inputRef}
       />
       
       {/* Only show the voice button if the feature is enabled */}
