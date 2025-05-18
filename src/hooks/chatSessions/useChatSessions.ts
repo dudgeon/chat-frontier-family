@@ -76,6 +76,14 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
     loadSessions();
   }, [user, fetchUserSessions, createNewChatInDb, setActiveChatId]);
 
+  // Clear sessions when user signs out
+  useEffect(() => {
+    if (!user) {
+      setChatSessions([]);
+      setActiveChatId('');
+    }
+  }, [user, setActiveChatId]);
+
   return { 
     chatSessions, 
     activeChatId, 

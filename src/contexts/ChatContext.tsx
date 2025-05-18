@@ -75,6 +75,13 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [activeSession, setMessages, isInitialized]);
 
+  // Reset messages when user signs out
+  useEffect(() => {
+    if (!user) {
+      setMessages([]);
+    }
+  }, [user, setMessages]);
+
   // Set up chat name generation
   useChatNameGenerator(
     messages, 
