@@ -20,7 +20,7 @@ export const generateChatName = async (messages: Message[]): Promise<string> => 
     const { data, error } = await supabase.functions.invoke('chat', {
       body: { 
         messages: chatHistory,
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-nano',
         titleGeneration: true
       }
     });
