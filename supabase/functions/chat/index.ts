@@ -20,6 +20,9 @@ serve(async (req) => {
       throw new Error('OpenAI API key is not configured');
     }
 
+    const url = new URL(req.url);
+    const streamRequested = url.searchParams.get('stream') === 'true';
+
     const { messages, model = Deno.env.get('OPENAI_MODEL') || 'gpt-4o', titleGeneration = false } = await req.json();
     
     if (!messages || !Array.isArray(messages)) {
@@ -37,6 +40,7 @@ serve(async (req) => {
         messages,
         temperature: titleGeneration ? 0.5 : 0.7, // Lower temperature for more predictable titles
         max_tokens: titleGeneration ? 20 : undefined, // Limit token count for titles
+        stream: streamRequested,
       })
     });
 
@@ -45,18 +49,28 @@ serve(async (req) => {
       throw new Error(errorData.error?.message || 'Error connecting to OpenAI');
     }
 
-    const data = await response.json();
-    const content = data.choices[0].message.content;
-
-    return new Response(
-      JSON.stringify({ content }),
-      { 
-        headers: { 
+    if (streamRequested) {
+      return new Response(response.body, {
+        headers: {
           ...corsHeaders,
-          'Content-Type': 'application/json' 
-        } 
-      }
-    );
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache'
+        }
+      });
+    } else {
+      const data = await response.json();
+      const content = data.choices[0].message.content;
+
+      return new Response(
+        JSON.stringify({ content }),
+        {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    }
   } catch (error) {
     console.error('Error in chat function:', error.message);
     

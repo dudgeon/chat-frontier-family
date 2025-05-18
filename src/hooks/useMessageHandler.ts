@@ -25,60 +25,120 @@ export const useMessageHandler = (
     };
     
     setMessages((prevMessages) => [...prevMessages, newMessage]);
-    
+
     // If this is a user message, get response from the edge function
     if (isUser) {
       setIsWaitingForResponse(true);
-      
+
       try {
         // Format messages for OpenAI API
         const openaiMessages = messages.map(msg => ({
           role: msg.isUser ? 'user' as const : 'assistant' as const,
           content: msg.content
         }));
-        
+
         // Add the new user message
         openaiMessages.push({ role: 'user' as const, content });
-        
+
         // Add system message at the beginning
         openaiMessages.unshift({
           role: 'user' as const, // Changed from 'system' to 'user' as a workaround
           content: systemMessageRef.current
         });
-        
-        // Call the Supabase edge function
-        const { data, error } = await supabase.functions.invoke('chat', {
-          body: { messages: openaiMessages }
-        });
 
-        if (error) {
-          throw new Error(error.message);
+        // Debugging: log the full prompt (system + user)
+        console.log('Full prompt to OpenAI:', openaiMessages);
+
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const session = await supabase.auth.getSession();
+        const accessToken = session.data.session?.access_token;
+
+        const response = await fetch(
+          `${supabaseUrl}/functions/v1/chat?stream=true`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              apikey: anon,
+              ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+            },
+            body: JSON.stringify({ messages: openaiMessages })
+          }
+        );
+
+        if (!response.ok || !response.body) {
+          const errorText = await response.text();
+          throw new Error(errorText);
         }
-        
-        if (data && data.content) {
-          // Add AI response to messages
-          setMessages(prev => [
-            ...prev,
-            { content: data.content, isUser: false, timestamp: Date.now() }
-          ]);
-        } else if (data && data.error) {
-          throw new Error(data.error);
+
+        // Prepare an empty assistant message for streaming updates
+        const assistantMessage: Message = {
+          content: '',
+          isUser: false,
+          timestamp: Date.now()
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let done = false;
+        let currentContent = '';
+
+        while (!done) {
+          const { value, done: doneReading } = await reader.read();
+          if (doneReading) {
+            done = true;
+            break;
+          }
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split('\n');
+          buffer = parts.pop() || '';
+          for (const part of parts) {
+            const line = part.trim();
+            if (!line) continue;
+            if (line.startsWith('data:')) {
+              const dataStr = line.replace(/^data:\s*/, '');
+              if (dataStr === '[DONE]') {
+                done = true;
+                break;
+              }
+              try {
+                const json = JSON.parse(dataStr);
+                const token = json.choices?.[0]?.delta?.content || '';
+                if (token) {
+                  currentContent += token;
+                  setMessages(prev => {
+                    const updated = [...prev];
+                    updated[updated.length - 1] = {
+                      ...updated[updated.length - 1],
+                      content: currentContent
+                    };
+                    return updated;
+                  });
+                }
+              } catch (err) {
+                console.error('Error parsing stream chunk', err);
+              }
+            }
+          }
         }
       } catch (error) {
         console.error('Error getting response:', error);
         toast({
-          title: "Error",
-          description: "Failed to get a response from the AI assistant. Please try again later.",
-          variant: "destructive"
+          title: 'Error',
+          description: 'Failed to get a response from the AI assistant. Please try again later.',
+          variant: 'destructive'
         });
-        
+
         // Add an error message to the chat
         setMessages(prev => [
           ...prev,
-          { 
-            content: "I'm sorry, I couldn't process your request. Please try again later.", 
-            isUser: false, 
-            timestamp: Date.now() 
+          {
+            content: "I'm sorry, I couldn't process your request. Please try again later.",
+            isUser: false,
+            timestamp: Date.now()
           }
         ]);
       } finally {
