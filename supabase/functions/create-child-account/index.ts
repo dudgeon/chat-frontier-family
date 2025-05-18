@@ -100,17 +100,20 @@ serve(async (req) => {
     );
   }
 
-  /* 5: Update the auto-created child profile */
+  /* 5: Insert/update the child profile with the correct role */
   const { error: updateErr } = await supabaseAdmin
     .from('profiles')
-    .update({
-      parent_id: parentId,
-      user_role: 'child',
-      system_message: DEFAULT_CHILD_SYSTEM_MESSAGE
-    })
-    .eq('id', newUser.user.id);
+    .upsert(
+      {
+        id: newUser.user.id,
+        parent_id: parentId,
+        user_role: 'child',
+        system_message: DEFAULT_CHILD_SYSTEM_MESSAGE
+      },
+      { onConflict: 'id' }
+    );
   if (updateErr) {
-    console.error('Update profile error:', updateErr);
+    console.error('Upsert profile error:', updateErr);
     return new Response(
       JSON.stringify({ error: 'Failed to update child profile' }),
       {
