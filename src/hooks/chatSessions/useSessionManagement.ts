@@ -49,7 +49,7 @@ export const useSessionManagement = (
         id: newId,
         name: null,
         messages: [{
-          content: "Hello! I'm powered by GPT-4o. How can I help you today?",
+          content: "Hello! How can I help you today?",
           isUser: false,
           timestamp: Date.now()
         }],
