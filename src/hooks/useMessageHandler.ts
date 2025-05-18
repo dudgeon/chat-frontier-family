@@ -1,5 +1,7 @@
 
 import { useState, useRef, useEffect } from 'react';
+
+const FETCH_TIMEOUT_MS = 30000; // Abort streaming if no response within 30s
 import { Message } from '@/types/chat';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -30,6 +32,9 @@ export const useMessageHandler = (
     if (isUser) {
       setIsWaitingForResponse(true);
 
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      const controller = new AbortController();
+
       try {
         // Format messages for OpenAI API
         const openaiMessages = messages.map(msg => ({
@@ -55,6 +60,8 @@ export const useMessageHandler = (
         const session = await supabase.auth.getSession();
         const accessToken = session.data.session?.access_token;
 
+        timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
         const response = await fetch(
           `${supabaseUrl}/functions/v1/chat?stream=true`,
           {
@@ -64,9 +71,12 @@ export const useMessageHandler = (
               apikey: anon,
               ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
             },
-            body: JSON.stringify({ messages: openaiMessages })
+            body: JSON.stringify({ messages: openaiMessages }),
+            signal: controller.signal
           }
         );
+
+        clearTimeout(timeout);
 
         if (!response.ok || !response.body) {
           const errorText = await response.text();
@@ -126,7 +136,11 @@ export const useMessageHandler = (
           }
         }
       } catch (error) {
-        console.error('Error getting response:', error);
+        if ((error as Error).name === 'AbortError') {
+          console.error('Request timed out');
+        } else {
+          console.error('Error getting response:', error);
+        }
         toast({
           title: 'Error',
           description: 'Failed to get a response from the AI assistant. Please try again later.',
@@ -143,6 +157,7 @@ export const useMessageHandler = (
           }
         ]);
       } finally {
+        if (timeout) clearTimeout(timeout);
         setIsWaitingForResponse(false);
       }
     }
