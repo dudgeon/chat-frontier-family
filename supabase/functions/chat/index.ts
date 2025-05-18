@@ -45,8 +45,14 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'Error connecting to OpenAI');
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Error connecting to OpenAI');
+      } else {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Error connecting to OpenAI');
+      }
     }
 
     if (streamRequested) {
