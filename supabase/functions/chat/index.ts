@@ -29,7 +29,7 @@ serve(async (req) => {
       throw new Error('Invalid or missing messages array');
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/responses', {
+    const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
