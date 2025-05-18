@@ -2,18 +2,15 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 
 const LogoutButton: React.FC = () => {
-  const navigate = useNavigate();
   const { signOut } = useAuth();
   
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate('/login');
     } catch (error) {
       toast({
         title: "Error signing out",
