@@ -40,9 +40,10 @@ export const useMessageHandler = (
         // Add the new user message
         openaiMessages.push({ role: 'user' as const, content });
 
-        // Add system message at the beginning
+        // Add system message at the beginning so the assistant
+        // receives proper context for the conversation
         openaiMessages.unshift({
-          role: 'user' as const, // Changed from 'system' to 'user' as a workaround
+          role: 'system' as const,
           content: systemMessageRef.current
         });
 
