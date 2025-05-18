@@ -45,19 +45,29 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
       
       try {
         const sessions = await fetchUserSessions(user.id);
-        
+
         if (sessions && sessions.length > 0) {
           console.log("Loaded chat sessions:", sessions.length);
-          setChatSessions(sessions);
-          
-          // Set active chat to the most recently updated one
-          const storedActiveId = localStorage.getItem(ACTIVE_SESSION_KEY);
-          const validActiveId = sessions.some(s => s.id === storedActiveId)
-            ? storedActiveId
-            : sessions[0].id;
-          
-          setActiveChatId(validActiveId);
-          localStorage.setItem(ACTIVE_SESSION_KEY, validActiveId);
+
+          setChatSessions(prev => {
+            if (prev.length === 0) return sessions;
+
+            const map = new Map(prev.map(s => [s.id, s]));
+            sessions.forEach(s => {
+              map.set(s.id, { ...map.get(s.id), ...s });
+            });
+            return Array.from(map.values());
+          });
+
+          if (!activeChatId) {
+            const storedActiveId = localStorage.getItem(ACTIVE_SESSION_KEY);
+            const validActiveId = sessions.some(s => s.id === storedActiveId)
+              ? storedActiveId
+              : sessions[0].id;
+
+            setActiveChatId(validActiveId);
+            localStorage.setItem(ACTIVE_SESSION_KEY, validActiveId);
+          }
         } else {
           // No sessions, create a new default one
           console.log("No existing sessions, creating a new one");
