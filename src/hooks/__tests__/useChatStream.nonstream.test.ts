@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { useChatStream } from '../useChatStream';
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook, act } from '@testing-library/react';
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { auth: { getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 't' } } }) } }
