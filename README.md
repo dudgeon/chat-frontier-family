@@ -74,6 +74,13 @@ VITE_OPENAI_MODEL=gpt-4o
 `VITE_OPENAI_MODEL` sets the model used by the edge functions when contacting
 OpenAI.
 
+## Preferred OpenAI API
+
+This project uses the **Responses API** for all OpenAI interactions. The older
+Completions endpoints are intentionally avoided. See
+[`docs/openai_api.md`](docs/openai_api.md) for details and links to official
+documentation.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/a746dae1-d079-4ba9-ad29-1a31653890b4) and click on Share -> Publish.
