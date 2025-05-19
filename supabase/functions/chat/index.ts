@@ -59,9 +59,13 @@ serve(async (req) => {
       store: true,
     };
 
+    if (streamRequested) {
+      createBody["stream"] = true;
+    }
+
     const createResp = await fetch(`${OPENAI_BASE}/v1/responses`, {
       method: "POST",
-      headers: openaiHeaders(apiKey),
+      headers: streamRequested ? sseHeaders(apiKey) : openaiHeaders(apiKey),
       body: JSON.stringify(createBody),
     });
 
@@ -84,23 +88,7 @@ serve(async (req) => {
     }
 
     if (streamRequested) {
-      const events = await fetch(
-        `${OPENAI_BASE}/v1/responses/${responseId}/events`,
-        { headers: sseHeaders(apiKey) },
-      );
-
-      if (!events.ok) {
-        console.error("OpenAI error", await events.text());
-        return new Response(
-          JSON.stringify({ error: "Upstream OpenAI error" }),
-          {
-            status: 502,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          },
-        );
-      }
-
-      return new Response(events.body, {
+      return new Response(createResp.body, {
         headers: {
           ...corsHeaders,
           "Content-Type": "text/event-stream",
