@@ -59,8 +59,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model,
         input: finalMessages,
-        store: true,
-        ...(streamRequested ? { stream: true } : {}),
+        store: true
       }),
     });
 
@@ -145,7 +144,17 @@ serve(async (req) => {
         );
       }
 
-      const content = data.output_text;
+      const content = Array.isArray(data.output)
+        ? data.output
+            .flatMap((item: any) =>
+              Array.isArray(item.content)
+                ? item.content
+                    .filter((c: any) => c.type === "output_text")
+                    .map((c: any) => c.text)
+                : [],
+            )
+            .join("")
+        : data.output_text;
 
       return new Response(JSON.stringify({ content }), {
         headers: {
