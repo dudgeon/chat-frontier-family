@@ -80,13 +80,6 @@ serve(async (req) => {
       );
     }
 
-    const creation = await createResp.json();
-    const responseId = creation.id;
-
-    if (!responseId) {
-      throw new Error("Invalid response ID from OpenAI");
-    }
-
     if (streamRequested) {
       return new Response(createResp.body, {
         headers: {
@@ -95,6 +88,13 @@ serve(async (req) => {
           "Cache-Control": "no-cache",
         },
       });
+    }
+
+    const creation = await createResp.json();
+    const responseId = creation.id;
+
+    if (!responseId) {
+      throw new Error("Invalid response ID from OpenAI");
     }
 
     // Poll for completion
