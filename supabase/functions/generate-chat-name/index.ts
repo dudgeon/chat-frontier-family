@@ -45,7 +45,7 @@ serve(async (req) => {
       headers: openaiHeaders(apiKey),
       body: JSON.stringify({
         model: "gpt-4o-mini",
-        messages: finalMessages,
+        input: finalMessages,
         store: true,
       }),
     });
