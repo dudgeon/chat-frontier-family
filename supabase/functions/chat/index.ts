@@ -11,6 +11,13 @@ function openaiHeaders(apiKey: string) {
   };
 }
 
+function sseHeaders(apiKey: string) {
+  return {
+    ...openaiHeaders(apiKey),
+    Accept: "text/event-stream",
+  };
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -77,7 +84,7 @@ serve(async (req) => {
     if (streamRequested) {
       const events = await fetch(
         `${OPENAI_BASE}/v1/responses/${responseId}/events`,
-        { headers: openaiHeaders(apiKey) },
+        { headers: sseHeaders(apiKey) },
       );
 
       if (!events.ok) {
