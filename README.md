@@ -76,6 +76,28 @@ OpenAI.
 
 ## Preferred OpenAI API
 
+## Quick start: Chat function
+
+To stream tokens:
+```bash
+curl -N -X POST "/functions/v1/chat?stream=true" \
+  -H "Content-Type: application/json" \
+  -d {messages:[role:user]}
+```
+
+To wait for the full response:
+```bash
+curl -X POST "/functions/v1/chat?stream=false" \
+  -H "Content-Type: application/json" \
+  -d {messages:[role:user]}
+```
+
+Streaming responses return `text/event-stream` events while non-stream calls return:
+```json
+{"content":"<final text>"}
+```
+
+
 This project uses the **Responses API** for all OpenAI interactions. The older
 Completions endpoints are intentionally avoided. See
 [`docs/openai_api.md`](docs/openai_api.md) for details and links to official
@@ -135,3 +157,24 @@ This repository includes a workflow that automatically applies migrations when c
   3. Authenticates with your service role key
   4. Applies migrations with `supabase db push`
   5. Shows migration status
+
+## Quick start: Chat function
+
+To stream tokens:
+```bash
+curl -N -X POST "$SUPABASE_URL/functions/v1/chat?stream=true" \
+  -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"Hello"}]}'
+```
+
+To wait for the full response:
+```bash
+curl -X POST "$SUPABASE_URL/functions/v1/chat?stream=false" \
+  -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"Hello"}]}'
+```
+
+Streaming responses return `text/event-stream` events while non-stream calls return:
+```json
+{"content":"<final text>"}
+```
