@@ -58,7 +58,7 @@ serve(async (req) => {
       headers: openaiHeaders(apiKey),
       body: JSON.stringify({
         model,
-        messages: finalMessages,
+        input: finalMessages,
         store: true,
       }),
     });
