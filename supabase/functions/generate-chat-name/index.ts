@@ -108,7 +108,17 @@ serve(async (req) => {
       );
     }
 
-    const title = data.output_text;
+    const title = Array.isArray(data.output)
+      ? data.output
+          .flatMap((item: any) =>
+            Array.isArray(item.content)
+              ? item.content
+                  .filter((c: any) => c.type === "output_text")
+                  .map((c: any) => c.text)
+              : [],
+          )
+          .join("")
+      : data.output_text;
     return new Response(JSON.stringify({ title }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
