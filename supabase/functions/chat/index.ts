@@ -1,148 +1,151 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
+const OPENAI_BASE = "https://api.openai.com";
+
+function openaiHeaders(apiKey: string) {
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${apiKey}`,
+    "OpenAI-Beta": "responses=auto",
+  };
+}
+
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const apiKey = Deno.env.get('OPENAI_API_KEY');
-    
+    const apiKey = Deno.env.get("OPENAI_API_KEY");
+
     if (!apiKey) {
-      throw new Error('OpenAI API key is not configured');
+      throw new Error("OpenAI API key is not configured");
     }
 
     const url = new URL(req.url);
-    const streamRequested = url.searchParams.get('stream') === 'true';
+    const streamRequested = url.searchParams.get("stream") === "true";
 
     const {
       input,
       messages,
-      model = Deno.env.get('OPENAI_MODEL') || 'gpt-4o',
+      model = Deno.env.get("OPENAI_MODEL") || "gpt-4o",
       titleGeneration = false,
     } = await req.json();
 
     const finalInput = input || messages;
 
     if (!finalInput || !Array.isArray(finalInput)) {
-      throw new Error('Invalid or missing messages array');
+      throw new Error("Invalid or missing messages array");
     }
 
-    const createResp = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
+    const createResp = await fetch(`${OPENAI_BASE}/v1/responses`, {
+      method: "POST",
+      headers: openaiHeaders(apiKey),
       body: JSON.stringify({
-        model: model,
+        model: "gpt-4o-mini",
         input: finalInput,
-        temperature: titleGeneration ? 0.5 : 0.7, // Lower temperature for more predictable titles
-        // The responses API no longer accepts the max_tokens parameter
-        // so we simply rely on the prompt to keep titles short.
-        // We do not request streaming directly; retrieval is handled separately
-      })
+        store: true,
+      }),
     });
 
     if (!createResp.ok) {
-      const contentType = createResp.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        const errorData = await createResp.json();
-        throw new Error(errorData.error?.message || 'Error connecting to OpenAI');
-      } else {
-        const errorText = await createResp.text();
-        throw new Error(errorText || 'Error connecting to OpenAI');
-      }
+      const err = await createResp.json();
+      return new Response(JSON.stringify(err), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const creation = await createResp.json();
     const responseId = creation.id;
 
     if (!responseId) {
-      throw new Error('Invalid response ID from OpenAI');
+      throw new Error("Invalid response ID from OpenAI");
     }
 
     if (streamRequested) {
-      const streamResp = await fetch(
-        `https://api.openai.com/v1/responses/${responseId}/events`,
-        {
-          headers: { 'Authorization': `Bearer ${apiKey}` }
-        }
+      const events = await fetch(
+        `${OPENAI_BASE}/v1/responses/${responseId}/events`,
+        { headers: openaiHeaders(apiKey) },
       );
 
-      if (!streamResp.ok) {
-        const errText = await streamResp.text();
-        throw new Error(errText || 'Error streaming from OpenAI');
+      if (!events.ok) {
+        const err = await events.json();
+        return new Response(JSON.stringify(err), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
 
-      return new Response(streamResp.body, {
+      return new Response(events.body, {
         headers: {
           ...corsHeaders,
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache'
-        }
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+        },
       });
     } else {
       // Poll for completion
       let data;
       for (let i = 0; i < 30; i++) {
-        const statusResp = await fetch(
-          `https://api.openai.com/v1/responses/${responseId}`,
-          {
-            headers: { 'Authorization': `Bearer ${apiKey}` }
-          }
+        const finished = await fetch(
+          `${OPENAI_BASE}/v1/responses/${responseId}`,
+          { headers: openaiHeaders(apiKey) },
         );
 
-        if (!statusResp.ok) {
-          const errText = await statusResp.text();
-          throw new Error(errText || 'Error retrieving OpenAI response');
+        if (!finished.ok) {
+          const err = await finished.json();
+          return new Response(JSON.stringify(err), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
         }
 
-        data = await statusResp.json();
+        data = await finished.json();
 
-        if (data.status === 'completed') {
+        if (data.status === "completed") {
           break;
         }
 
         await new Promise((res) => setTimeout(res, 1000));
       }
 
-      if (!data || data.status !== 'completed') {
-        throw new Error('Timed out waiting for OpenAI response');
+      if (!data || data.status !== "completed") {
+        return new Response(
+          JSON.stringify({ error: "Timed out waiting for OpenAI response" }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
 
       const content = data.responses[0].message.content;
 
-      return new Response(
-        JSON.stringify({ content }),
-        {
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      return new Response(JSON.stringify({ content }), {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      });
     }
   } catch (error) {
-    console.error('Error in chat function:', error.message);
-    
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { 
-        status: 500, 
-        headers: { 
-          ...corsHeaders,
-          'Content-Type': 'application/json' 
-        } 
-      }
-    );
+    console.error("Error in chat function:", error.message);
+
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+      },
+    });
   }
 });
