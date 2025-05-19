@@ -53,14 +53,20 @@ serve(async (req) => {
       throw new Error("Invalid or missing messages array");
     }
 
+    const createBody: Record<string, unknown> = {
+      model,
+      input: finalMessages,
+      store: true,
+    };
+
+    if (streamRequested) {
+      createBody["stream"] = true;
+    }
+
     const createResp = await fetch(`${OPENAI_BASE}/v1/responses`, {
       method: "POST",
-      headers: openaiHeaders(apiKey),
-      body: JSON.stringify({
-        model,
-        input: finalMessages,
-        store: true
-      }),
+      headers: streamRequested ? sseHeaders(apiKey) : openaiHeaders(apiKey),
+      body: JSON.stringify(createBody),
     });
 
     if (!createResp.ok) {
@@ -74,6 +80,16 @@ serve(async (req) => {
       );
     }
 
+    if (streamRequested) {
+      return new Response(createResp.body, {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+        },
+      });
+    }
+
     const creation = await createResp.json();
     const responseId = creation.id;
 
@@ -81,33 +97,8 @@ serve(async (req) => {
       throw new Error("Invalid response ID from OpenAI");
     }
 
-    if (streamRequested) {
-      const events = await fetch(
-        `${OPENAI_BASE}/v1/responses/${responseId}/events`,
-        { headers: sseHeaders(apiKey) },
-      );
-
-      if (!events.ok) {
-        console.error("OpenAI error", await events.text());
-        return new Response(
-          JSON.stringify({ error: "Upstream OpenAI error" }),
-          {
-            status: 502,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          },
-        );
-      }
-
-      return new Response(events.body, {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-        },
-      });
-    } else {
-      // Poll for completion
-      let data;
+    // Poll for completion
+    let data;
       for (let i = 0; i < 30; i++) {
         const retrieveUrl = `${OPENAI_BASE}/v1/responses/${responseId}`;
         const finished = await fetch(retrieveUrl, {
@@ -162,7 +153,6 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
       });
-    }
   } catch (error) {
     console.error("Error in chat function:", error.message);
 
