@@ -57,11 +57,14 @@ serve(async (req) => {
     });
 
     if (!createResp.ok) {
-      const err = await createResp.json();
-      return new Response(JSON.stringify(err), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error("OpenAI error", await createResp.text());
+      return new Response(
+        JSON.stringify({ error: "Upstream OpenAI error" }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const creation = await createResp.json();
@@ -78,11 +81,14 @@ serve(async (req) => {
       );
 
       if (!events.ok) {
-        const err = await events.json();
-        return new Response(JSON.stringify(err), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        console.error("OpenAI error", await events.text());
+        return new Response(
+          JSON.stringify({ error: "Upstream OpenAI error" }),
+          {
+            status: 502,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
 
       return new Response(events.body, {
@@ -96,17 +102,20 @@ serve(async (req) => {
       // Poll for completion
       let data;
       for (let i = 0; i < 30; i++) {
-        const finished = await fetch(
-          `${OPENAI_BASE}/v1/responses/${responseId}`,
-          { headers: openaiHeaders(apiKey) },
-        );
+        const retrieveUrl = `${OPENAI_BASE}/v1/responses/${responseId}`;
+        const finished = await fetch(retrieveUrl, {
+          headers: openaiHeaders(apiKey),
+        });
 
         if (!finished.ok) {
-          const err = await finished.json();
-          return new Response(JSON.stringify(err), {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+          console.error("OpenAI error", await finished.text());
+          return new Response(
+            JSON.stringify({ error: "Upstream OpenAI error" }),
+            {
+              status: 502,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
 
         data = await finished.json();
