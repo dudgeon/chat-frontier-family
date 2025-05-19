@@ -75,7 +75,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setMessages,
     isWaitingForResponse,
     addMessage: handleMessage
-  } = useMessageHandler(initialMessages, systemMessage);
+  } = useMessageHandler(initialMessages, systemMessage, activeChatId);
 
   // Track the previously active chat ID to detect chat switches
   const prevChatIdRef = useRef<string | null>(null);
