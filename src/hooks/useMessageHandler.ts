@@ -71,7 +71,7 @@ export const useMessageHandler = (
               apikey: anon,
               ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
             },
-            body: JSON.stringify({ input: openaiMessages }),
+            body: JSON.stringify({ messages: openaiMessages }),
             signal: controller.signal
           }
         );
@@ -117,7 +117,7 @@ export const useMessageHandler = (
               }
               try {
                 const json = JSON.parse(dataStr);
-                const token = json.responses?.[0]?.delta?.content || '';
+                const token = json.response?.delta?.content || '';
                 if (token) {
                   currentContent += token;
                   setMessages(prev => {
