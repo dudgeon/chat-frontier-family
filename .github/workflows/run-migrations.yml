@@ -27,7 +27,10 @@ jobs:
         run: supabase link --project-ref "${{ secrets.SUPABASE_PROJECT_ID }}"
 
       - name: Push migrations
-        run: supabase db push
+        run: supabase db push --non-interactive
+        env:
+          SUPABASE_DB_PASSWORD: "${{ secrets.SUPABASE_DB_PASSWORD }}"
+          PGPASSWORD: "${{ secrets.SUPABASE_DB_PASSWORD }}"
 
       - name: Show migration status
         run: supabase db status
