@@ -116,6 +116,9 @@ This project uses GitHub Actions to automatically deploy Supabase Edge Functions
 ![Migrations](https://github.com/<you>/<repo>/actions/workflows/run-migrations.yml/badge.svg)
 
 Migration SQL files live in `supabase/migrations/`.
+Each migration is written to be idempotent using `IF NOT EXISTS` or
+`CREATE OR REPLACE` so rerunning them won't throw errors if the
+database already contains the objects.
 
 This repository includes a workflow that automatically applies migrations when changes are pushed or the workflow is manually triggered.
 
