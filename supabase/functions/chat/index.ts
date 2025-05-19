@@ -59,13 +59,9 @@ serve(async (req) => {
       store: true,
     };
 
-    if (streamRequested) {
-      createBody["stream"] = true;
-    }
-
     const createResp = await fetch(`${OPENAI_BASE}/v1/responses`, {
       method: "POST",
-      headers: streamRequested ? sseHeaders(apiKey) : openaiHeaders(apiKey),
+      headers: openaiHeaders(apiKey),
       body: JSON.stringify(createBody),
     });
 
@@ -80,21 +76,37 @@ serve(async (req) => {
       );
     }
 
+    const creation = await createResp.json();
+    const responseId = creation.id;
+
+    if (!responseId) {
+      throw new Error("Invalid response ID from OpenAI");
+    }
+
     if (streamRequested) {
-      return new Response(createResp.body, {
+      const events = await fetch(
+        `${OPENAI_BASE}/v1/responses/${responseId}/events`,
+        { headers: sseHeaders(apiKey) },
+      );
+
+      if (!events.ok) {
+        console.error("OpenAI error", await events.text());
+        return new Response(
+          JSON.stringify({ error: "Upstream OpenAI error" }),
+          {
+            status: 502,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      return new Response(events.body, {
         headers: {
           ...corsHeaders,
           "Content-Type": "text/event-stream",
           "Cache-Control": "no-cache",
         },
       });
-    }
-
-    const creation = await createResp.json();
-    const responseId = creation.id;
-
-    if (!responseId) {
-      throw new Error("Invalid response ID from OpenAI");
     }
 
     // Poll for completion
