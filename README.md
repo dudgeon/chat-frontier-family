@@ -102,8 +102,8 @@ This project uses GitHub Actions to automatically deploy Supabase Edge Functions
   - Push to the `main` branch affecting `functions/**`
   - Manual dispatch via the **Actions** tab  
 - **Required repository secrets:**
-  - `SUPABASE_ACCESS_TOKEN` – Your Supabase Service Role Key  
-  - `SUPABASE_PROJECT_ID` – Your Supabase Project Reference  
+- `SUPABASE_ACCESS_TOKEN` – Your Supabase Service Role Key
+- `SUPABASE_PROJECT_ID` – Your Supabase Project Reference
 - **What happens:**
   1. Checks out the repo  
   2. Installs the Supabase CLI  
@@ -126,9 +126,10 @@ This repository includes a workflow that automatically applies migrations when c
 - **Required repository secrets:**
   - `SUPABASE_ACCESS_TOKEN` – Your Supabase Service Role Key
   - `SUPABASE_PROJECT_ID` – Your Supabase Project Reference
+  - `SUPABASE_DB_URL` – Connection string for your project's database
 - **What happens:**
   1. Checks out the repo
   2. Installs the Supabase CLI
   3. Authenticates with your service role key
-  4. Applies migrations with `supabase db push`
+  4. Applies migrations with `supabase db push` using `SUPABASE_DB_URL`
   5. Shows migration status
