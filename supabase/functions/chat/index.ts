@@ -36,7 +36,7 @@ serve(async (req) => {
       throw new Error('Invalid or missing messages array');
     }
 
-    const response = await fetch('https://api.openai.com/v1/responses', {
+    const createResp = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,23 +48,42 @@ serve(async (req) => {
         temperature: titleGeneration ? 0.5 : 0.7, // Lower temperature for more predictable titles
         // The responses API no longer accepts the max_tokens parameter
         // so we simply rely on the prompt to keep titles short.
-        stream: streamRequested,
+        // We do not request streaming directly; retrieval is handled separately
       })
     });
 
-    if (!response.ok) {
-      const contentType = response.headers.get('content-type') || '';
+    if (!createResp.ok) {
+      const contentType = createResp.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
-        const errorData = await response.json();
+        const errorData = await createResp.json();
         throw new Error(errorData.error?.message || 'Error connecting to OpenAI');
       } else {
-        const errorText = await response.text();
+        const errorText = await createResp.text();
         throw new Error(errorText || 'Error connecting to OpenAI');
       }
     }
 
+    const creation = await createResp.json();
+    const responseId = creation.id;
+
+    if (!responseId) {
+      throw new Error('Invalid response ID from OpenAI');
+    }
+
     if (streamRequested) {
-      return new Response(response.body, {
+      const streamResp = await fetch(
+        `https://api.openai.com/v1/responses/${responseId}/events`,
+        {
+          headers: { 'Authorization': `Bearer ${apiKey}` }
+        }
+      );
+
+      if (!streamResp.ok) {
+        const errText = await streamResp.text();
+        throw new Error(errText || 'Error streaming from OpenAI');
+      }
+
+      return new Response(streamResp.body, {
         headers: {
           ...corsHeaders,
           'Content-Type': 'text/event-stream',
@@ -72,7 +91,34 @@ serve(async (req) => {
         }
       });
     } else {
-      const data = await response.json();
+      // Poll for completion
+      let data;
+      for (let i = 0; i < 30; i++) {
+        const statusResp = await fetch(
+          `https://api.openai.com/v1/responses/${responseId}`,
+          {
+            headers: { 'Authorization': `Bearer ${apiKey}` }
+          }
+        );
+
+        if (!statusResp.ok) {
+          const errText = await statusResp.text();
+          throw new Error(errText || 'Error retrieving OpenAI response');
+        }
+
+        data = await statusResp.json();
+
+        if (data.status === 'completed') {
+          break;
+        }
+
+        await new Promise((res) => setTimeout(res, 1000));
+      }
+
+      if (!data || data.status !== 'completed') {
+        throw new Error('Timed out waiting for OpenAI response');
+      }
+
       const content = data.responses[0].message.content;
 
       return new Response(
