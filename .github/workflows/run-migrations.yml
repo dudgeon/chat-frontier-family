@@ -28,6 +28,8 @@ jobs:
 
       - name: Push migrations
         run: supabase db push
+        env:
+          SUPABASE_DB_PASSWORD: "${{ secrets.SUPABASE_DB_PASSWORD }}"
 
       - name: Show migration status
         run: supabase db status
