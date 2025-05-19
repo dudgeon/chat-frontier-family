@@ -135,3 +135,15 @@ This repository includes a workflow that automatically applies migrations when c
   3. Authenticates with your service role key
   4. Applies migrations with `supabase db push`
   5. Shows migration status
+
+## Local SSE Testing
+
+Run `supabase start` and set your `OPENAI_API_KEY` in `.env`. Then execute:
+
+```bash
+curl -N -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"Hello"}]}' \
+  "http://localhost:54321/functions/v1/chat?stream=true"
+```
+
+You should see streaming `data:` events in the terminal.
