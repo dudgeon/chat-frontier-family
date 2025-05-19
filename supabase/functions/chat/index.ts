@@ -60,6 +60,7 @@ serve(async (req) => {
         model,
         input: finalMessages,
         store: true,
+        ...(streamRequested ? { stream: true } : {}),
       }),
     });
 
@@ -144,7 +145,7 @@ serve(async (req) => {
         );
       }
 
-      const content = data.responses[0].message.content;
+      const content = data.output_text;
 
       return new Response(JSON.stringify({ content }), {
         headers: {

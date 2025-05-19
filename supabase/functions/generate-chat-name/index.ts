@@ -108,7 +108,7 @@ serve(async (req) => {
       );
     }
 
-    const title = data.responses[0].message.content;
+    const title = data.output_text;
     return new Response(JSON.stringify({ title }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
