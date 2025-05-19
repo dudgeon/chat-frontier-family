@@ -81,6 +81,28 @@ Completions endpoints are intentionally avoided. See
 [`docs/openai_api.md`](docs/openai_api.md) for details and links to official
 documentation.
 
+### Curl Examples
+
+**Stream tokens**
+```sh
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "apikey: $SUPABASE_ANON_KEY" \
+  -H "Authorization: Bearer $JWT" \
+  -d '{"chatId":"123","messages":[],"stream":true}' \
+  https://your-project.supabase.co/functions/v1/chat -N
+```
+
+**No streaming**
+```sh
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "apikey: $SUPABASE_ANON_KEY" \
+  -H "Authorization: Bearer $JWT" \
+  -d '{"chatId":"123","messages":[],"stream":false}' \
+  https://your-project.supabase.co/functions/v1/chat
+```
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/a746dae1-d079-4ba9-ad29-1a31653890b4) and click on Share -> Publish.
