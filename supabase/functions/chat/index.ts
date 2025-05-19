@@ -47,9 +47,9 @@ serve(async (req) => {
       titleGeneration = false,
     } = await req.json();
 
-    const finalInput = input || messages;
+    const finalMessages = messages || input;
 
-    if (!finalInput || !Array.isArray(finalInput)) {
+    if (!finalMessages || !Array.isArray(finalMessages)) {
       throw new Error("Invalid or missing messages array");
     }
 
@@ -57,8 +57,8 @@ serve(async (req) => {
       method: "POST",
       headers: openaiHeaders(apiKey),
       body: JSON.stringify({
-        model: "gpt-4o-mini",
-        input: finalInput,
+        model,
+        messages: finalMessages,
         store: true,
       }),
     });
