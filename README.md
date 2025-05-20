@@ -82,10 +82,9 @@ These are public keys required at build time. No runtime fetch or proxy is neede
 
 ## Preferred OpenAI API
 
-This project uses the **Responses API** for all OpenAI interactions. The older
-Completions endpoints are intentionally avoided. See
-[`docs/openai_api.md`](docs/openai_api.md) for details and links to official
-documentation.
+The edge function now calls the **Chat Completions API** with `stream:true`.
+The previous two-step Responses API flow has been removed. See
+[`docs/openai_api.md`](docs/openai_api.md) for details.
 
 ### Curl Examples
 
@@ -99,23 +98,11 @@ curl -X POST \
   https://your-project.supabase.co/functions/v1/chat -N
 ```
 
-**No streaming**
-```sh
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -H "apikey: $SUPABASE_ANON_KEY" \
-  -H "Authorization: Bearer $JWT" \
-  -d '{"chatId":"123","messages":[],"stream":false}' \
-  https://your-project.supabase.co/functions/v1/chat
-```
-
 ### Edge function streaming notes
 
-The chat function now relies on Deno fetch automatically following
-redirects when streaming events from OpenAI. There is no longer an
-`OPENAI_BASE` environment variable. Make sure your project secret
-`OPENAI_API_KEY` is set so the edge function can authenticate with
-OpenAI.
+Tokens stream directly from OpenAI without any redirect logic. Ensure the
+`OPENAI_API_KEY` environment variable is set so the function can authenticate
+with the Chat Completions API.
 
 ## How can I deploy this project?
 
