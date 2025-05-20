@@ -91,6 +91,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
     addMessage: handleMessage,
   } = useMessageHandler(initialMessages, systemMessage);
 
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
   // Track the previously active chat ID to detect chat switches
   const prevChatIdRef = useRef<string | null>(null);
 
@@ -212,6 +214,63 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
     [user, handleMessage],
   );
 
+  const generateImage = useCallback(
+    async (prompt: string) => {
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to generate images.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        { content: prompt, isUser: true, timestamp: Date.now() },
+      ]);
+      setIsGeneratingImage(true);
+
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const session = await supabase.auth.getSession();
+        const accessToken = session.data.session?.access_token;
+
+        const resp = await fetch(`${supabaseUrl}/functions/v1/generate-image`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: anon,
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+          },
+          body: JSON.stringify({ prompt }),
+        });
+
+        if (!resp.ok) {
+          throw new Error(await resp.text());
+        }
+
+        const data = await resp.json();
+        const url = data.url;
+        setMessages((prev) => [
+          ...prev,
+          { content: '', isUser: false, timestamp: Date.now(), imageUrl: url },
+        ]);
+      } catch (error) {
+        console.error("Error generating image:", error);
+        toast({
+          title: "Error",
+          description: "Could not generate image. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsGeneratingImage(false);
+      }
+    },
+    [user, setMessages]
+  );
+
   // Delete a message from the chat
   const deleteMessage = useCallback(
     async (messageId: string) => {
@@ -329,7 +388,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
         deleteMessage,
         heroColor,
         setHeroColor,
-        isWaitingForResponse,
+        isWaitingForResponse: isWaitingForResponse || isGeneratingImage,
+        generateImage,
         systemMessage,
         chatName: activeSession.name,
         chatSessions: visibleSessions,

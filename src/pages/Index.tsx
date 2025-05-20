@@ -14,10 +14,11 @@ import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 const Index: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isVoiceModeActive, setIsVoiceModeActive] = useState(false);
-  const { 
-    messages, 
-    addMessage, 
-    heroColor, 
+  const {
+    messages,
+    addMessage,
+    generateImage,
+    heroColor,
     setHeroColor,
     createNewChat
   } = useChat();
@@ -35,6 +36,10 @@ const Index: React.FC = () => {
 
   const handleSendMessage = (message: string) => {
     addMessage(message, true);
+  };
+
+  const handleGenerateImage = (prompt: string) => {
+    generateImage(prompt);
   };
 
   const toggleVoiceMode = () => {
@@ -92,10 +97,12 @@ const Index: React.FC = () => {
         </main>
         
         <div className="fixed bottom-0 left-0 right-0">
-          <MessageInput 
-            onSendMessage={handleSendMessage} 
+          <MessageInput
+            onSendMessage={handleSendMessage}
             onVoiceButtonClick={toggleVoiceMode}
             showVoiceButton={isEnabled('voiceMode')}
+            onGenerateImage={handleGenerateImage}
+            showImageButton={isEnabled('imageGeneration')}
           />
         </div>
       </div>

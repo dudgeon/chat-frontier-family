@@ -53,6 +53,8 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
         >
           {message.isUser ? (
             message.content
+          ) : message.imageUrl ? (
+            <img src={message.imageUrl} alt="Generated" className="max-w-full rounded" />
           ) : (
             <div className="prose prose-sm dark:prose-invert">
               <ReactMarkdown components={{

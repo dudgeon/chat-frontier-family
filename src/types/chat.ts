@@ -3,6 +3,7 @@ export interface Message {
   content: string;
   isUser: boolean;
   timestamp?: number;
+  imageUrl?: string;
   role?: 'user' | 'assistant' | 'system';
 }
 
