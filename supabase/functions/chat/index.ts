@@ -1,15 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
-
-import { fetchOpenAIEvents } from "./openai.ts";
-
-function openaiHeaders(apiKey: string) {
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${apiKey}`,
-    "OpenAI-Beta": "responses=auto",
-  };
-}
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { accumulateAssistantText } from "./utils/accumulate.ts";
 
 
 const corsHeaders = {
@@ -68,106 +60,47 @@ serve(async (req) => {
     model = Deno.env.get("OPENAI_MODEL") || "gpt-4o",
   } = body;
 
-  const url = new URL(req.url);
-  const stream = url.searchParams.get("stream") === "true" || body.stream === true;
-
   if (!messages || !Array.isArray(messages)) {
     return errorResponse(400, "Invalid or missing messages");
   }
 
-  const createResp = await fetch(`https://api.openai.com/v1/responses`, {
+  const openaiResp = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: openaiHeaders(apiKey),
-    body: JSON.stringify({ model, input: messages, store: true }),
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ model, stream: true, messages }),
   });
 
-  if (!createResp.ok) {
-    return errorResponse(createResp.status, await createResp.text());
+  if (!openaiResp.ok || !openaiResp.body) {
+    return errorResponse(openaiResp.status, await openaiResp.text());
   }
 
-  const creation = await createResp.json().catch(() => ({}));
-  const responseId = creation.id || createResp.headers.get("OpenAI-Response-Id");
-  if (!responseId) {
-    return errorResponse(503, "Missing response id");
-  }
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const supabase = supabaseUrl && supabaseKey
+    ? createClient(supabaseUrl, supabaseKey)
+    : null;
 
-  if (stream) {
-    const eventsResp = await fetchOpenAIEvents(responseId, apiKey);
-    if (!eventsResp.ok || !eventsResp.body) {
-      console.error("events fetch failed", eventsResp.status);
-      return errorResponse(eventsResp.status, await eventsResp.text());
+  const [logStream, clientStream] = openaiResp.body.tee();
+  accumulateAssistantText(logStream, (latency) => {
+    const payload = { chat_id: chatId, latency_ms: latency };
+    console.log("[edgeLog]", JSON.stringify(payload));
+    logMetrics(payload);
+  }).then(async (full) => {
+    if (supabase) {
+      await supabase
+        .from("chat_messages")
+        .insert({ chat_id: chatId, role: "assistant", content: full });
     }
-    if (eventsResp.status !== 200) {
-      console.log(
-        "[edgeLog]",
-        JSON.stringify({ upstream_status: eventsResp.status }),
-      );
-    }
+  });
 
-    const start = Date.now();
-    const [logStream, clientStream] = eventsResp.body.tee();
-    (async () => {
-      const reader = logStream.getReader();
-      let logged = false;
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        if (!logged) {
-          logged = true;
-          const latency = Date.now() - start;
-          const payload = {
-            chat_id: chatId,
-            openai_response_id: responseId,
-            latency_ms: latency,
-          };
-          console.log("[edgeLog]", JSON.stringify(payload));
-          await logMetrics(payload);
-        }
-      }
-    })();
-
-    console.log("Returning stream response", clientStream);
-    return new Response(clientStream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Access-Control-Allow-Origin": "*",
-        "X-Accel-Buffering": "no",
-      },
-    });
-  }
-
-  const retrieveUrl = `https://api.openai.com/v1/responses/${responseId}`;
-  let data: any;
-  for (let i = 0; i < 30; i++) {
-    const res = await fetch(retrieveUrl, { headers: openaiHeaders(apiKey) });
-    if (!res.ok) {
-      return errorResponse(res.status, await res.text());
-    }
-    data = await res.json();
-    if (data.status === "completed") break;
-    await new Promise((r) => setTimeout(r, 1000));
-  }
-  if (!data || data.status !== "completed") {
-    return errorResponse(503, "Timed out waiting for OpenAI response");
-  }
-
-  const content = Array.isArray(data.output)
-    ? data.output
-        .flatMap((item: any) =>
-          Array.isArray(item.content)
-            ? item.content
-                .filter((c: any) => c.type === "output_text")
-                .map((c: any) => c.text)
-            : [],
-        )
-        .join("")
-    : data.output_text;
-
-  return new Response(JSON.stringify({ content }), {
+  return new Response(clientStream, {
     headers: {
-      ...corsHeaders,
-      "Content-Type": "application/json",
-      "X-Stream": "false",
+      "Content-Type": "text/event-stream",
+      "Access-Control-Allow-Origin": "*",
+      "X-Accel-Buffering": "no",
     },
   });
 });
