@@ -29,7 +29,10 @@ export async function parseSseStream(
             onImage?.(payload.url);
           } else {
             const delta =
-              payload.delta ?? payload.response?.delta?.content ?? '';
+              payload.delta ??
+              payload.response?.delta?.content ??
+              payload.choices?.[0]?.delta?.content ??
+              '';
             if (delta) onToken?.(delta);
           }
         } catch (err) {
