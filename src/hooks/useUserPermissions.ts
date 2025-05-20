@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getSupabase } from '@/lib/supa';
+import { supabase } from '@/lib/supa';
 import { UserPermissions, UserRole, SubscriptionTier, UserFeatureAccess } from '@/types/userTypes';
 
 export const useUserPermissions = (): {
@@ -36,7 +36,6 @@ export const useUserPermissions = (): {
       }
       
       try {
-        const supabase = await getSupabase();
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('user_role, subscription_tier, system_message')

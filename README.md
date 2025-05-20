@@ -74,6 +74,13 @@ VITE_OPENAI_MODEL=gpt-4o
 `VITE_OPENAI_MODEL` sets the model used by the edge functions when contacting
 OpenAI.
 
+### Netlify environment variables
+Set in the Netlify UI → Site Settings → Environment variables:
+  VITE_SUPABASE_URL        = https://<project>.supabase.co
+  VITE_SUPABASE_ANON_KEY   = eyJhbGciOiJI...
+The VITE_ prefix makes Vite inject them at build time.
+No runtime fetch or proxy is required.
+
 ## Preferred OpenAI API
 
 This project uses the **Responses API** for all OpenAI interactions. The older

@@ -1,6 +1,5 @@
 import { useRef } from 'react';
-import { getSupabase } from '@/lib/supa';
-import { getRuntimeConfig } from '@/lib/runtimeConfig';
+import { supabase } from '@/lib/supa';
 
 export async function parseSseStream(
   stream: ReadableStream<Uint8Array>,
@@ -57,10 +56,10 @@ export const useChatStream = () => {
     const controller = new AbortController();
     ctrlRef.current = controller;
 
-    const supabase = await getSupabase();
     const { data } = await supabase.auth.getSession();
     const access = data.session?.access_token;
-    const { supabaseUrl, supabaseAnonKey: anon } = await getRuntimeConfig();
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
     const url = `${supabaseUrl}/functions/v1/chat`;
 
     const resp = await fetch(url, {

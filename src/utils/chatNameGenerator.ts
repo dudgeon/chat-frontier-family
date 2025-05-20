@@ -1,10 +1,9 @@
 
 import { Message } from '@/types/chat';
-import { getSupabase } from '@/lib/supa';
+import { supabase } from '@/lib/supa';
 
 export const generateChatName = async (messages: Message[]): Promise<string> => {
   try {
-    const supabase = await getSupabase();
     // Format messages for the API
     const chatHistory = messages.map(msg => ({
       role: msg.isUser ? 'user' : 'assistant',
