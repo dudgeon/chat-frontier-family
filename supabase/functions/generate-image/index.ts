@@ -57,7 +57,16 @@ serve(async (req) => {
   }
 
   const data = await openaiResp.json();
-  const url = data.data?.[0]?.url;
+  const url = data?.data?.[0]?.url;
+
+  // Debug log - remove in production
+  console.log("OpenAI response data:", JSON.stringify(data));
+  console.log("Extracted image URL:", url);
+
+  if (!url) {
+    return errorResponse(502, "No image URL returned from OpenAI.");
+  }
+
   return new Response(JSON.stringify({ url }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
