@@ -72,8 +72,10 @@ serve(async (req) => {
     chatId,
     messages = body.input,
     model = Deno.env.get("OPENAI_MODEL") || "gpt-4o",
-    stream = false,
   } = body;
+
+  const url = new URL(req.url);
+  const stream = url.searchParams.get("stream") === "true" || body.stream === true;
 
   if (!messages || !Array.isArray(messages)) {
     return errorResponse(400, "Invalid or missing messages");
@@ -126,6 +128,7 @@ serve(async (req) => {
       }
     })();
 
+    console.log("Returning stream response", clientStream);
     return new Response(clientStream, {
       headers: {
         "Content-Type": "text/event-stream",
