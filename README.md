@@ -52,6 +52,23 @@ netlify deploy --prod
 
 Supabase edge functions are deployed separately using the `supabase` CLI (see quick start above).
 
+### Edge functions
+
+| Endpoint | Purpose |
+| -------- | ------- |
+| `/functions/v1/hideSession` | Mark a chat session as hidden |
+| `/functions/v1/deleteSession` | Soft delete a chat session |
+
+Example request:
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{"id":"uuid"}' \
+  https://<project>.supabase.co/functions/v1/hideSession
+```
+
 ### GitHub Actions
 
 Automated CI workflows handle Supabase deploys and migrations.

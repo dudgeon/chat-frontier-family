@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { EyeOff, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supa";
+import { toast } from "@/components/ui/use-toast";
 
 interface Props {
   session: { id: string; title: string };
@@ -10,6 +11,36 @@ interface Props {
 export default function ChatSessionRow({ session, onSelect }: Props) {
   const [show, setShow] = useState(false);
   const toggle = () => setShow((v) => !v);
+
+  const hide = async () => {
+    const { error } = await supabase.functions.invoke("hideSession", {
+      body: { id: session.id },
+    });
+    if (error) {
+      toast({
+        title: "Failed to hide chat",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Chat hidden" });
+    }
+  };
+
+  const remove = async () => {
+    const { error } = await supabase.functions.invoke("deleteSession", {
+      body: { id: session.id },
+    });
+    if (error) {
+      toast({
+        title: "Failed to delete chat",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Chat deleted" });
+    }
+  };
 
   return (
     <li
@@ -26,7 +57,7 @@ export default function ChatSessionRow({ session, onSelect }: Props) {
           aria-label="Hide session"
           onClick={(e) => {
             e.stopPropagation();
-            supabase.functions.invoke("hideSession", { id: session.id });
+            hide();
           }}
           className="p-1 rounded hover:bg-muted pointer-events-auto"
         >
@@ -36,7 +67,7 @@ export default function ChatSessionRow({ session, onSelect }: Props) {
           aria-label="Delete session"
           onClick={(e) => {
             e.stopPropagation();
-            supabase.functions.invoke("deleteSession", { id: session.id });
+            remove();
           }}
           className="p-1 rounded hover:bg-destructive/20 pointer-events-auto"
         >
