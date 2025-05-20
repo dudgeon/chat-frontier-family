@@ -109,6 +109,14 @@ curl -X POST \
   https://your-project.supabase.co/functions/v1/chat
 ```
 
+### Edge function streaming notes
+
+The chat function now relies on Deno fetch automatically following
+redirects when streaming events from OpenAI. There is no longer an
+`OPENAI_BASE` environment variable. Make sure your project secret
+`OPENAI_API_KEY` is set so the edge function can authenticate with
+OpenAI.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/a746dae1-d079-4ba9-ad29-1a31653890b4) and click on Share -> Publish.

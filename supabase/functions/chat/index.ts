@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
-const OPENAI_BASE = "https://api.openai.com";
+import { fetchOpenAIEvents } from "./openai.ts";
 
 function openaiHeaders(apiKey: string) {
   return {
@@ -11,12 +11,6 @@ function openaiHeaders(apiKey: string) {
   };
 }
 
-function sseHeaders(apiKey: string) {
-  return {
-    ...openaiHeaders(apiKey),
-    Accept: "text/event-stream",
-  };
-}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -81,7 +75,7 @@ serve(async (req) => {
     return errorResponse(400, "Invalid or missing messages");
   }
 
-  const createResp = await fetch(`${OPENAI_BASE}/v1/responses`, {
+  const createResp = await fetch(`https://api.openai.com/v1/responses`, {
     method: "POST",
     headers: openaiHeaders(apiKey),
     body: JSON.stringify({ model, input: messages, store: true }),
@@ -98,30 +92,16 @@ serve(async (req) => {
   }
 
   if (stream) {
-    const eventsUrl = `${OPENAI_BASE}/v1/responses/${responseId}/events`;
-    console.log("Fetching", eventsUrl);
-    let eventsResp = await fetch(eventsUrl, {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        Accept: "text/event-stream",
-      },
-    });
-    if (eventsResp.status >= 300 && eventsResp.status < 400) {
-      const loc = eventsResp.headers.get("location");
-      if (loc) {
-        const newUrl = loc.startsWith("http")
-          ? loc
-          : `https://api.openai.com${loc}`;
-        eventsResp = await fetch(newUrl, {
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            Accept: "text/event-stream",
-          },
-        });
-      }
-    }
+    const eventsResp = await fetchOpenAIEvents(responseId, apiKey);
     if (!eventsResp.ok || !eventsResp.body) {
+      console.error("events fetch failed", eventsResp.status);
       return errorResponse(eventsResp.status, await eventsResp.text());
+    }
+    if (eventsResp.status !== 200) {
+      console.log(
+        "[edgeLog]",
+        JSON.stringify({ upstream_status: eventsResp.status }),
+      );
     }
 
     const start = Date.now();
@@ -156,7 +136,7 @@ serve(async (req) => {
     });
   }
 
-  const retrieveUrl = `${OPENAI_BASE}/v1/responses/${responseId}`;
+  const retrieveUrl = `https://api.openai.com/v1/responses/${responseId}`;
   let data: any;
   for (let i = 0; i < 30; i++) {
     const res = await fetch(retrieveUrl, { headers: openaiHeaders(apiKey) });
