@@ -1,20 +1,19 @@
-
-import { useState, useEffect } from 'react';
-import { Message } from '@/types/chat';
-import { ChatSession, ACTIVE_SESSION_KEY } from '@/types/chatContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { useChatDatabase } from './useChatDatabase';
-import { useActiveSession } from './useActiveSession';
-import { useSessionManagement } from './useSessionManagement';
-import { useMessageManagement } from './useMessageManagement';
+import { useState, useEffect } from "react";
+import { Message } from "@/types/chat";
+import { ChatSession, ACTIVE_SESSION_KEY } from "@/types/chatContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useChatDatabase } from "./useChatDatabase";
+import { useActiveSession } from "./useActiveSession";
+import { useSessionManagement } from "./useSessionManagement";
+import { useMessageManagement } from "./useMessageManagement";
 
 export const useChatSessions = (initialMessages: Message[] = []) => {
   const { user } = useAuth();
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const { fetchUserSessions, createNewChatInDb } = useChatDatabase();
-  
+
   const {
     activeChatId,
     setActiveChatId,
@@ -22,16 +21,22 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
     hiddenSessionIds,
     hideSession,
     unhideSession,
-    visibleSessions
+    visibleSessions,
   } = useActiveSession(chatSessions);
-  
-  const {
-    createNewChat,
-    switchToChat,
-    updateChatName
-  } = useSessionManagement(chatSessions, setChatSessions, activeChatId, setActiveChatId);
-  
-  const { updateSessionMessages } = useMessageManagement(chatSessions, setChatSessions, activeChatId);
+
+  const { createNewChat, switchToChat, updateChatName, deleteChat } =
+    useSessionManagement(
+      chatSessions,
+      setChatSessions,
+      activeChatId,
+      setActiveChatId,
+    );
+
+  const { updateSessionMessages } = useMessageManagement(
+    chatSessions,
+    setChatSessions,
+    activeChatId,
+  );
 
   // Load sessions from database when user is authenticated
   useEffect(() => {
@@ -40,20 +45,20 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
         setIsLoading(false);
         return;
       }
-      
+
       setIsLoading(true);
-      
+
       try {
         const sessions = await fetchUserSessions(user.id);
 
         if (sessions && sessions.length > 0) {
           console.log("Loaded chat sessions:", sessions.length);
 
-          setChatSessions(prev => {
+          setChatSessions((prev) => {
             if (prev.length === 0) return sessions;
 
-            const map = new Map(prev.map(s => [s.id, s]));
-            sessions.forEach(s => {
+            const map = new Map(prev.map((s) => [s.id, s]));
+            sessions.forEach((s) => {
               map.set(s.id, { ...map.get(s.id), ...s });
             });
             return Array.from(map.values());
@@ -61,7 +66,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
 
           if (!activeChatId) {
             const storedActiveId = localStorage.getItem(ACTIVE_SESSION_KEY);
-            const validActiveId = sessions.some(s => s.id === storedActiveId)
+            const validActiveId = sessions.some((s) => s.id === storedActiveId)
               ? storedActiveId
               : sessions[0].id;
 
@@ -77,12 +82,12 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
           localStorage.setItem(ACTIVE_SESSION_KEY, newSession.id);
         }
       } catch (error) {
-        console.error('Error fetching chat sessions:', error);
+        console.error("Error fetching chat sessions:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     loadSessions();
   }, [user, fetchUserSessions, createNewChatInDb, setActiveChatId]);
 
@@ -90,22 +95,24 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
   useEffect(() => {
     if (!user) {
       setChatSessions([]);
-      setActiveChatId('');
+      setActiveChatId("");
     }
   }, [user, setActiveChatId]);
 
-  return { 
-    chatSessions, 
-    activeChatId, 
+  return {
+    chatSessions,
+    activeChatId,
     activeSession,
     isLoading,
     createNewChat,
     switchToChat,
     updateChatName,
+    deleteChat,
     updateSessionMessages,
     hiddenSessionIds,
     hideSession,
     unhideSession,
-    visibleSessions
+    visibleSessions,
+    deleteChat,
   };
 };
