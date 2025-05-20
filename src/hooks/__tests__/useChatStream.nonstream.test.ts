@@ -3,7 +3,9 @@ import { useChatStream } from '../useChatStream';
 import { renderHook, act } from '@testing-library/react';
 
 vi.mock('@/lib/supa', () => ({
-  getSupabase: async () => ({ auth: { getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 't' } } }) } })
+  supabase: {
+    auth: { getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 't' } } }) }
+  }
 }));
 
 global.fetch = vi.fn().mockResolvedValue({
