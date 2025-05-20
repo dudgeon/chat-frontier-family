@@ -14,33 +14,39 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  if (!supabaseUrl || !anonKey) {
-    return jsonResponse({ error: "Missing Supabase env vars" }, 500);
-  }
+  const url = Deno.env.get("SUPABASE_URL")!;
+  const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-  const supabase = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: req.headers.get("authorization")! } },
+  const jwtFromCaller =
+    req.headers.get("authorization")?.replace("Bearer ", "");
+
+  const supabase = createClient(url, anon, {
+    global: {
+      headers: { authorization: `Bearer ${jwtFromCaller}` },
+    },
   });
 
   let body: { id?: string };
-  try { body = await req.json(); } catch { body = {}; }
+  try {
+    body = await req.json();
+  } catch {
+    body = {};
+  }
 
   if (!body.id) {
     return jsonResponse({ error: "id required" }, 400);
   }
 
-  const { data: userData, error: userErr } = await supabase.auth.getUser();
-  if (userErr || !userData?.user) {
+  if (!jwtFromCaller) {
     return jsonResponse({ error: "Unauthorized" }, 401);
   }
 
-  const { error } = await supabase
+  const query = supabase
     .from("chat_sessions")
     .update({ deleted_at: new Date().toISOString() })
-    .eq("id", body.id)
-    .eq("user_id", userData.user.id);
+    .eq("id", body.id);
+
+  const { error } = await query;
 
   if (error) return jsonResponse({ error: error.message }, 500);
   return jsonResponse({ success: true });
