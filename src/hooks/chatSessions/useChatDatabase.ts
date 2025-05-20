@@ -2,12 +2,13 @@
 import { useCallback } from 'react';
 import { Message } from '@/types/chat';
 import { ChatSession } from '@/types/chatContext';
-import { supabase } from '@/integrations/supabase/client';
+import { getSupabase } from '@/lib/supa';
 
 export const useChatDatabase = () => {
   // Fetch all sessions for a user. If no userId is provided, use the
   // currently authenticated user.
   const fetchUserSessions = useCallback(async (userId?: string) => {
+    const supabase = await getSupabase();
     if (!userId) {
       const {
         data: { user },
@@ -68,6 +69,7 @@ export const useChatDatabase = () => {
 
   // Create a new chat in the database
   const createNewChatInDb = useCallback(async (userId: string) => {
+    const supabase = await getSupabase();
     if (!userId) {
       throw new Error('User must be logged in to create a chat');
     }
@@ -129,6 +131,7 @@ export const useChatDatabase = () => {
 
   // Update a chat name in the database
   const updateChatNameInDb = useCallback(async (chatId: string, userId: string, newName: string) => {
+    const supabase = await getSupabase();
     try {
       const { error } = await supabase
         .from('chat_sessions')
@@ -146,6 +149,7 @@ export const useChatDatabase = () => {
 
   // Set the initial chat name using a SECURITY DEFINER function
   const initializeSessionName = useCallback(async (chatId: string, name: string) => {
+    const supabase = await getSupabase();
     try {
       const { error } = await supabase.rpc('set_session_name', {
         _session_id: chatId,
@@ -162,6 +166,7 @@ export const useChatDatabase = () => {
 
   // Update session timestamp in the database
   const updateSessionTimestampInDb = useCallback(async (chatId: string, userId: string) => {
+    const supabase = await getSupabase();
     try {
       const { error } = await supabase
         .from('chat_sessions')
@@ -179,6 +184,7 @@ export const useChatDatabase = () => {
 
   // Save a message to the database
   const saveMessageToDb = useCallback(async (chatId: string, message: Message) => {
+    const supabase = await getSupabase();
     try {
       const { data, error } = await supabase
         .from('chat_messages')

@@ -3,7 +3,8 @@ import { useState, useRef, useEffect } from 'react';
 
 const FETCH_TIMEOUT_MS = 30000; // Abort streaming if no response within 30s
 import { Message } from '@/types/chat';
-import { supabase } from '@/integrations/supabase/client';
+import { getSupabase } from '@/lib/supa';
+import { getRuntimeConfig } from '@/lib/runtimeConfig';
 import { toast } from '@/components/ui/use-toast';
 import { DEFAULT_ADULT_SYSTEM_MESSAGE } from '@/config/systemMessages';
 
@@ -55,8 +56,8 @@ export const useMessageHandler = (
         // Debugging: log the full prompt (system + user)
         console.log('Full prompt to OpenAI:', openaiMessages);
 
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const { supabaseUrl, supabaseAnonKey: anon } = await getRuntimeConfig();
+        const supabase = await getSupabase();
         const session = await supabase.auth.getSession();
         const accessToken = session.data.session?.access_token;
 
