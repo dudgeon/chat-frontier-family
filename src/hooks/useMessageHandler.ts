@@ -25,11 +25,64 @@ export const useMessageHandler = (
       isUser,
       timestamp: Date.now(),
     };
-    
+
     setMessages((prevMessages) => [...prevMessages, newMessage]);
 
     // If this is a user message, get response from the edge function
     if (isUser) {
+      // Handle /image prompt for DALL-E generation
+      if (content.startsWith('/image ')) {
+        const prompt = content.slice(7).trim();
+        if (prompt) {
+          setIsWaitingForResponse(true);
+          try {
+            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+            const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
+            const session = await supabase.auth.getSession();
+            const accessToken = session.data.session?.access_token;
+
+            const resp = await fetch(`${supabaseUrl}/functions/v1/generate-image`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                apikey: anon,
+                ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+              },
+              body: JSON.stringify({ prompt })
+            });
+
+            if (!resp.ok) {
+              throw new Error(await resp.text());
+            }
+
+            const data = await resp.json();
+            const url = data.url as string | undefined;
+            if (url) {
+              setMessages(prev => [
+                ...prev,
+                {
+                  content: `![Generated Image](${url})`,
+                  isUser: false,
+                  timestamp: Date.now()
+                }
+              ]);
+            } else {
+              throw new Error('No image URL received');
+            }
+          } catch (err) {
+            console.error('Image generation error', err);
+            toast({
+              title: 'Image generation failed',
+              description: 'Unable to generate the requested image.',
+              variant: 'destructive'
+            });
+          } finally {
+            setIsWaitingForResponse(false);
+          }
+          return;
+        }
+      }
+
       setIsWaitingForResponse(true);
 
       let timeout: ReturnType<typeof setTimeout> | undefined;
