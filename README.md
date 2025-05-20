@@ -1,160 +1,85 @@
-# Welcome to your Lovable project
+# Chat Streaming App
 
-## Project info
+[View architecture diagram](docs/architecture.md)
 
-**URL**: https://lovable.dev/projects/a746dae1-d079-4ba9-ad29-1a31653890b4
+## Quick Start
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/a746dae1-d079-4ba9-ad29-1a31653890b4) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+bun install
+bun run dev
 ```
 
-**Edit a file directly in GitHub**
+Production build:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## Configuration
-
-The application expects the following environment variables when running in the browser:
-
-```
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
-VITE_OPENAI_MODEL=gpt-4o
+```bash
+bun run build
+bun run preview
 ```
 
-`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` configure the Supabase connection.
-`VITE_OPENAI_MODEL` sets the model used by the edge functions when contacting
-OpenAI.
+Deploy Supabase edge function:
 
-### Netlify environment variables
-Set in Netlify → Site settings → Env vars:
-  VITE_SUPABASE_URL        = https://<project-ref>.supabase.co
-  VITE_SUPABASE_ANON_KEY   = eyJhbGciOiJI...
-These are public keys required at build time. No runtime fetch or proxy is needed.
-
-## Preferred OpenAI API
-
-The edge function now calls the **Chat Completions API** with `stream:true`.
-The previous two-step Responses API flow has been removed. See
-[`docs/openai_api.md`](docs/openai_api.md) for details.
-
-### Curl Examples
-
-**Stream tokens**
-```sh
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -H "apikey: $SUPABASE_ANON_KEY" \
-  -H "Authorization: Bearer $JWT" \
-  -d '{"chatId":"123","messages":[],"stream":true}' \
-  https://your-project.supabase.co/functions/v1/chat -N
+```bash
+supabase functions deploy chat --project-ref <project-id>
 ```
 
-### Edge function streaming notes
+## Environment Variables
 
-Tokens stream directly from OpenAI without any redirect logic. Ensure the
-`OPENAI_API_KEY` environment variable is set so the function can authenticate
-with the Chat Completions API.
+| Name | Purpose |
+| ---- | ------- |
+| `VITE_SUPABASE_URL` | Supabase project URL for the client |
+| `VITE_SUPABASE_ANON_KEY` | Public anon key for browser requests |
+| `OPENAI_API_KEY` | Server key for OpenAI requests |
+| `ENABLE_METRICS` | When set, log latency to `edge_logs` table |
+| `SUPABASE_URL` | Supabase URL for edge functions |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key for edge inserts |
 
-## How can I deploy this project?
+## Streaming Chat Flow
 
-Simply open [Lovable](https://lovable.dev/projects/a746dae1-d079-4ba9-ad29-1a31653890b4) and click on Share -> Publish.
+1. User submits a message.
+2. Browser calls the `/chat` edge function with `stream: true`.
+3. Edge forwards the request to `OpenAI /chat/completions`.
+4. OpenAI streams tokens back via SSE.
+5. Edge relays tokens to the browser while accumulating full text.
+6. After the stream finishes, the assistant text is inserted into `chat_messages`.
 
-## Can I connect a custom domain to my Lovable project?
+## Deploy
 
-Yes, you can!
+This project can be hosted on Netlify. Configure the environment variables above and run:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```bash
+netlify deploy --prod
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Supabase edge functions are deployed separately using the `supabase` CLI (see quick start above).
 
-## Deployment
+### GitHub Actions
 
-This project uses GitHub Actions to automatically deploy Supabase Edge Functions whenever code under `functions/` changes:
+Automated CI workflows handle Supabase deploys and migrations.
 
-- **Workflow file:** `.github/workflows/deploy-functions.yml`  
-- **Triggers:**
-  - Push to the `main` branch affecting `functions/**`
-  - Manual dispatch via the **Actions** tab  
-- **Required repository secrets:**
-  - `SUPABASE_ACCESS_TOKEN` – Your Supabase Service Role Key  
-  - `SUPABASE_PROJECT_ID` – Your Supabase Project Reference  
-- **What happens:**
-  1. Checks out the repo  
-  2. Installs the Supabase CLI  
-  3. Authenticates with your service role key  
-  4. Deploys all functions in `functions/`  
-- **To manually run:** Go to **Actions ➔ Deploy Supabase Edge Functions** and click **Run workflow**.
+#### Deploy Edge Functions
 
-## Database Migrations
+- **Workflow:** `.github/workflows/deploy-functions.yml`
+- **Triggers:** push to `main` under `supabase/functions/**` or manual dispatch
+- **Secrets:** `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID`
+
+#### Run Migrations
 
 ![Migrations](https://github.com/<you>/<repo>/actions/workflows/run-migrations.yml/badge.svg)
 
-Migration SQL files live in `supabase/migrations/`.
-Each migration is written to be idempotent using `IF NOT EXISTS` or
-`CREATE OR REPLACE` so rerunning them won't throw errors if the
-database already contains the objects.
+- **Workflow:** `.github/workflows/run-migrations.yml`
+- **Triggers:** push to `main` under `supabase/migrations/**` or manual dispatch
+- **Secrets:** `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID`
 
-This repository includes a workflow that automatically applies migrations when changes are pushed or the workflow is manually triggered.
+## Troubleshooting
 
-- **Workflow file:** `.github/workflows/run-migrations.yml`
-- **Triggers:**
-  - Push to the `main` branch affecting `supabase/migrations/**`
-  - Manual dispatch via the **Actions** tab
-- **Required repository secrets:**
-  - `SUPABASE_ACCESS_TOKEN` – Your Supabase Service Role Key
-  - `SUPABASE_PROJECT_ID` – Your Supabase Project Reference
-- **What happens:**
-  1. Checks out the repo
-  2. Installs the Supabase CLI
-  3. Authenticates with your service role key
-  4. Applies migrations with `supabase db push`
-  5. Shows migration status
+| Issue | Resolution |
+| ----- | ---------- |
+| 401/404 from edge | Check `Authorization` header and function URL |
+| CORS errors | Ensure `Access-Control-Allow-Origin` is `*` or your domain |
+| `context_length_exceeded` | Reduce previous messages before sending |
+
+## Roadmap
+
+- Multimodal image packets
+- Voice TTS responses
+- Agentic function calls

@@ -24,6 +24,7 @@ export async function accumulateAssistantText(
           const json = JSON.parse(data);
           const token = json.choices?.[0]?.delta?.content;
           if (token) {
+            // TODO: support multimodal {type:"image"} chunks
             full += token;
             if (first) {
               first = false;
@@ -43,9 +44,9 @@ export async function accumulateAssistantText(
         const json = JSON.parse(data);
         const token = json.choices?.[0]?.delta?.content;
         if (token) {
-          full += token;
+            // TODO: support multimodal {type:"image"} chunks
+              full += token;
           if (first) {
-            first = false;
             onFirstChunk?.(Date.now() - start);
           }
         }
