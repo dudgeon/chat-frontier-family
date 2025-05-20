@@ -43,7 +43,10 @@ serve(async (req) => {
 
   const query = supabase
     .from("chat_sessions")
-    .update({ hidden: true })
+    .update({
+      hidden: true,
+      hidden_at: new Date().toISOString(),
+    })
     .eq("id", body.id);
 
   const { error } = await query;
