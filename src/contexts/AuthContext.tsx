@@ -1,7 +1,7 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { getSupabase } from '@/lib/supa';
+import { supabase } from '@/lib/supa';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
 
@@ -41,8 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Set up auth state listener and session initialization
     let subscription: { unsubscribe: () => void } | undefined;
-    getSupabase().then(async (supabase) => {
-      const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
         (event, currentSession) => {
           console.log('Auth state changed:', event);
         
@@ -65,10 +64,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
         }
       );
-      subscription = sub;
+    subscription = sub;
 
-      // THEN check for existing session
-      const initializeSession = async () => {
+    // THEN check for existing session
+    const initializeSession = async () => {
       try {
         // First try to get session from Supabase
         const { data: { session: currentSession } } = await supabase.auth.getSession();
@@ -132,8 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-      await initializeSession();
-    });
+    void initializeSession();
     return () => {
       console.log('Cleaning up auth listener');
       subscription?.unsubscribe();
@@ -142,7 +140,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      const supabase = await getSupabase();
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Error signing out:', error);

@@ -4,7 +4,7 @@ import { differenceInYears } from "date-fns";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from "@/components/ui/card";
-import { getSupabase } from '@/lib/supa';
+import { supabase } from '@/lib/supa';
 import { toast } from '@/components/ui/use-toast';
 import DateOfBirthInput from './DateOfBirthInput';
 
@@ -52,7 +52,6 @@ const SignUpForm: React.FC = () => {
     setLoading(true);
     
     try {
-      const supabase = await getSupabase();
       const { error, data } = await supabase.auth.signUp({
         email,
         password,
