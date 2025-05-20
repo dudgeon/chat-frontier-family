@@ -1,5 +1,6 @@
 
 import { VoiceSessionState } from '@/types/voiceSession';
+import { getRuntimeConfig } from '@/lib/runtimeConfig';
 
 /**
  * Creates a WebSocket connection to the OpenAI realtime API via our Supabase edge function
@@ -12,10 +13,9 @@ export const createVoiceWebSocket = async (
   onClose?: () => void
 ): Promise<WebSocket | null> => {
   try {
-    // Build the WebSocket URL from Supabase env vars
-    const http = import.meta.env.VITE_SUPABASE_URL;
-    const wsBase = http.replace(/^https?/, 'wss');
-    const anon = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    // Build the WebSocket URL from runtime config
+    const { supabaseUrl, supabaseAnonKey: anon } = await getRuntimeConfig();
+    const wsBase = supabaseUrl.replace(/^https?/, 'wss');
     const supabaseRealtimeEndpoint = `${wsBase}/functions/v1/realtime-chat?apikey=${anon}`;
     
     console.log('Creating WebSocket connection to:', supabaseRealtimeEndpoint);

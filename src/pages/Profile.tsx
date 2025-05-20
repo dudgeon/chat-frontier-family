@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useChat } from '@/contexts/ChatContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { getSupabase } from '@/lib/supa';
 import { DEFAULT_ADULT_SYSTEM_MESSAGE, getDefaultSystemMessage } from '@/config/systemMessages';
 
 // Import refactored components
@@ -32,6 +32,8 @@ const Profile: React.FC = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
+
+      const supabase = await getSupabase();
       
       try {
         const { data, error } = await supabase
@@ -61,9 +63,11 @@ const Profile: React.FC = () => {
   
   const handleProfileUpdate = async () => {
     if (!user) return;
-    
+
     try {
       setLoading(true);
+
+      const supabase = await getSupabase();
       
       // If updating email, check that it's not already used
       if (email !== user.email) {

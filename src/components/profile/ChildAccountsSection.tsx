@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useFeatureAccess } from '@/hooks/useFeatureAccess';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { getSupabase } from '@/lib/supa';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -29,6 +29,7 @@ const ChildAccountsSection: React.FC = () => {
   const fetchChildren = async () => {
     if (!user) return;
     setLoading(true);
+    const supabase = await getSupabase();
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -73,6 +74,7 @@ const ChildAccountsSection: React.FC = () => {
 
   const handleUpdateMessage = async (childId: string, message: string) => {
     try {
+      const supabase = await getSupabase();
       const { error } = await supabase
         .from('profiles')
         .update({ system_message: message })

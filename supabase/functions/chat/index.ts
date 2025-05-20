@@ -109,7 +109,9 @@ serve(async (req) => {
     if (eventsResp.status >= 300 && eventsResp.status < 400) {
       const loc = eventsResp.headers.get("location");
       if (loc) {
-        const newUrl = loc.startsWith("http") ? loc : `${OPENAI_BASE}${loc}`;
+        const newUrl = loc.startsWith("http")
+          ? loc
+          : `https://api.openai.com${loc}`;
         eventsResp = await fetch(newUrl, {
           headers: {
             Authorization: `Bearer ${apiKey}`,

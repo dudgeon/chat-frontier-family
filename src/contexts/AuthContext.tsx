@@ -1,7 +1,7 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { getSupabase } from '@/lib/supa';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
 
@@ -39,10 +39,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set initializing flag to prevent duplicate initialization
     setInitialized(true);
     
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        console.log('Auth state changed:', event);
+    // Set up auth state listener and session initialization
+    let subscription: { unsubscribe: () => void } | undefined;
+    getSupabase().then(async (supabase) => {
+      const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
+        (event, currentSession) => {
+          console.log('Auth state changed:', event);
         
         if (event === 'SIGNED_IN') {
           // Store session in localStorage for persistence
@@ -61,11 +63,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         setLoading(false);
-      }
-    );
+        }
+      );
+      subscription = sub;
 
-    // THEN check for existing session
-    const initializeSession = async () => {
+      // THEN check for existing session
+      const initializeSession = async () => {
       try {
         // First try to get session from Supabase
         const { data: { session: currentSession } } = await supabase.auth.getSession();
@@ -129,16 +132,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    initializeSession();
-
+      await initializeSession();
+    });
     return () => {
       console.log('Cleaning up auth listener');
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
   const signOut = async () => {
     try {
+      const supabase = await getSupabase();
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Error signing out:', error);
