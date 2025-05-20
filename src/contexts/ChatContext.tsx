@@ -8,7 +8,7 @@ import { useChatSessions } from '@/hooks/chatSessions';
 import { useChatNameGenerator } from '@/hooks/useChatNameGenerator';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
-import { getSupabase } from '@/lib/supa';
+import { supabase } from '@/lib/supa';
 import {
   DEFAULT_ADULT_SYSTEM_MESSAGE,
   getDefaultSystemMessage
@@ -28,7 +28,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchSystemMessage = async () => {
       if (!user) return;
 
-      const supabase = await getSupabase();
       const { data, error } = await supabase
         .from('profiles')
         .select('system_message, user_role')
@@ -201,7 +200,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       // Check if user has adult role
-      const supabase = await getSupabase();
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('user_role, system_message')
