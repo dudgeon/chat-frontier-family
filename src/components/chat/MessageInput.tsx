@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { Send, Loader2, Mic } from 'lucide-react';
+import { Send, Loader2, Mic, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useChat } from '@/contexts/ChatContext';
@@ -9,12 +9,16 @@ interface MessageInputProps {
   onSendMessage: (message: string) => void;
   onVoiceButtonClick?: () => void;
   showVoiceButton?: boolean;
+  onGenerateImage?: (prompt: string) => void;
+  showImageButton?: boolean;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({ 
-  onSendMessage, 
-  onVoiceButtonClick, 
-  showVoiceButton = true 
+const MessageInput: React.FC<MessageInputProps> = ({
+  onSendMessage,
+  onVoiceButtonClick,
+  showVoiceButton = true,
+  onGenerateImage,
+  showImageButton = false
 }) => {
   const [message, setMessage] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -25,6 +29,15 @@ const MessageInput: React.FC<MessageInputProps> = ({
       onSendMessage(message);
       setMessage('');
       // Keep focus on the text entry for follow-up messages
+      inputRef.current?.focus();
+    }
+  };
+
+  const handleGenerateImage = () => {
+    if (!onGenerateImage) return;
+    if (message.trim()) {
+      onGenerateImage(message);
+      setMessage('');
       inputRef.current?.focus();
     }
   };
@@ -51,14 +64,26 @@ const MessageInput: React.FC<MessageInputProps> = ({
       
       {/* Only show the voice button if the feature is enabled */}
       {showVoiceButton && onVoiceButtonClick && (
-        <Button 
-          className="bg-hero/80 hover:bg-hero text-white" 
-          size="icon" 
+        <Button
+          className="bg-hero/80 hover:bg-hero text-white"
+          size="icon"
           onClick={onVoiceButtonClick}
           disabled={isWaitingForResponse}
           title="Start voice conversation"
         >
           <Mic size={18} />
+        </Button>
+      )}
+
+      {showImageButton && onGenerateImage && (
+        <Button
+          className="bg-hero/80 hover:bg-hero text-white"
+          size="icon"
+          onClick={handleGenerateImage}
+          disabled={!message.trim() || isWaitingForResponse}
+          title="Generate image"
+        >
+          <ImageIcon size={18} />
         </Button>
       )}
       
