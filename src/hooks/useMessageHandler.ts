@@ -62,19 +62,17 @@ export const useMessageHandler = (
 
         timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-        const response = await fetch(
-          `${supabaseUrl}/functions/v1/chat?stream=true`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              apikey: anon,
-              ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
-            },
-            body: JSON.stringify({ input: openaiMessages }),
-            signal: controller.signal
-          }
-        );
+        const url = `${supabaseUrl}/functions/v1/chat`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: anon,
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+          },
+          body: JSON.stringify({ input: openaiMessages, stream: true }),
+          signal: controller.signal
+        });
 
         clearTimeout(timeout);
 

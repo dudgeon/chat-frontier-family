@@ -98,10 +98,15 @@ serve(async (req) => {
   }
 
   if (stream) {
-    const eventsResp = await fetch(
-      `${OPENAI_BASE}/v1/responses/${responseId}/events`,
-      { headers: sseHeaders(apiKey) },
-    );
+    const eventsUrl =
+      `https://api.openai.com/v1/responses/${responseId}/events`;
+    console.log("Fetching", eventsUrl);
+    const eventsResp = await fetch(eventsUrl, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        Accept: "text/event-stream",
+      },
+    });
     if (!eventsResp.ok || !eventsResp.body) {
       return errorResponse(eventsResp.status, await eventsResp.text());
     }
