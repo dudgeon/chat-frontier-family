@@ -21,7 +21,7 @@ export const featureFlags = {
   subscriptionTier: false,
   
   // Future features
-  imageGeneration: false,
+  imageGeneration: true,
   documentUpload: false,
 };
 
