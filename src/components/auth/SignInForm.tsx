@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CardContent, CardFooter } from "@/components/ui/card";
-import { getSupabase } from '@/lib/supa';
+import { supabase } from '../../lib/supa';
 import { toast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -18,7 +18,6 @@ const SignInForm: React.FC = () => {
     setLoading(true);
     
     try {
-      const supabase = await getSupabase();
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
