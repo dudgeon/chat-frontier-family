@@ -115,7 +115,11 @@ export const useMessageHandler = (
               }
               try {
                 const json = JSON.parse(dataStr);
-                const token = json.response?.delta?.content || '';
+                const token =
+                  json.choices?.[0]?.delta?.content ||
+                  json.delta ||
+                  json.response?.delta?.content ||
+                  '';
                 if (token) {
                   currentContent += token;
                   setMessages(prev => {
