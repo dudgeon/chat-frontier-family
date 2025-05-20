@@ -34,12 +34,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   const handleGenerateImage = () => {
-    if (!onGenerateImage) return;
-    if (message.trim()) {
-      onGenerateImage(message);
-      setMessage('');
-      inputRef.current?.focus();
-    }
+    if (!onGenerateImage || !message.trim()) return;
+    onGenerateImage(message);
+    setMessage('');
+    inputRef.current?.focus();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
