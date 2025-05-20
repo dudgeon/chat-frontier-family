@@ -105,12 +105,10 @@ serve(async (req) => {
     }
 
     const start = Date.now();
-    const reader = eventsResp.body.getReader();
-    const { readable, writable } = new TransformStream();
-    const writer = writable.getWriter();
-    let logged = false;
-
+    const [logStream, clientStream] = eventsResp.body.tee();
     (async () => {
+      const reader = logStream.getReader();
+      let logged = false;
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
@@ -125,16 +123,14 @@ serve(async (req) => {
           console.log("[edgeLog]", JSON.stringify(payload));
           await logMetrics(payload);
         }
-        if (value) await writer.write(value);
       }
-      writer.close();
     })();
 
-    return new Response(readable, {
+    return new Response(clientStream, {
       headers: {
-        ...corsHeaders,
         "Content-Type": "text/event-stream",
-        "X-Stream": "true",
+        "Access-Control-Allow-Origin": "*",
+        "X-Accel-Buffering": "no",
       },
     });
   }
