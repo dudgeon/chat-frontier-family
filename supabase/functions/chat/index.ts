@@ -98,15 +98,26 @@ serve(async (req) => {
   }
 
   if (stream) {
-    const eventsUrl =
-      `https://api.openai.com/v1/responses/${responseId}/events`;
+    const eventsUrl = `${OPENAI_BASE}/v1/responses/${responseId}/events`;
     console.log("Fetching", eventsUrl);
-    const eventsResp = await fetch(eventsUrl, {
+    let eventsResp = await fetch(eventsUrl, {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         Accept: "text/event-stream",
       },
     });
+    if (eventsResp.status >= 300 && eventsResp.status < 400) {
+      const loc = eventsResp.headers.get("location");
+      if (loc) {
+        const newUrl = loc.startsWith("http") ? loc : `${OPENAI_BASE}${loc}`;
+        eventsResp = await fetch(newUrl, {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            Accept: "text/event-stream",
+          },
+        });
+      }
+    }
     if (!eventsResp.ok || !eventsResp.body) {
       return errorResponse(eventsResp.status, await eventsResp.text());
     }
