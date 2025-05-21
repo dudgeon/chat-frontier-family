@@ -41,16 +41,19 @@ serve(async (req) => {
     return jsonResponse({ error: "Unauthorized" }, 401);
   }
 
-  const query = supabase
-    .from("chat_sessions")
-    .update({
-      hidden: true,
-      hidden_at: new Date().toISOString(),
-    })
-    .eq("id", body.id);
+  try {
+    const { error } = await supabase
+      .from("chat_sessions")
+      .update({
+        hidden: true,
+        hidden_at: new Date().toISOString(),
+      })
+      .eq("id", body.id);
 
-  const { error } = await query;
-
-  if (error) return jsonResponse({ error: error.message }, 500);
-  return jsonResponse({ success: true });
+    if (error) throw error;
+    return jsonResponse({ success: true });
+  } catch (err) {
+    console.error("update failed", err);
+    return jsonResponse({ error: (err as Error).message }, 500);
+  }
 });
