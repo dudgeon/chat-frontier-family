@@ -44,10 +44,7 @@ serve(async (req) => {
   try {
     const { error } = await supabase
       .from("chat_sessions")
-      .update({
-        hidden: true,
-        hidden_at: new Date().toISOString(),
-      })
+      .update({ hidden: true })
       .eq("id", body.id);
 
     if (error) throw error;
