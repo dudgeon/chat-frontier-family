@@ -112,3 +112,4 @@ Automated CI workflows handle Supabase deploys and migrations.
 - Voice TTS responses
 - Agentic function calls
 - Replace manual image generation invocation with agentic workflow
+- Edge swipe from the left on mobile opens the settings panel
