@@ -25,6 +25,7 @@ export interface ChatContextType {
   hideSession: (id: string) => void;
   unhideSession: (id: string) => void;
   deleteSession: (id: string) => void;
+  removeSessionLocal: (id: string) => void;
 }
 
 // Local storage keys
