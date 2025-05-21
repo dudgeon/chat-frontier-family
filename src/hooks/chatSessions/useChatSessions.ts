@@ -6,6 +6,7 @@ import { useChatDatabase } from "./useChatDatabase";
 import { useActiveSession } from "./useActiveSession";
 import { useSessionManagement } from "./useSessionManagement";
 import { useMessageManagement } from "./useMessageManagement";
+import { supabase } from "@/lib/supa";
 
 export const useChatSessions = (initialMessages: Message[] = []) => {
   const { user } = useAuth();
@@ -99,6 +100,70 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
     }
   }, [user, setActiveChatId]);
 
+  // Listen for realtime updates to chat_sessions
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel("chat_sessions_updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "chat_sessions",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          setChatSessions((prev) => {
+            if (payload.eventType === "DELETE") {
+              const id = (payload.old as any).id as string;
+              return prev.filter((s) => s.id !== id);
+            }
+            if (payload.eventType === "UPDATE") {
+              const updated = payload.new as any;
+              if (updated.hidden || updated.deleted_at) {
+                return prev.filter((s) => s.id !== updated.id);
+              }
+              return prev.map((s) =>
+                s.id === updated.id
+                  ? {
+                      ...s,
+                      name: updated.name,
+                      lastUpdated: updated.last_updated
+                        ? new Date(updated.last_updated).getTime()
+                        : s.lastUpdated,
+                    }
+                  : s,
+              );
+            }
+            return prev;
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  const removeSessionLocal = (id: string) => {
+    setChatSessions((prev) => prev.filter((s) => s.id !== id));
+
+    if (activeChatId === id) {
+      const remaining = chatSessions.filter((s) => s.id !== id);
+      const next = remaining[0];
+      if (next) {
+        setActiveChatId(next.id);
+        localStorage.setItem(ACTIVE_SESSION_KEY, next.id);
+      } else {
+        setActiveChatId("");
+        localStorage.removeItem(ACTIVE_SESSION_KEY);
+      }
+    }
+  };
+
   return {
     chatSessions,
     activeChatId,
@@ -113,6 +178,6 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
     hideSession,
     unhideSession,
     visibleSessions,
-    deleteChat,
+    removeSessionLocal,
   };
 };

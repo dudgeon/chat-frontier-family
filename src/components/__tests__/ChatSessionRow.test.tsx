@@ -4,6 +4,9 @@ import ChatSessionRow from '../ChatSessionRow';
 import { vi } from 'vitest';
 
 vi.mock('@/lib/supa', () => ({ supabase: { functions: { invoke: vi.fn() } } }));
+vi.mock('@/contexts/ChatContext', () => ({
+  useChat: () => ({ hideSession: vi.fn(), removeSessionLocal: vi.fn() })
+}));
 
 describe('ChatSessionRow', () => {
   const session = { id: '1', title: 'test' };

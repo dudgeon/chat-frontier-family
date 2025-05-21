@@ -69,6 +69,10 @@ curl -X POST \
   https://<project>.supabase.co/functions/v1/hideSession
 ```
 
+The `chat_sessions` table streams updates via the Realtime channel
+`chat_sessions_updates`. The UI subscribes to this channel so hides and
+deletions sync across browser tabs.
+
 ### Session Lifecycle
 
 | Action | Behaviour |

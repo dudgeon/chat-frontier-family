@@ -78,6 +78,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
     unhideSession,
     deleteChat,
     visibleSessions,
+    removeSessionLocal,
   } = useChatSessions();
 
   // Initialize with empty messages until sessions are loaded
@@ -400,6 +401,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
         hideSession,
         unhideSession,
         deleteSession,
+        removeSessionLocal,
       }}
     >
       {children}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { EyeOff, Trash2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { invokeWithAuth } from "@/lib/invokeWithAuth";
+import { useChat } from "@/contexts/ChatContext";
 
 interface Props {
   session: { id: string; title: string };
@@ -13,6 +14,7 @@ export default function ChatSessionRow({ session, onSelect }: Props) {
   const [hiding, setHiding] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const toggle = () => setShow((v) => !v);
+  const { hideSession, removeSessionLocal } = useChat();
 
   const hide = async () => {
     setHiding(true);
@@ -24,6 +26,7 @@ export default function ChatSessionRow({ session, onSelect }: Props) {
         variant: "destructive",
       });
     } else {
+      hideSession(session.id);
       toast({ title: "Chat hidden" });
     }
     setHiding(false);
@@ -39,6 +42,7 @@ export default function ChatSessionRow({ session, onSelect }: Props) {
         variant: "destructive",
       });
     } else {
+      removeSessionLocal(session.id);
       toast({ title: "Chat deleted" });
     }
     setDeleting(false);
