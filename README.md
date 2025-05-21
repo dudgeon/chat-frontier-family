@@ -57,7 +57,7 @@ Supabase edge functions are deployed separately using the `supabase` CLI (see qu
 | Endpoint | Purpose |
 | -------- | ------- |
 | `/functions/v1/hideSession` | Mark a chat session as hidden |
-| `/functions/v1/deleteSession` | Soft delete a chat session |
+| `/functions/v1/deleteSession` | Delete a chat session |
 
 Example request:
 
@@ -68,6 +68,13 @@ curl -X POST \
   -d '{"id":"uuid"}' \
   https://<project>.supabase.co/functions/v1/hideSession
 ```
+
+### Session Lifecycle
+
+| Action | Behaviour |
+| ------ | --------- |
+| hide   | hidden=true, recoverable |
+| delete | removes session+messages |
 
 ### GitHub Actions
 

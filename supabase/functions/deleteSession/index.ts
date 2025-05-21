@@ -42,12 +42,25 @@ serve(async (req) => {
   }
 
   try {
-    const { error } = await supabase
-      .from("chat_sessions")
-      .update({ deleted_at: new Date().toISOString() })
-      .eq("id", body.id);
+    // (1) ensure chat has a title before deletion
+    await supabase.functions.invoke("generate-chat-name", {
+      body: { chatId: body.id },
+    });
 
-    if (error) throw error;
+    // (2) hard delete session row
+    const { error: sessionErr } = await supabase
+      .from("chat_sessions")
+      .delete()
+      .eq("id", body.id);
+    if (sessionErr) throw sessionErr;
+
+    // (3) cascade delete messages
+    const { error: messagesErr } = await supabase
+      .from("chat_messages")
+      .delete()
+      .eq("chat_id", body.id);
+    if (messagesErr) throw messagesErr;
+
     return jsonResponse({ success: true });
   } catch (err) {
     console.error("update failed", err);
