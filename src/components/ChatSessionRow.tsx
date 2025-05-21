@@ -34,6 +34,10 @@ export default function ChatSessionRow({ session, onSelect }: Props) {
 
   const remove = async () => {
     setDeleting(true);
+
+    // Optimistically remove the session so the row disappears immediately
+    removeSessionLocal(session.id);
+
     const { error } = await invokeWithAuth("deleteSession", { id: session.id });
     if (error) {
       toast({
@@ -42,7 +46,6 @@ export default function ChatSessionRow({ session, onSelect }: Props) {
         variant: "destructive",
       });
     } else {
-      removeSessionLocal(session.id);
       toast({ title: "Chat deleted" });
     }
     setDeleting(false);
