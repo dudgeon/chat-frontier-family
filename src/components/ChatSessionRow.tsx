@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { EyeOff, Trash2 } from "lucide-react";
-import { supabase } from "@/lib/supa";
 import { toast } from "@/components/ui/use-toast";
+import { invokeWithAuth } from "@/lib/invokeWithAuth";
 
 interface Props {
   session: { id: string; title: string };
@@ -10,12 +10,13 @@ interface Props {
 
 export default function ChatSessionRow({ session, onSelect }: Props) {
   const [show, setShow] = useState(false);
+  const [hiding, setHiding] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const toggle = () => setShow((v) => !v);
 
   const hide = async () => {
-    const { error } = await supabase.functions.invoke("hideSession", {
-      body: { id: session.id },
-    });
+    setHiding(true);
+    const { error } = await invokeWithAuth("hideSession", { id: session.id });
     if (error) {
       toast({
         title: "Failed to hide chat",
@@ -25,12 +26,12 @@ export default function ChatSessionRow({ session, onSelect }: Props) {
     } else {
       toast({ title: "Chat hidden" });
     }
+    setHiding(false);
   };
 
   const remove = async () => {
-    const { error } = await supabase.functions.invoke("deleteSession", {
-      body: { id: session.id },
-    });
+    setDeleting(true);
+    const { error } = await invokeWithAuth("deleteSession", { id: session.id });
     if (error) {
       toast({
         title: "Failed to delete chat",
@@ -40,6 +41,7 @@ export default function ChatSessionRow({ session, onSelect }: Props) {
     } else {
       toast({ title: "Chat deleted" });
     }
+    setDeleting(false);
   };
 
   return (
@@ -59,6 +61,7 @@ export default function ChatSessionRow({ session, onSelect }: Props) {
             e.stopPropagation();
             hide();
           }}
+          disabled={hiding}
           className="p-1 rounded hover:bg-muted pointer-events-auto"
         >
           <EyeOff size={16} />
@@ -69,6 +72,7 @@ export default function ChatSessionRow({ session, onSelect }: Props) {
             e.stopPropagation();
             remove();
           }}
+          disabled={deleting}
           className="p-1 rounded hover:bg-destructive/20 pointer-events-auto"
         >
           <Trash2 size={16} />
