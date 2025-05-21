@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { useEdgeSwipe } from '@/hooks/useEdgeSwipe';
 
 const Index: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -24,6 +25,9 @@ const Index: React.FC = () => {
   } = useChat();
   const { session } = useAuth();
   const { isEnabled } = useFeatureFlags();
+
+  // Open the settings panel when the user swipes from the left edge on mobile
+  useEdgeSwipe(() => setIsSettingsOpen(true));
 
   // Additional check to ensure the user is authenticated
   if (!session) {
