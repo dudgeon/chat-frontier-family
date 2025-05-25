@@ -36,6 +36,8 @@ serve(async (req) => {
     return errorResponse(400, "Missing prompt");
   }
 
+  const model = Deno.env.get("OPENAI_IMAGE_MODEL") || "dall-e-3";
+
   const openaiResp = await fetch(
     "https://api.openai.com/v1/images/generations",
     {
@@ -45,7 +47,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-image-1",
+        model,
         prompt,
       }),
     },
