@@ -1,0 +1,36 @@
+name: Parent-Child RLS Test
+
+on:
+  # run on demand or whenever the test script / workflow changes
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "scripts/test_parent_child_access.ts"
+      - ".github/workflows/parent-child-access-test.yml"
+
+jobs:
+  rls-test:
+    runs-on: ubuntu-latest
+
+    # 🔐 Supabase creds & demo-adult login live in repo secrets
+    env:
+      SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY:   ${{ secrets.SUPABASE_ANON_KEY }}
+      TEST_ADULT_EMAIL:    ${{ secrets.TEST_ADULT_EMAIL }}
+      TEST_ADULT_PASSWORD: ${{ secrets.TEST_ADULT_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # 🥖  Use Bun (repo’s default runtime)
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run parent-child access test
+        # script exits 0 (success) or 2 (no rows ➜ RLS failing)
+        run: |
+          bun run scripts/test_parent_child_access.ts
