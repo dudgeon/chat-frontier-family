@@ -29,6 +29,7 @@ supabase functions deploy chat --project-ref <project-id>
 | `VITE_SUPABASE_URL` | Supabase project URL for the client |
 | `VITE_SUPABASE_ANON_KEY` | Public anon key for browser requests |
 | `OPENAI_API_KEY` | Server key for OpenAI requests |
+| `OPENAI_IMAGE_MODEL` | DALL·E model used by `generate-image` (default `dall-e-3`) |
 | `ENABLE_METRICS` | When set, log latency to `edge_logs` table |
 | `SUPABASE_URL` | Supabase URL for edge functions |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key for edge inserts |

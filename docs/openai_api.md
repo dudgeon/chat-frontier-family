@@ -7,6 +7,7 @@ Key points:
 - Requests are sent to `https://api.openai.com/v1/chat/completions` with `stream: true`.
 - Chat messages are provided as the `messages` array.
 - After the stream finishes the full assistant text is stored in the `chat_messages` table.
+- Image generation calls `https://api.openai.com/v1/images/generations` using the `OPENAI_IMAGE_MODEL` env var (default `dall-e-3`).
 
 For implementation examples, see the Supabase Edge Functions in [`supabase/functions`](../supabase/functions).
 
