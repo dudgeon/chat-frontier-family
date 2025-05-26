@@ -2,7 +2,7 @@
 
 [View architecture diagram](docs/architecture.md)
 
-## Quick Start
+## Local development
 
 ```bash
 bun install
@@ -21,6 +21,14 @@ Deploy Supabase edge function:
 ```bash
 supabase functions deploy chat --project-ref <project-id>
 ```
+
+## Database & RLS
+
+Row level security ensures adults can read their kids' data while each child only sees their own rows. The policies live in [supabase/migrations](supabase/migrations). See [supabase/migrations/202505260035_parent_read_children.sql](supabase/migrations/202505260035_parent_read_children.sql) for the two policies added on 2025-05-26.
+
+Do **not** use `CREATE POLICY ... IF NOT EXISTS` until Postgres 16. Instead use `DROP POLICY IF EXISTS ...; CREATE POLICY ...`.
+
+When adding columns, wrap the `ALTER TABLE` in an existence check as shown in [supabase/migrations/20250521133000_add_hidden.sql](supabase/migrations/20250521133000_add_hidden.sql).
 
 ## Environment Variables
 

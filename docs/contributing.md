@@ -37,3 +37,12 @@ Use the Supabase CLI:
 ```bash
 supabase functions deploy chat --project-ref <project-id>
 ```
+
+## Writing Migrations
+
+- Generate a new migration with `supabase migration new <name>`; the CLI prefixes the file with a timestamp so order is preserved.
+- Make migrations re-runnable:
+  - `DROP POLICY IF EXISTS ...; CREATE POLICY ...` for policy changes.
+  - Wrap `ALTER TABLE ... ADD COLUMN` in an existence check as seen in [`../supabase/migrations/20250521133000_add_hidden.sql`](../supabase/migrations/20250521133000_add_hidden.sql).
+- Whenever `package.json` changes, run `bun install` and commit the updated `bun.lockb`.
+- CI runs `bun install --frozen-lockfile`; forgetting to commit `bun.lockb` will break builds.
