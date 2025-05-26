@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 ## [Unreleased]
 - _Add new entries here for each `feat:` PR._
 
+### Added
+- Sessions list displays most recent chats first with last interaction date.
+
 ### Fixed
 - Resolve Netlify 404 when navigating directly to `/login`.
 

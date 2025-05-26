@@ -5,7 +5,7 @@ import { invokeWithAuth } from "@/lib/invokeWithAuth";
 import { useChat } from "@/contexts/ChatContext";
 
 interface Props {
-  session: { id: string; title: string };
+  session: { id: string; title: string; lastUpdated?: number | null };
   onSelect: (id: string) => void;
 }
 
@@ -57,7 +57,14 @@ export default function ChatSessionRow({ session, onSelect }: Props) {
       onClick={() => onSelect(session.id)}
       onTouchStart={toggle}
     >
-      <span className="truncate">{session.title}</span>
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <span className="truncate font-bold">{session.title}</span>
+        {session.lastUpdated && (
+          <span className="text-xs text-muted-foreground">
+            {new Date(session.lastUpdated).toLocaleDateString()}
+          </span>
+        )}
+      </div>
 
       <div
         className={`absolute right-1 top-1 flex gap-2 transition-opacity duration-200 pointer-events-none opacity-0 group-hover:opacity-100 focus-within:opacity-100 ${show ? "opacity-100 pointer-events-auto" : ""}`}
