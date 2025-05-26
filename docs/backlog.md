@@ -4,3 +4,5 @@
 | ---- | ----- | ------ |
 | Storage cleanup | Delete session images on removal [#131] | Todo |
 | Storage cleanup | Delete message images on removal [#132] | Todo |
+| Upper bound on chat context |
+
