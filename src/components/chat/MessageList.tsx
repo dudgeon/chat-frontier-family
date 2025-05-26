@@ -42,9 +42,9 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
 
   return (
     <div className="flex flex-col gap-3 py-4 px-3 overflow-y-auto">
-      {visibleMessages.map((message, index) => (
+      {visibleMessages.map((message) => (
         <div
-          key={index}
+          key={message.id}
           className={message.isUser 
             ? 'message-bubble-user relative'
             : 'message-bot relative px-4 py-2 max-w-[90%] self-start text-foreground'}

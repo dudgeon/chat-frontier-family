@@ -7,6 +7,7 @@ import { useActiveSession } from "./useActiveSession";
 import { useSessionManagement } from "./useSessionManagement";
 import { useMessageManagement } from "./useMessageManagement";
 import { supabase } from "@/lib/supa";
+import { dedupeById } from "@/utils/dedupeById";
 
 export const useChatSessions = (initialMessages: Message[] = []) => {
   const { user } = useAuth();
@@ -55,15 +56,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
         if (sessions && sessions.length > 0) {
           console.log("Loaded chat sessions:", sessions.length);
 
-          setChatSessions((prev) => {
-            if (prev.length === 0) return sessions;
-
-            const map = new Map(prev.map((s) => [s.id, s]));
-            sessions.forEach((s) => {
-              map.set(s.id, { ...map.get(s.id), ...s });
-            });
-            return Array.from(map.values());
-          });
+          setChatSessions(dedupeById(sessions));
 
           if (!activeChatId) {
             const storedActiveId = localStorage.getItem(ACTIVE_SESSION_KEY);
@@ -120,6 +113,21 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
               const id = (payload.old as any).id as string;
               return prev.filter((s) => s.id !== id);
             }
+
+            if (payload.eventType === "INSERT") {
+              const inserted = payload.new as any;
+              if (prev.some((s) => s.id === inserted.id)) return prev;
+              const row = {
+                id: inserted.id,
+                name: inserted.name,
+                messages: [],
+                lastUpdated: inserted.last_updated
+                  ? new Date(inserted.last_updated).getTime()
+                  : null,
+              } as ChatSession;
+              return dedupeById([...prev, row]);
+            }
+
             if (payload.eventType === "UPDATE") {
               const updated = payload.new as any;
               if (updated.hidden || updated.deleted_at) {
@@ -137,6 +145,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
                   : s,
               );
             }
+
             return prev;
           });
         },
