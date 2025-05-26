@@ -34,6 +34,10 @@ supabase functions deploy chat --project-ref <project-id>
 | `SUPABASE_URL` | Supabase URL for edge functions |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key for edge inserts |
 
+### Database
+
+This project runs on **Postgres&nbsp;14** (the Supabase default). Ensure all migrations use features supported by this version.
+
 ## Streaming Chat Flow
 
 1. User submits a message.
