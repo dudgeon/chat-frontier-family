@@ -55,6 +55,8 @@ serve(async (req) => {
       body: JSON.stringify({
         model,
         prompt,
+        response_format: "b64_json",
+        size: "1024x1024",
       }),
     },
   );
@@ -65,14 +67,14 @@ serve(async (req) => {
   }
 
   const data = await openaiResp.json();
-  const url = data?.data?.[0]?.url;
+  const b64 = data?.data?.[0]?.b64_json;
 
   // Debug log - remove in production
   console.log("OpenAI response data:", JSON.stringify(data));
-  console.log("Extracted image URL:", url);
+  console.log("Extracted image base64 length:", b64?.length);
 
-  if (!url) {
-    return errorResponse(502, "No image URL returned from OpenAI.");
+  if (!b64) {
+    return errorResponse(500, "Failed to generate image");
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -83,12 +85,10 @@ serve(async (req) => {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const imageResp = await fetch(url);
-  if (!imageResp.ok) {
-    const text = await imageResp.text();
-    return errorResponse(imageResp.status, text);
-  }
-  const arrayBuffer = await imageResp.arrayBuffer();
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const arrayBuffer = bytes.buffer;
   const fileName = `${crypto.randomUUID()}.png`;
   const { error: uploadErr } = await supabase.storage
     .from(bucket)
