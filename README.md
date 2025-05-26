@@ -41,10 +41,15 @@ When adding columns, wrap the `ALTER TABLE` in an existence check as shown in [s
 | `ENABLE_METRICS` | When set, log latency to `edge_logs` table |
 | `SUPABASE_URL` | Supabase URL for edge functions |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key for edge inserts |
+| `IMAGE_BUCKET` | Storage bucket for generated images (default `chat-images`) |
 
 ### Database
 
 This project runs on **Postgres&nbsp;14** (the Supabase default). Ensure all migrations use features supported by this version.
+
+Generated images are cached in the `IMAGE_BUCKET` Supabase Storage bucket. Run
+`ts-node scripts/create_image_bucket.ts` (or create manually in the dashboard)
+to provision the bucket.
 
 ## Streaming Chat Flow
 
