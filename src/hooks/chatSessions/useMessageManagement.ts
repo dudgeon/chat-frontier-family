@@ -23,62 +23,57 @@ export const useMessageManagement = (
   // Update messages for active chat
   const updateSessionMessages = useCallback(async (messages: Message[]) => {
     if (!activeChatId || !user) return;
-    
+
     // Update state for UI responsiveness
-    setChatSessions(prevSessions => 
-      prevSessions.map(session => 
+    setChatSessions(prevSessions =>
+      prevSessions.map(session =>
         session.id === activeChatId
           ? { ...session, messages, lastUpdated: Date.now() }
           : session
       )
     );
-    
+
     try {
       // Update last_updated timestamp in the database
       await updateSessionTimestampInDb(activeChatId, user.id);
-      
-      // Find the most recent message - assuming it's the one we need to add
-      const latestMessage = messages[messages.length - 1];
-      if (!latestMessage) return;
-      
-      // Check if this message already exists in the database by checking if it has an ID
-      if (!latestMessage.id) {
-        // It's a new message, add it to the database
-        const newMessageId = await saveMessageToDb(activeChatId, latestMessage);
 
-        if (newMessageId) {
-          // Update the message in our state with the new ID
+      // Find messages that haven't been saved yet (no ID)
+      const unsavedIndices = messages
+        .map((m, i) => (!m.id ? i : -1))
+        .filter(i => i !== -1);
+
+      for (const index of unsavedIndices) {
+        const msg = messages[index];
+        const newMessageId = await saveMessageToDb(activeChatId, msg);
+        if (!newMessageId) continue;
+
+        // Update the message in state with its new ID
+        setChatSessions(prevSessions =>
+          prevSessions.map(session => {
+            if (session.id === activeChatId) {
+              const updated = [...session.messages];
+              updated[index] = { ...updated[index], id: newMessageId };
+              return { ...session, messages: updated };
+            }
+            return session;
+          })
+        );
+
+        // If session has no name yet and this is a user message, set a name
+        const session = chatSessionsRef.current.find(s => s.id === activeChatId);
+        if (session && !session.name && msg.isUser) {
+          const newName = generateSessionName(msg.content);
+          await initializeSessionName(activeChatId, newName);
           setChatSessions(prevSessions =>
-            prevSessions.map(session => {
-              if (session.id === activeChatId) {
-                const updatedMessages = session.messages.map((msg, index) => {
-                  if (index === messages.length - 1) {
-                    return { ...msg, id: newMessageId };
-                  }
-                  return msg;
-                });
-                return { ...session, messages: updatedMessages };
-              }
-              return session;
-            })
+            prevSessions.map(s =>
+              s.id === activeChatId ? { ...s, name: newName } : s
+            )
           );
-
-          // If session has no name yet and this is the first user message, set a name
-          const session = chatSessionsRef.current.find(s => s.id === activeChatId);
-          if (session && !session.name && latestMessage.isUser) {
-            const newName = generateSessionName(latestMessage.content);
-            await initializeSessionName(activeChatId, newName);
-            setChatSessions(prevSessions =>
-              prevSessions.map(s =>
-                s.id === activeChatId ? { ...s, name: newName } : s
-              )
-            );
-          }
         }
       }
     } catch (error) {
       console.error('Error updating session messages:', error);
-      
+
       // Show toast for persistent errors but not transient ones
       if (error instanceof Error && error.message.includes('Failed to fetch')) {
         toast({
