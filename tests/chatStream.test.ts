@@ -21,7 +21,9 @@ describe('pipeAndStore', () => {
     const supabase = { from: vi.fn(() => ({ insert })) } as any;
     const clientStream = pipeAndStore(stream, 'chat1', supabase, () => {});
     const reader = clientStream.getReader();
-    while (!(await reader.read()).done) {}
+    while (!(await reader.read()).done) {
+      /* empty */
+    }
     await Promise.resolve();
     expect(insert).toHaveBeenCalledWith({ chat_id: 'chat1', role: 'assistant', content: 'Hello world' });
     expect(supabase.from).toHaveBeenCalledWith('chat_messages');

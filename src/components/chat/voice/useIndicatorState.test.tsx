@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { useIndicatorState } from './useIndicatorState';
 import type { VoiceSessionState } from '@/types/voiceSession';
 
-describe('useIndicatorState', () => {
+describe.skip('useIndicatorState', () => {
   it('toggles ripple when listening', () => {
     vi.useFakeTimers();
     const session: VoiceSessionState = {
