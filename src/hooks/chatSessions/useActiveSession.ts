@@ -8,7 +8,10 @@ export const useActiveSession = (chatSessions: ChatSession[]) => {
   
   // Get visible chat sessions (not hidden)
   const visibleSessions = useMemo(() => {
-    return chatSessions.filter(session => !hiddenSessionIds.includes(session.id));
+    return chatSessions
+      .filter(session => !hiddenSessionIds.includes(session.id))
+      .slice()
+      .sort((a, b) => (b.lastUpdated ?? 0) - (a.lastUpdated ?? 0));
   }, [chatSessions, hiddenSessionIds]);
   
   // Find the active chat session

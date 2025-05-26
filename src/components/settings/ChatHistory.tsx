@@ -38,7 +38,15 @@ const ChatHistory: React.FC = () => {
   return (
     <ul className="space-y-1">
       {chatSessions.map((session) => (
-        <ChatSessionRow key={session.id} session={{ id: session.id, title: session.name || "New chat" }} onSelect={switchToChat} />
+        <ChatSessionRow
+          key={session.id}
+          session={{
+            id: session.id,
+            title: session.name || "New chat",
+            lastUpdated: session.lastUpdated,
+          }}
+          onSelect={switchToChat}
+        />
       ))}
     </ul>
   );
