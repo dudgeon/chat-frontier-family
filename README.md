@@ -31,3 +31,4 @@ More configuration help resides in [docs/openai.md](docs/openai.md).
 - [Roadmap](docs/roadmap.md)
 - [Backlog](docs/backlog.md)
 - [Changelog](CHANGELOG.md)
+- [📍 Component Map](COMPONENT_MAP.md)
