@@ -10,24 +10,28 @@ export const useChatNameGenerator = (
   updateChatName: (id: string, name: string) => void,
   isWaitingForResponse: boolean
 ) => {
-  const hasGeneratedRef = useRef(false);
+  const lastGeneratedCountRef = useRef(0);
 
-  // Reset the generated flag when switching chats or a name is set externally
+  // Keep track of how many assistant messages were present when a name
+  // was last generated. Reset this count when switching chats or when the
+  // chat name is manually edited so that subsequent generations occur on the
+  // correct interval.
   useEffect(() => {
-    hasGeneratedRef.current = !!chatName;
+    lastGeneratedCountRef.current = messages.filter(m => !m.isUser).length;
   }, [activeChatId, chatName]);
 
-  // Generate a chat name after the third assistant reply, once streaming finishes
+  // Generate a chat name after every third assistant reply, once streaming finishes
   useEffect(() => {
     const assistantMessages = messages.filter(m => !m.isUser);
+    const count = assistantMessages.length;
 
     if (
-      assistantMessages.length >= 3 &&
-      !chatName &&
+      count >= 3 &&
+      count % 3 === 0 &&
       !isWaitingForResponse &&
-      !hasGeneratedRef.current
+      count !== lastGeneratedCountRef.current
     ) {
-      hasGeneratedRef.current = true;
+      lastGeneratedCountRef.current = count;
       generateChatName(messages).then(name => {
         updateChatName(activeChatId, name);
       });
