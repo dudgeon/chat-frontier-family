@@ -44,6 +44,9 @@ All changes must pass:
 bun run lint && bun run test
 
 CI will enforce; run locally before committing.
+Feature Logging
+For every PR tagged `feat:` you must add an entry to CHANGELOG.md under `Unreleased`.
+
 
 ⸻
 

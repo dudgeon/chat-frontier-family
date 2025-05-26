@@ -1,4 +1,5 @@
 # Architecture
+An SPA built with React and Tailwind communicates with Supabase Edge Functions for streaming chat.
 
 ## Sequence Diagram
 ```mermaid
