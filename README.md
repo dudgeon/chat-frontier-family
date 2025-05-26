@@ -42,6 +42,8 @@ When adding columns, wrap the `ALTER TABLE` in an existence check as shown in [s
 | `SUPABASE_URL` | Supabase URL for edge functions |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key for edge inserts |
 | `IMAGE_BUCKET` | Storage bucket for generated images (default `chat-images`) |
+| `STORAGE_PUBLIC` | When `false`, generate signed URLs instead of public links |
+| `SIGNED_URL_TTL` | Lifespan of signed URLs in seconds (default 2592000) |
 
 ### Database
 
@@ -50,6 +52,14 @@ This project runs on **Postgres&nbsp;14** (the Supabase default). Ensure all mig
 Generated images are cached in the `IMAGE_BUCKET` Supabase Storage bucket. Run
 `ts-node scripts/create_image_bucket.ts` (or create manually in the dashboard)
 to provision the bucket.
+
+### Image persistence flow
+
+OpenAI generates an image, the edge function downloads it, stores the bytes in
+the `IMAGE_BUCKET` Storage bucket, then saves the resulting URL to
+`chat_messages.image_url`. When `STORAGE_PUBLIC` is `false`, the edge function
+returns a signed URL with a default expiry of 30&nbsp;days (overridable via the
+`SIGNED_URL_TTL` env var).
 
 ## Streaming Chat Flow
 
