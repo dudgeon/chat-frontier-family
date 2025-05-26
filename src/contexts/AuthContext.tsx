@@ -44,6 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
         (event, currentSession) => {
           console.log('Auth state changed:', event);
+          if (event === 'INITIAL_SESSION') return;
         
         if (event === 'SIGNED_IN') {
           // Store session in localStorage for persistence
