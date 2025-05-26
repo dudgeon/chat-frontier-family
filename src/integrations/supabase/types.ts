@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          image_url: string | null
           id: string
           is_hidden: boolean
           is_user: boolean
@@ -21,6 +22,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          image_url?: string | null
           id?: string
           is_hidden?: boolean
           is_user?: boolean
@@ -29,6 +31,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          image_url?: string | null
           id?: string
           is_hidden?: boolean
           is_user?: boolean

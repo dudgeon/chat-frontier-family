@@ -34,7 +34,7 @@ export const useChatDatabase = () => {
             // Fetch messages for this session
             const { data: messagesData, error: messagesError } = await supabase
               .from("chat_messages")
-              .select("id, content, is_user, created_at, session_id")
+              .select("id, content, is_user, created_at, session_id, image_url")
               .eq("session_id", session.id)
               .order("created_at", { ascending: true });
 
@@ -46,6 +46,7 @@ export const useChatDatabase = () => {
               content: msg.content,
               isUser: msg.is_user,
               timestamp: new Date(msg.created_at).getTime(),
+              imageUrl: msg.image_url ?? undefined,
             }));
 
             return {
@@ -199,6 +200,7 @@ export const useChatDatabase = () => {
             content: message.content,
             is_user: message.isUser,
             created_at: new Date(message.timestamp || Date.now()).toISOString(),
+            image_url: message.imageUrl ?? null,
           })
           .select("id");
 

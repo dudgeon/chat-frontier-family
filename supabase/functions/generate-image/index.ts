@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -69,7 +70,41 @@ serve(async (req) => {
     return errorResponse(502, "No image URL returned from OpenAI.");
   }
 
-  return new Response(JSON.stringify({ url }), {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !supabaseKey) {
+    return errorResponse(500, "Supabase env vars not configured");
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  const bucket = "chat-images";
+  const { error: bucketErr } = await supabase.storage.createBucket(bucket, {
+    public: true,
+  });
+  if (bucketErr && !bucketErr.message.includes("already exists")) {
+    console.error("Bucket creation failed", bucketErr.message);
+  }
+
+  const imageResp = await fetch(url);
+  if (!imageResp.ok) {
+    const text = await imageResp.text();
+    return errorResponse(imageResp.status, text);
+  }
+  const arrayBuffer = await imageResp.arrayBuffer();
+  const fileName = `${crypto.randomUUID()}.png`;
+  const { error: uploadErr } = await supabase.storage
+    .from(bucket)
+    .upload(fileName, arrayBuffer, { contentType: "image/png", upsert: true });
+  if (uploadErr) {
+    console.error("Upload error", uploadErr.message);
+    return errorResponse(500, "Failed to upload image");
+  }
+
+  const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(fileName);
+  const storedUrl = publicData.publicUrl;
+
+  return new Response(JSON.stringify({ url: storedUrl }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });
