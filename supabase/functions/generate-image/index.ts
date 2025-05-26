@@ -8,6 +8,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const bucket = Deno.env.get("IMAGE_BUCKET") ?? "chat-images";
+const storagePublic = (Deno.env.get("STORAGE_PUBLIC") ?? "true") === "true";
+const signedUrlTtl =
+  parseInt(Deno.env.get("SIGNED_URL_TTL") ?? "") || 60 * 60 * 24 * 30;
+
 function errorResponse(status: number, msg: string) {
   return new Response(JSON.stringify({ error: msg }), {
     status,
@@ -78,14 +83,6 @@ serve(async (req) => {
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const bucket = "chat-images";
-  const { error: bucketErr } = await supabase.storage.createBucket(bucket, {
-    public: true,
-  });
-  if (bucketErr && !bucketErr.message.includes("already exists")) {
-    console.error("Bucket creation failed", bucketErr.message);
-  }
-
   const imageResp = await fetch(url);
   if (!imageResp.ok) {
     const text = await imageResp.text();
@@ -95,14 +92,26 @@ serve(async (req) => {
   const fileName = `${crypto.randomUUID()}.png`;
   const { error: uploadErr } = await supabase.storage
     .from(bucket)
-    .upload(fileName, arrayBuffer, { contentType: "image/png", upsert: true });
+    .upload(fileName, arrayBuffer, { contentType: "image/png" });
   if (uploadErr) {
     console.error("Upload error", uploadErr.message);
     return errorResponse(500, "Failed to upload image");
   }
 
-  const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(fileName);
-  const storedUrl = publicData.publicUrl;
+  let storedUrl: string;
+  if (storagePublic) {
+    const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
+    storedUrl = data.publicUrl;
+  } else {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(fileName, signedUrlTtl);
+    if (error) {
+      console.error("Signed URL error", error.message);
+      return errorResponse(500, "Failed to sign image URL");
+    }
+    storedUrl = data.signedUrl;
+  }
 
   return new Response(JSON.stringify({ url: storedUrl }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },

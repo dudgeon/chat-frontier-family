@@ -34,5 +34,11 @@ jobs:
       - name: Apply migrations
         run: supabase db push
 
+      - name: Ensure storage bucket exists
+        env:
+          IMAGE_BUCKET: ${{ secrets.IMAGE_BUCKET }}
+          STORAGE_PUBLIC: ${{ secrets.STORAGE_PUBLIC }}
+        run: bunx tsx scripts/create_image_bucket.ts
+
       - name: Show migration status
         run: supabase db status
