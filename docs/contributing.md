@@ -4,6 +4,7 @@
 
 - Node.js or Bun
 - Supabase CLI installed and logged in
+- Local Supabase runs Postgres 14—verify migrations against this version
 
 ## Development
 

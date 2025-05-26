@@ -32,10 +32,11 @@ These illustrate recurring failure modes:
 3.Every schema change ships with: (a) a Supabase migration, (b) matching RLS, (c) updated TypeScript types, (d) tests.
 4.Mirror existing UI interaction patterns. If a control uses group-hover/group-focus, copy that pattern—don’t invent a new one.
 5.Write tests before you patch regressions. A failing test that reproduces the bug must accompany the fix.
-6.Parse streams defensively. Treat data: lines that are empty, 
+6.Parse streams defensively. Treat data: lines that are empty,
 , or [DONE] specially. Use regex: /^data:\s*(.*)$/.
 7.Fail fast & loudly. Throw explicit errors when a critical env var is missing instead of silently falling back.
 8.Respect the project structure. Config lives in /src/lib/config.ts; edge-function files read env directly; React code never touches process.env.
+9.Ensure all database migrations are compatible with Postgres&nbsp;14. Avoid features introduced in later versions and test migrations locally with `supabase start`.
 
 ⸻
 
@@ -45,6 +46,7 @@ These illustrate recurring failure modes:
 - [ ] I ran `bun run test` and all suites pass.
 - [ ] No env var or public API contract was renamed; if yes, I updated docs & affected code.
 - [ ] For any DB change, I added a Supabase migration **and** RLS policy.
+- [ ] I verified the migration runs on Postgres 14 (`supabase start`).
 - [ ] I reproduced the original bug with a failing test and the test now passes.
 - [ ] I manually tested streaming in the Netlify preview (desktop + mobile).
 - [ ] I confirmed UI affordances match existing hover/tap behaviour.
