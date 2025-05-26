@@ -1,6 +1,6 @@
 
 import { Message } from '@/types/chat';
-import { supabase } from '@/lib/supa';
+import { invokeWithAuth } from '@/lib/invokeWithAuth';
 
 export const generateChatName = async (messages: Message[]): Promise<string> => {
   try {
@@ -17,22 +17,19 @@ export const generateChatName = async (messages: Message[]): Promise<string> => 
     });
     
     // Call the Supabase edge function to generate a title
-    const { data, error } = await supabase.functions.invoke('chat', {
-      body: { 
-        messages: chatHistory,
-        model: 'gpt-4.1-nano',
-        titleGeneration: true
-      }
+    const { data, error } = await invokeWithAuth('generate-chat-name', {
+      messages: chatHistory,
+      model: 'gpt-4.1-nano'
     });
 
     if (error) {
       throw new Error(error.message);
     }
     
-    if (data && data.content) {
-      return data.content.trim();
+    if (data && (data.title ?? data.content)) {
+      return (data.title ?? data.content).trim();
     }
-    
+
     return 'Chat Session'; // Default fallback
   } catch (error) {
     console.error('Error generating chat name:', error);
