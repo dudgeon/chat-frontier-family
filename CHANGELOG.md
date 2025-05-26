@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 ## [Unreleased]
 - _Add new entries here for each `feat:` PR._
 
+### Fixed
+- Resolve Netlify 404 when navigating directly to `/login`.
+
 ## [1.4.0] - 2025-05-26
 ### Added
 - Persist generated images to Supabase Storage [#128].
