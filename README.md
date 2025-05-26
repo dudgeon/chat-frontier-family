@@ -1,143 +1,33 @@
-# Chat Streaming App
+# Chat Frontier Family
 
-[View architecture diagram](docs/architecture.md)
+Family friendly chat application with parental supervision, built with Vite, React and Supabase.
 
-## Local development
-
+## Quick start
 ```bash
 bun install
 bun run dev
 ```
 
-Production build:
-
+Run lint and tests:
 ```bash
-bun run build
-bun run preview
+bun run lint
+bun run test
 ```
 
-Deploy Supabase edge function:
+## Architecture
+The app streams OpenAI responses via Supabase Edge Functions. See [architecture docs](docs/architecture.md) for diagrams and flow details.
 
-```bash
-supabase functions deploy chat --project-ref <project-id>
-```
+Database policies and storage buckets are described in [docs/supabase.md](docs/supabase.md). UI conventions live in [docs/ui.md](docs/ui.md).
 
-## Database & RLS
+## Environment
+Create a `.env` with your Supabase project credentials and OpenAI keys. Example variables:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `OPENAI_API_KEY`
 
-Row level security ensures adults can read their kids' data while each child only sees their own rows. The policies live in [supabase/migrations](supabase/migrations). See [supabase/migrations/202505260035_parent_read_children.sql](supabase/migrations/202505260035_parent_read_children.sql) for the two policies added on 2025-05-26.
+More configuration help resides in [docs/openai.md](docs/openai.md).
 
-Do **not** use `CREATE POLICY ... IF NOT EXISTS` until Postgres 16. Instead use `DROP POLICY IF EXISTS ...; CREATE POLICY ...`.
-
-When adding columns, wrap the `ALTER TABLE` in an existence check as shown in [supabase/migrations/20250521133000_add_hidden.sql](supabase/migrations/20250521133000_add_hidden.sql).
-
-## Environment Variables
-
-| Name | Purpose |
-| ---- | ------- |
-| `VITE_SUPABASE_URL` | Supabase project URL for the client |
-| `VITE_SUPABASE_ANON_KEY` | Public anon key for browser requests |
-| `OPENAI_API_KEY` | Server key for OpenAI requests |
-| `OPENAI_IMAGE_MODEL` | DALL·E model used by `generate-image` (default `dall-e-3`) |
-| `ENABLE_METRICS` | When set, log latency to `edge_logs` table |
-| `SUPABASE_URL` | Supabase URL for edge functions |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key for edge inserts |
-| `IMAGE_BUCKET` | Storage bucket for generated images (default `chat-images`) |
-| `STORAGE_PUBLIC` | When `false`, generate signed URLs instead of public links |
-| `SIGNED_URL_TTL` | Lifespan of signed URLs in seconds (default 2592000) |
-
-### Database
-
-This project runs on **Postgres&nbsp;14** (the Supabase default). Ensure all migrations use features supported by this version.
-
-Generated images are cached in the `IMAGE_BUCKET` Supabase Storage bucket. Run
-`ts-node scripts/create_image_bucket.ts` (or create manually in the dashboard)
-to provision the bucket.
-
-### Image persistence flow
-
-OpenAI generates an image, the edge function downloads it, stores the bytes in
-the `IMAGE_BUCKET` Storage bucket, then saves the resulting URL to
-`chat_messages.image_url`. When `STORAGE_PUBLIC` is `false`, the edge function
-returns a signed URL with a default expiry of 30&nbsp;days (overridable via the
-`SIGNED_URL_TTL` env var).
-
-## Streaming Chat Flow
-
-1. User submits a message.
-2. Browser calls the `/chat` edge function with `stream: true`.
-3. Edge forwards the request to `OpenAI /chat/completions`.
-4. OpenAI streams tokens back via SSE.
-5. Edge relays tokens to the browser while accumulating full text.
-6. After the stream finishes, the assistant text is inserted into `chat_messages`.
-
-## Deploy
-
-This project can be hosted on Netlify. Configure the environment variables above and run:
-
-```bash
-netlify deploy --prod
-```
-
-Supabase edge functions are deployed separately using the `supabase` CLI (see quick start above).
-
-### Edge functions
-
-| Endpoint | Purpose |
-| -------- | ------- |
-| `/functions/v1/hideSession` | Mark a chat session as hidden |
-| `/functions/v1/deleteSession` | Delete a chat session |
-
-Example request:
-
-```bash
-curl -X POST \
-  -H "Authorization: Bearer <access_token>" \
-  -H "Content-Type: application/json" \
-  -d '{"id":"uuid"}' \
-  https://<project>.supabase.co/functions/v1/hideSession
-```
-
-The `chat_sessions` table streams updates via the Realtime channel
-`chat_sessions_updates`. The UI subscribes to this channel so hides and
-deletions sync across browser tabs.
-
-### Session Lifecycle
-
-| Action | Behaviour |
-| ------ | --------- |
-| hide   | hidden=true, recoverable |
-| delete | removes session+messages |
-
-### GitHub Actions
-
-Automated CI workflows handle Supabase deploys and migrations.
-
-#### Deploy Edge Functions
-
-- **Workflow:** `.github/workflows/deploy-functions.yml`
-- **Triggers:** push to `main` under `supabase/functions/**` or manual dispatch
-- **Secrets:** `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID`
-
-#### Run Migrations
-
-![Migrations](https://github.com/<you>/<repo>/actions/workflows/run-migrations.yml/badge.svg)
-
-- **Workflow:** `.github/workflows/run-migrations.yml`
-- **Triggers:** push to `main` under `supabase/migrations/**` or manual dispatch
-- **Secrets:** `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID`
-
-## Troubleshooting
-
-| Issue | Resolution |
-| ----- | ---------- |
-| 401/404 from edge | Check `Authorization` header and function URL |
-| CORS errors | Ensure `Access-Control-Allow-Origin` is `*` or your domain |
-| `context_length_exceeded` | Reduce previous messages before sending |
-
-## Roadmap
-
-- Multimodal image packets
-- Voice TTS responses
-- Agentic function calls
-- Replace manual image generation invocation with agentic workflow
-- Edge swipe from the left on mobile opens the settings panel
+## Further reading
+- [Roadmap](docs/roadmap.md)
+- [Backlog](docs/backlog.md)
+- [Changelog](CHANGELOG.md)
