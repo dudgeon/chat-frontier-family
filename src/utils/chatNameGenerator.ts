@@ -23,15 +23,14 @@ export const generateChatName = async (
     const { data, error } = await invokeWithAuth('generate-chat-name', {
       session_id: sessionId,
       messages: chatHistory,
-      model: 'gpt-4.1-nano'
     });
 
     if (error) {
       throw new Error(error.message);
     }
     
-    if (data && (data.title ?? data.content)) {
-      return (data.title ?? data.content).trim();
+    if (data && data.title) {
+      return data.title.trim();
     }
 
     return 'Chat Session'; // Default fallback

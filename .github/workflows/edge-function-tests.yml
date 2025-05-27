@@ -1,0 +1,27 @@
+name: Edge Function Tests
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/functions/**'
+      - '.github/workflows/edge-function-tests.yml'
+      - 'tests/**'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run lint && bun run test
+      - run: supabase test edge-functions
