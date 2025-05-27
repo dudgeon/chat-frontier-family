@@ -32,7 +32,7 @@ export const useChatNameGenerator = (
       count !== lastGeneratedCountRef.current
     ) {
       lastGeneratedCountRef.current = count;
-      generateChatName(messages).then(name => {
+      generateChatName(activeChatId, messages).then(name => {
         updateChatName(activeChatId, name);
       });
     }

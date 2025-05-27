@@ -53,6 +53,7 @@ export type Database = {
           is_hidden: boolean
           last_updated: string
           name: string | null
+          session_summary: string
           user_id: string
         }
         Insert: {
@@ -60,6 +61,7 @@ export type Database = {
           is_hidden?: boolean
           last_updated?: string
           name?: string | null
+          session_summary?: string
           user_id: string
         }
         Update: {
@@ -67,6 +69,7 @@ export type Database = {
           is_hidden?: boolean
           last_updated?: string
           name?: string | null
+          session_summary?: string
           user_id?: string
         }
         Relationships: []
