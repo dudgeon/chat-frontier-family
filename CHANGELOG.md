@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 ### Added
 - Sessions list displays most recent chats first with last interaction date.
 - CI-generated Mermaid component map for React hierarchy.
+- Automatic session summaries via GPT
 
 ### Fixed
 - Resolve Netlify 404 when navigating directly to `/login`.
