@@ -60,7 +60,7 @@ serve(async (req) => {
       method: "POST",
       headers: openaiHeaders(apiKey),
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         input: finalMessages,
         store: true,
       }),
@@ -157,7 +157,7 @@ serve(async (req) => {
               method: "POST",
               headers: openaiHeaders(apiKey),
               body: JSON.stringify({
-                model: "gpt-4.1-nano",
+                model: "gpt-4o",
                 messages: [
                   {
                     role: "system",
@@ -175,17 +175,25 @@ serve(async (req) => {
             console.error("OpenAI summary error", await summaryResp.text());
           } else {
             const sumData = await summaryResp.json();
-            sessionSummary = sumData.choices?.[0]?.message?.content.trim() ?? "";
-            const { error: updErr } = await supabase
-              .from("chat_sessions")
-              .update({ session_summary: sessionSummary })
-              .eq("id", session_id);
-            if (updErr) console.error("Failed to update session summary", updErr);
+            sessionSummary =
+              sumData.choices?.[0]?.message?.content.trim() ?? "";
           }
         } catch (err) {
           console.error("OpenAI summary failure", err);
         }
       }
+    }
+
+    if (supabase) {
+      const { error: updErr } = await supabase
+        .from("chat_sessions")
+        .update({
+          name: title,
+          session_summary: sessionSummary,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", session_id);
+      if (updErr) console.error("Failed to update session metadata", updErr);
     }
 
     return new Response(JSON.stringify({ title, session_summary: sessionSummary }), {

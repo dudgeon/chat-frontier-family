@@ -124,6 +124,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
                 lastUpdated: inserted.last_updated
                   ? new Date(inserted.last_updated).getTime()
                   : null,
+                sessionSummary: inserted.session_summary,
               } as ChatSession;
               return dedupeById([...prev, row]);
             }
@@ -141,6 +142,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
                       lastUpdated: updated.last_updated
                         ? new Date(updated.last_updated).getTime()
                         : s.lastUpdated,
+                      sessionSummary: updated.session_summary ?? s.sessionSummary,
                     }
                   : s,
               );
