@@ -21,7 +21,7 @@ export const useChatDatabase = () => {
       // Fetch all chat sessions for the current user
       const { data, error } = await supabase
         .from("chat_sessions")
-        .select("id, name, last_updated, session_summary")
+        .select("id, name, last_updated, session_summary, description")
         .eq("user_id", userId)
         .order("last_updated", { ascending: false });
 
@@ -55,6 +55,7 @@ export const useChatDatabase = () => {
               messages: messages,
               lastUpdated: new Date(session.last_updated).getTime(),
               sessionSummary: session.session_summary,
+              description: session.description,
             };
           }),
         );
@@ -122,6 +123,7 @@ export const useChatDatabase = () => {
         messages: [messageWithId],
         lastUpdated: timestamp,
         sessionSummary: '',
+        description: null,
       };
 
       console.log("Created new chat session:", newSession);

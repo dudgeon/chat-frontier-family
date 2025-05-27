@@ -13,4 +13,5 @@ export interface ChatSession {
   messages: Message[];
   lastUpdated: number | null;
   sessionSummary?: string;
+  description?: string | null;
 }
