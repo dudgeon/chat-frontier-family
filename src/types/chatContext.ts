@@ -5,6 +5,7 @@ export interface ChatSession {
   name: string | null;
   messages: Message[];
   lastUpdated: number | null;
+  sessionSummary?: string;
 }
 
 export interface ChatContextType {

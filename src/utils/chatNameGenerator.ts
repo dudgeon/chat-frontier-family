@@ -2,7 +2,10 @@
 import { Message } from '@/types/chat';
 import { invokeWithAuth } from '@/lib/invokeWithAuth';
 
-export const generateChatName = async (messages: Message[]): Promise<string> => {
+export const generateChatName = async (
+  sessionId: string,
+  messages: Message[],
+): Promise<string> => {
   try {
     // Format messages for the API
     const chatHistory = messages.map(msg => ({
@@ -18,6 +21,7 @@ export const generateChatName = async (messages: Message[]): Promise<string> => 
     
     // Call the Supabase edge function to generate a title
     const { data, error } = await invokeWithAuth('generate-chat-name', {
+      session_id: sessionId,
       messages: chatHistory,
       model: 'gpt-4.1-nano'
     });

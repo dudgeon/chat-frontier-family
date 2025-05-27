@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const OPENAI_BASE = "https://api.openai.com";
 
@@ -28,8 +29,17 @@ serve(async (req) => {
       throw new Error("OpenAI API key is not configured");
     }
 
-    const { input, messages } = await req.json();
+    const { input, messages, session_id } = await req.json();
     const finalMessages = messages || input;
+    if (!session_id) {
+      return new Response(
+        JSON.stringify({ error: "session_id required" }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
     if (!finalMessages || !Array.isArray(finalMessages)) {
       return new Response(
         JSON.stringify({ error: "Invalid or missing messages array" }),
@@ -39,6 +49,12 @@ serve(async (req) => {
         },
       );
     }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabase = supabaseUrl && serviceRole
+      ? createClient(supabaseUrl, serviceRole)
+      : null;
 
     const createResp = await fetch(`${OPENAI_BASE}/v1/responses`, {
       method: "POST",
@@ -119,7 +135,60 @@ serve(async (req) => {
           )
           .join("")
       : data.output_text;
-    return new Response(JSON.stringify({ title }), {
+    let sessionSummary = "";
+    if (supabase) {
+      const { data: history, error: histErr } = await supabase
+        .from("chat_messages")
+        .select("content, is_user")
+        .eq("session_id", session_id)
+        .order("created_at", { ascending: true });
+
+      if (histErr) {
+        console.error("failed to fetch messages", histErr);
+      } else {
+        const summaryMessages = history.map((m: any) => ({
+          role: m.is_user ? "user" : "assistant",
+          content: m.content,
+        }));
+        try {
+          const summaryResp = await fetch(
+            `${OPENAI_BASE}/v1/chat/completions`,
+            {
+              method: "POST",
+              headers: openaiHeaders(apiKey),
+              body: JSON.stringify({
+                model: "gpt-4.1-nano",
+                messages: [
+                  {
+                    role: "system",
+                    content:
+                      "Summarize the following conversation so far in **no more than 140 characters**. One sentence, no line breaks.",
+                  },
+                  ...summaryMessages,
+                ],
+                max_tokens: 80,
+                temperature: 0.3,
+              }),
+            },
+          );
+          if (!summaryResp.ok) {
+            console.error("OpenAI summary error", await summaryResp.text());
+          } else {
+            const sumData = await summaryResp.json();
+            sessionSummary = sumData.choices?.[0]?.message?.content.trim() ?? "";
+            const { error: updErr } = await supabase
+              .from("chat_sessions")
+              .update({ session_summary: sessionSummary })
+              .eq("id", session_id);
+            if (updErr) console.error("Failed to update session summary", updErr);
+          }
+        } catch (err) {
+          console.error("OpenAI summary failure", err);
+        }
+      }
+    }
+
+    return new Response(JSON.stringify({ title, session_summary: sessionSummary }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
