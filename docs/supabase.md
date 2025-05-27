@@ -9,5 +9,5 @@ Edge functions handle chat streaming and image generation. Deploy them with:
 ```bash
 supabase functions deploy <name> --project-ref <id>
 ```
-The `chat_sessions` table now includes a `session_summary` column used to store a model-generated recap of each conversation.
+The `chat_sessions` table now includes a `session_summary` column used to store a model-generated recap of each conversation. A nullable `description` column mirrors this summary for display in lists.
 

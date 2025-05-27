@@ -54,6 +54,7 @@ export type Database = {
           last_updated: string
           name: string | null
           session_summary: string
+          description: string | null
           user_id: string
         }
         Insert: {
@@ -62,6 +63,7 @@ export type Database = {
           last_updated?: string
           name?: string | null
           session_summary?: string
+          description?: string | null
           user_id: string
         }
         Update: {
@@ -70,6 +72,7 @@ export type Database = {
           last_updated?: string
           name?: string | null
           session_summary?: string
+          description?: string | null
           user_id?: string
         }
         Relationships: []

@@ -125,6 +125,7 @@ const ChildAccountsSection: React.FC = () => {
                 {child.system_message}
               </p>
             )}
+            {/* TODO: link to new Child View page */}
             <Link
               to={`/child-history/${child.id}`}
               className="text-xs text-blue-600 hover:underline"

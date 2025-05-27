@@ -17,7 +17,7 @@ bun run test
 ## Architecture
 The app streams OpenAI responses via Supabase Edge Functions. See [architecture docs](docs/architecture.md) for diagrams and flow details.
 
-Database policies and storage buckets are described in [docs/supabase.md](docs/supabase.md). UI conventions live in [docs/ui.md](docs/ui.md).
+Database policies and storage buckets are described in [docs/supabase.md](docs/supabase.md). UI conventions live in [docs/ui.md](docs/ui.md). The parent-only Child View is available at `/children/:id`.
 
 ## Environment
 Create a `.env` with your Supabase project credentials and OpenAI keys. Example variables:

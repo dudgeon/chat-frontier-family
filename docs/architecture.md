@@ -1,5 +1,5 @@
 # Architecture
-An SPA built with React and Tailwind communicates with Supabase Edge Functions for streaming chat.
+An SPA built with React and Tailwind communicates with Supabase Edge Functions for streaming chat. Parents can inspect child activity via a dedicated `/children/:id` view served by an edge function.
 
 ## Sequence Diagram
 ```mermaid
