@@ -10,7 +10,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
-import ChildHistory from "./pages/ChildHistory";
+import ChildView from "./pages/ChildView";
 import AuthGuard from "./components/auth/AuthGuard";
 
 const queryClient = new QueryClient();
@@ -40,10 +40,10 @@ const App = () => (
                 }
               />
               <Route
-                path="/child-history/:childId"
+                path="/children/:childId"
                 element={
                   <AuthGuard>
-                    <ChildHistory />
+                    <ChildView />
                   </AuthGuard>
                 }
               />

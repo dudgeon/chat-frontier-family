@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - CI-generated Mermaid component map for React hierarchy.
 - Automatic session summaries via GPT
 - Session summary stored in DB and shown to parents
+- Parent-only child view with editable prompt and session list
 
 ### Fixed
 - Resolve Netlify 404 when navigating directly to `/login`.
