@@ -51,7 +51,8 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
+      Deno.env.get("SUPABASE_ANON_KEY");
     const supabaseAdmin = supabaseUrl && serviceRole
       ? createClient(supabaseUrl, serviceRole)
       : null;
@@ -193,7 +194,12 @@ serve(async (req) => {
           updated_at: new Date().toISOString(),
         })
         .eq("id", session_id);
-      if (updErr) console.error("Failed to update session metadata", updErr);
+      if (updErr) {
+        console.error(
+          "Failed to update session metadata",
+          updErr.message,
+        );
+      }
     }
 
     return new Response(JSON.stringify({ title, session_summary: sessionSummary }), {
