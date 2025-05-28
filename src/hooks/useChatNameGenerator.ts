@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { Message } from '@/types/chat';
 import { generateChatName } from '@/utils/chatNameGenerator';
 import { toast } from '@/components/ui/use-toast';
+import { ASSISTANT } from '@/constants/roles';
 
 export const useChatNameGenerator = (
   messages: Message[],
@@ -16,12 +17,16 @@ export const useChatNameGenerator = (
 
   // Reset the generated count when switching chats or a name is set externally
   useEffect(() => {
-    lastGeneratedCountRef.current = messages.filter(m => !m.isUser).length;
+    lastGeneratedCountRef.current = messages.filter(
+      (m) => m.role && m.role.startsWith(ASSISTANT)
+    ).length;
   }, [activeChatId]);
 
   // Generate a chat name after every third assistant reply
   useEffect(() => {
-    const assistantMessages = messages.filter(m => !m.isUser);
+    const assistantMessages = messages.filter(
+      (m) => m.role && m.role.startsWith(ASSISTANT)
+    );
     const count = assistantMessages.length;
 
     if (

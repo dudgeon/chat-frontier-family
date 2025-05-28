@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - Resolve Netlify 404 when navigating directly to `/login`.
 - Child account names on the adult profile page link to the child view.
 - Chat sessions update to GPT-generated titles again
+- Fix: session titles refresh again after message-role refactor (PR #155 regression).
 
 ## [1.4.0] - 2025-05-26
 ### Added
