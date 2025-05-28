@@ -126,7 +126,7 @@ const ChildAccountsSection: React.FC = () => {
               </p>
             )}
             <Link
-              to={`/child-history/${child.id}`}
+              to={`/children/${child.id}`}
               className="text-xs text-blue-600 hover:underline"
             >
               View history
