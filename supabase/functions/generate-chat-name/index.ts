@@ -52,7 +52,7 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const supabase = supabaseUrl && serviceRole
+    const supabaseAdmin = supabaseUrl && serviceRole
       ? createClient(supabaseUrl, serviceRole)
       : null;
 
@@ -136,8 +136,8 @@ serve(async (req) => {
           .join("")
       : data.output_text;
     let sessionSummary = "";
-    if (supabase) {
-      const { data: history, error: histErr } = await supabase
+    if (supabaseAdmin) {
+      const { data: history, error: histErr } = await supabaseAdmin
         .from("chat_messages")
         .select("content, is_user")
         .eq("session_id", session_id)
@@ -184,12 +184,12 @@ serve(async (req) => {
       }
     }
 
-    if (supabase) {
-      const { error: updErr } = await supabase
+    if (supabaseAdmin) {
+      const { error: updErr } = await supabaseAdmin
         .from("chat_sessions")
         .update({
           name: title,
-          session_summary: sessionSummary,
+          session_summary: sessionSummary.slice(0, 200),
           updated_at: new Date().toISOString(),
         })
         .eq("id", session_id);

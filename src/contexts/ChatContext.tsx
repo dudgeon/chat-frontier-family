@@ -73,6 +73,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
     createNewChat: createNewChatSession,
     switchToChat: switchToChatSession,
     updateChatName,
+    stashSessionSummary,
     updateSessionMessages,
     hideSession,
     unhideSession,
@@ -125,6 +126,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
     activeSession.name,
     activeChatId,
     updateChatName,
+    stashSessionSummary,
     isWaitingForResponse,
   );
 
@@ -398,6 +400,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
         createNewChat,
         switchToChat,
         updateChatName,
+        stashSessionSummary,
         hideSession,
         unhideSession,
         deleteSession,

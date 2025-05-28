@@ -23,6 +23,7 @@ export interface ChatContextType {
   createNewChat: () => void;
   switchToChat: (id: string) => void;
   updateChatName: (id: string, newName: string) => void;
+  stashSessionSummary: (id: string, summary: string) => void;
   hideSession: (id: string) => void;
   unhideSession: (id: string) => void;
   deleteSession: (id: string) => void;

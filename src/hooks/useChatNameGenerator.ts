@@ -9,6 +9,7 @@ export const useChatNameGenerator = (
   chatName: string | null,
   activeChatId: string,
   updateChatName: (id: string, name: string) => void,
+  stashSummary: (id: string, summary: string) => void,
   isWaitingForResponse: boolean
 ) => {
   const lastGeneratedCountRef = useRef(0);
@@ -30,9 +31,10 @@ export const useChatNameGenerator = (
       count !== lastGeneratedCountRef.current
     ) {
       lastGeneratedCountRef.current = count;
-      generateChatName(activeChatId, messages)
-        .then((name) => {
-          updateChatName(activeChatId, name);
+      generateChatName(activeChatId)
+        .then(({ title, sessionSummary }) => {
+          updateChatName(activeChatId, title);
+          stashSummary(activeChatId, sessionSummary);
         })
         .catch((err) => {
           console.error('generateChatName failed', err);
