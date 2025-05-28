@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - Child account names on the adult profile page link to the child view.
 - Chat sessions update to GPT-generated titles again
 - Fix: session titles refresh again after message-role refactor (PR #155 regression).
+- Session summaries now save even without service role env key.
 
 ## [1.4.0] - 2025-05-26
 ### Added
