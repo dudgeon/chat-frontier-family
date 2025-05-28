@@ -30,6 +30,7 @@ export const useChatNameGenerator = (
     const count = assistantMessages.length;
 
     if (
+      // Run after the third assistant reply
       count >= 3 &&
       count % 3 === 0 &&
       !isWaitingForResponse &&
