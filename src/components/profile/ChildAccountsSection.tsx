@@ -99,7 +99,12 @@ const ChildAccountsSection: React.FC = () => {
         )}
         {children.map((child) => (
           <div key={child.id} className="space-y-1">
-            <p className="text-sm font-medium">{child.display_name || child.id}</p>
+            <Link
+              to={`/children/${child.id}`}
+              className="text-sm font-medium hover:underline"
+            >
+              {child.display_name || child.id}
+            </Link>
             {isAdult ? (
               <EditableField
                 value={child.system_message || ''}
