@@ -26,7 +26,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
     visibleSessions,
   } = useActiveSession(chatSessions);
 
-  const { createNewChat, switchToChat, updateChatName, deleteChat } =
+  const { createNewChat, switchToChat, updateChatName, deleteChat, stashSessionSummary } =
     useSessionManagement(
       chatSessions,
       setChatSessions,
@@ -183,6 +183,7 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
     createNewChat,
     switchToChat,
     updateChatName,
+    stashSessionSummary,
     deleteChat,
     updateSessionMessages,
     hiddenSessionIds,

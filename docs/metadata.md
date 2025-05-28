@@ -8,5 +8,8 @@ Metadata is written server-side using the service role key so that row level sec
 not block updates. The function updates `chat_sessions.name` and `chat_sessions.session_summary`
 directly and returns the values only for debugging.
 
+As of May 2025 the summary field is truncated to 200 characters before saving.
+The UI displays this recap for adult accounts only.
+
 To keep API costs low the request payloads are short and generation runs at most once every
 three assistant messages.

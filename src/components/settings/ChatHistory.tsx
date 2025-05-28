@@ -44,6 +44,7 @@ const ChatHistory: React.FC = () => {
             id: session.id,
             title: session.name || "New chat",
             lastUpdated: session.lastUpdated,
+            sessionSummary: session.sessionSummary,
           }}
           onSelect={switchToChat}
         />

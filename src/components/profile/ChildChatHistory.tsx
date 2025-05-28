@@ -46,7 +46,14 @@ const ChildChatHistory: React.FC<ChildChatHistoryProps> = ({ childId }) => {
       {sessions.map((session) => (
         <AccordionItem key={session.id} value={session.id}>
           <AccordionTrigger>
-            {session.name || 'Unnamed chat'}
+            <div className="flex flex-col text-left">
+              <span>{session.name || 'Unnamed chat'}</span>
+              {session.sessionSummary && (
+                <span className="text-xs text-muted-foreground truncate">
+                  {session.sessionSummary}
+                </span>
+              )}
+            </div>
           </AccordionTrigger>
           <AccordionContent>
             <MessageList messages={session.messages} />

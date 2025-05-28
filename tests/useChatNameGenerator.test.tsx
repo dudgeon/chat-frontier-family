@@ -4,7 +4,7 @@ import { useChatNameGenerator } from '@/hooks/useChatNameGenerator';
 import { Message } from '@/types/chat';
 
 vi.mock('@/utils/chatNameGenerator', () => ({
-  generateChatName: vi.fn(() => Promise.resolve('AI Title')),
+  generateChatName: vi.fn(() => Promise.resolve({ title: 'AI Title', sessionSummary: 'summary' })),
 }));
 vi.mock('@/components/ui/use-toast', () => ({
   toast: vi.fn(),
@@ -15,7 +15,7 @@ describe.skip('useChatNameGenerator', () => {
     const update = vi.fn();
     const messages: Message[] = [];
     const { rerender } = renderHook((props: { msgs: Message[] }) =>
-      useChatNameGenerator(props.msgs, null, 's1', update, false)
+      useChatNameGenerator(props.msgs, null, 's1', update, vi.fn(), false)
     , { initialProps: { msgs: messages } });
 
     const push = (content: string, isUser = false) => {

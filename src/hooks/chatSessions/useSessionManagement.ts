@@ -104,6 +104,17 @@ export const useSessionManagement = (
     [user, updateChatNameInDb, setChatSessions],
   );
 
+  const stashSessionSummary = useCallback(
+    (id: string, summary: string) => {
+      setChatSessions(prev =>
+        prev.map(session =>
+          session.id === id ? { ...session, sessionSummary: summary } : session,
+        ),
+      );
+    },
+    [setChatSessions],
+  );
+
   // Delete a chat session
   const deleteChat = useCallback(
     async (id: string) => {
@@ -159,6 +170,7 @@ export const useSessionManagement = (
     createNewChat,
     switchToChat,
     updateChatName,
+    stashSessionSummary,
     deleteChat,
   };
 };
