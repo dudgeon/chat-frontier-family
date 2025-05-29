@@ -8,7 +8,6 @@ function openaiHeaders(apiKey: string) {
   return {
     "Content-Type": "application/json",
     Authorization: `Bearer ${apiKey}`,
-    "OpenAI-Beta": "responses=auto",
   };
 }
 
@@ -57,18 +56,22 @@ serve(async (req) => {
       ? createClient(supabaseUrl, serviceRole)
       : null;
 
-    const createResp = await fetch(`${OPENAI_BASE}/v1/responses`, {
+    const createResp = await fetch(`${OPENAI_BASE}/v1/chat/completions`, {
       method: "POST",
       headers: openaiHeaders(apiKey),
       body: JSON.stringify({
-        model: "gpt-4o",
-        input: finalMessages,
-        store: true,
+        model: "gpt-4o-mini",
+        messages: finalMessages,
+        temperature: 0.3,
       }),
     });
 
     if (!createResp.ok) {
-      console.error("OpenAI error", await createResp.text());
+      console.error(
+        "OpenAI error",
+        createResp.status,
+        await createResp.text(),
+      );
       return new Response(
         JSON.stringify({ error: "Upstream OpenAI error" }),
         {
@@ -78,110 +81,27 @@ serve(async (req) => {
       );
     }
 
-    const creation = await createResp.json();
-    const responseId = creation.id;
-    if (!responseId) {
-      return new Response(
-        JSON.stringify({ error: "Invalid response ID from OpenAI" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
-    }
+    const data = await createResp.json();
+    const text: string = data.choices?.[0]?.message?.content?.trim() ?? "";
 
-    let data;
-    for (let i = 0; i < 30; i++) {
-      const retrieveUrl = `${OPENAI_BASE}/v1/responses/${responseId}`;
-      const finished = await fetch(retrieveUrl, {
-        headers: openaiHeaders(apiKey),
-      });
-
-      if (!finished.ok) {
-        console.error("OpenAI error", await finished.text());
-        return new Response(
-          JSON.stringify({ error: "Upstream OpenAI error" }),
-          {
-            status: 502,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          },
-        );
-      }
-
-      data = await finished.json();
-      if (data.status === "completed") {
-        break;
-      }
-      await new Promise((res) => setTimeout(res, 1000));
-    }
-
-    if (!data || data.status !== "completed") {
-      return new Response(
-        JSON.stringify({ error: "Timed out waiting for OpenAI response" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        },
-      );
-    }
-
-    const title = Array.isArray(data.output)
-      ? data.output
-          .flatMap((item: any) =>
-            Array.isArray(item.content)
-              ? item.content
-                  .filter((c: any) => c.type === "output_text")
-                  .map((c: any) => c.text)
-              : [],
-          )
-          .join("")
-      : data.output_text;
+    const matchJson = text.startsWith("{") && text.endsWith("}");
+    let title = "";
     let sessionSummary = "";
-    if (supabaseAdmin) {
-      const { data: history, error: histErr } = await supabaseAdmin
-        .from("chat_messages")
-        .select("content, is_user")
-        .eq("session_id", session_id)
-        .order("created_at", { ascending: true });
-
-      if (histErr) {
-        console.error("failed to fetch messages", histErr);
-      } else {
-        const summaryMessages = history.map((m: any) => ({
-          role: m.is_user ? "user" : "assistant",
-          content: m.content,
-        }));
-        try {
-          const summaryResp = await fetch(
-            `${OPENAI_BASE}/v1/chat/completions`,
-            {
-              method: "POST",
-              headers: openaiHeaders(apiKey),
-              body: JSON.stringify({
-                model: "gpt-4o",
-                messages: [
-                  {
-                    role: "system",
-                    content:
-                      "Summarize the following conversation so far in **no more than 140 characters**. One sentence, no line breaks.",
-                  },
-                  ...summaryMessages,
-                ],
-                max_tokens: 80,
-                temperature: 0.3,
-              }),
-            },
-          );
-          if (!summaryResp.ok) {
-            console.error("OpenAI summary error", await summaryResp.text());
-          } else {
-            const sumData = await summaryResp.json();
-            sessionSummary =
-              sumData.choices?.[0]?.message?.content.trim() ?? "";
-          }
-        } catch (err) {
-          console.error("OpenAI summary failure", err);
-        }
+    if (matchJson) {
+      try {
+        const parsed = JSON.parse(text);
+        title = parsed.title ?? parsed.name ?? "";
+        sessionSummary = parsed.summary ?? parsed.session_summary ?? "";
+      } catch {
+        title = text;
+      }
+    } else {
+      const titleMatch = /title[:\-]*\s*(.+)/i.exec(text);
+      const summaryMatch = /summary[:\-]*\s*(.+)/i.exec(text);
+      if (titleMatch) title = titleMatch[1].trim();
+      if (summaryMatch) sessionSummary = summaryMatch[1].trim();
+      if (!title && !sessionSummary) {
+        [title, sessionSummary] = text.split("\n", 2).map((s) => s.trim());
       }
     }
 

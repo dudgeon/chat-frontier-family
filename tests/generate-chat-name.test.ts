@@ -34,4 +34,17 @@ describe('generate-chat-name update', () => {
     expect(update).toHaveBeenCalledWith({ session_summary: 'summary' });
     expect(eq).toHaveBeenCalledWith('id', 's1');
   });
+
+  it('writes session summary', async () => {
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'svc';
+    const eq = vi.fn().mockResolvedValue({ error: null });
+    const update = vi.fn(() => ({ eq }));
+    const from = vi.fn(() => ({ update }));
+    (createClient as unknown as Mock).mockReturnValue({ from });
+
+    await handler('s2', 'hello');
+
+    expect(update).toHaveBeenCalledWith({ session_summary: 'hello' });
+    expect(eq).toHaveBeenCalledWith('id', 's2');
+  });
 });
