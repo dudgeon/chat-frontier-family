@@ -134,18 +134,19 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
               if (updated.hidden || updated.deleted_at) {
                 return prev.filter((s) => s.id !== updated.id);
               }
-              return prev.map((s) =>
-                s.id === updated.id
-                  ? {
-                      ...s,
-                      name: updated.name,
-                      lastUpdated: updated.last_updated
-                        ? new Date(updated.last_updated).getTime()
-                        : s.lastUpdated,
-                      sessionSummary: updated.session_summary ?? s.sessionSummary,
-                    }
-                  : s,
-              );
+              return prev.map((s) => {
+                if (s.id !== updated.id) return s;
+                const incomingTime = updated.last_updated
+                  ? new Date(updated.last_updated).getTime()
+                  : 0;
+                if (s.lastUpdated && incomingTime <= s.lastUpdated) return s;
+                return {
+                  ...s,
+                  name: updated.name,
+                  lastUpdated: incomingTime || s.lastUpdated,
+                  sessionSummary: updated.session_summary ?? s.sessionSummary,
+                };
+              });
             }
 
             return prev;

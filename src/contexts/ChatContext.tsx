@@ -121,7 +121,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [user, setMessages]);
 
   // Set up chat name generation
-  useChatNameGenerator(
+  const displayName = useChatNameGenerator(
     messages,
     activeSession.name,
     activeChatId,
@@ -394,7 +394,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
         isWaitingForResponse: isWaitingForResponse || isGeneratingImage,
         generateImage,
         systemMessage,
-        chatName: activeSession.name,
+        chatName: displayName,
         chatSessions: visibleSessions,
         activeChatId,
         createNewChat,

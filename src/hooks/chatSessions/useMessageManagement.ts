@@ -20,6 +20,8 @@ export const useMessageManagement = (
     chatSessionsRef.current = chatSessions;
   }, [chatSessions]);
 
+  const fallbackSet = useRef<Record<string, boolean>>({});
+
   // Update messages for active chat
   const updateSessionMessages = useCallback(async (messages: Message[]) => {
     if (!activeChatId || !user) return;
@@ -59,9 +61,15 @@ export const useMessageManagement = (
           })
         );
 
-        // If session has no name yet and this is a user message, set a name
+        // If session has no name yet and this is the first user message, set a name
         const session = chatSessionsRef.current.find(s => s.id === activeChatId);
-        if (session && !session.name && msg.isUser) {
+        if (
+          session &&
+          !session.name &&
+          msg.isUser &&
+          !fallbackSet.current[activeChatId]
+        ) {
+          fallbackSet.current[activeChatId] = true;
           const newName = generateSessionName(msg.content);
           await initializeSessionName(activeChatId, newName);
           setChatSessions(prevSessions =>
