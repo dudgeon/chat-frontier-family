@@ -1,16 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-function utf8Truncate(str: string, maxBytes = 200) {
-  const encoder = new TextEncoder();
-  let bytes = encoder.encode(str);
-  while (bytes.length > maxBytes) {
-    str = str.slice(0, -1);
-    bytes = encoder.encode(str);
-  }
-  return str;
-}
+import { utf8Truncate } from "../../../src/utils/metadata/index.ts";
 
 const OPENAI_BASE = "https://api.openai.com";
 
@@ -138,6 +129,9 @@ serve(async (req) => {
       }
     }
 
+    if (Deno.env.get('DEBUG_META_LOGS')) {
+      console.debug('metadata result', { title, sessionSummary });
+    }
     return new Response(JSON.stringify({ title, session_summary: sessionSummary }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
