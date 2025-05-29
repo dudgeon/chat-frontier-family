@@ -47,6 +47,29 @@ CI will enforce; run locally before committing.
 Feature Logging
 For every PR tagged `feat:` you must add an entry to CHANGELOG.md under `Unreleased`.
 
+### Edge-Function Tests
+        •       Path-filter CI so these run only when files under `supabase/functions/` change or when manually dispatched.
+        •       Keep the default PR workflow under 4 minutes.
+
+### Skipped Tests Lint
+        •       eslint-plugin-vitest rejects `describe.skip` or `test.only` in committed code.
+
+### Cost Guardrail
+        •       Default model is `gpt-4.1-nano`.
+        •       To upgrade, flip `featureFlags.metadataModel` and document cost + latency comparison.
+        •       Obtain @dudgeon approval before merging.
+
+### Online RLS Migration Pattern
+        •       Add the new policy in a first release.
+        •       Back-fill data with both policies active.
+        •       Drop the old policy in a later release.
+
+### Guard-Clause Integration Test
+        •       Assert the title/summary generator fires once per session.
+
+### Multi-Concern PR Rule
+        •       If a change spans edge function, client, and CI updates, create separate PRs.
+
 
 ⸻
 

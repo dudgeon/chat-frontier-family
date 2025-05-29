@@ -76,10 +76,19 @@ A concise **title** and one-sentence **summary** make it easy for parents and ki
 | RLS blocks updates       | CI test validates service-role write succeeds. |
 
 ## 8. Release Plan
-1. Develop behind feature flag `metadata_v2`.  
-2. QA with synthetic 50-message chat.  
-3. Gradual rollout 10 % → 100 %.  
+1. Develop behind feature flag `metadata_v2`.
+2. QA with synthetic 50-message chat.
+3. Gradual rollout 10 % → 100 %.
 4. Monitor cost and error logs for 7 days.
+
+## 9. Implementation Notes & Guardrails
+* **Default model:** `gpt-4.1-nano`; upgrades toggled via `featureFlags.metadataModel`.
+* **Guard clause:** `if (!chatName || !chatSummary)` prevents duplicate generator calls.
+* **Integration test:** verify the name/summary generator executes once per session with coverage.
+* **Model change gate:** document cost & latency benchmarks and secure @dudgeon approval before merging.
+* **RLS online migration:** add new policy, back-fill rows, drop old policy in a later release.
+* **Edge-function CI:** path filter so edge-function tests run only on `supabase/functions/**` changes.
+* **Acceptance:** zero user-visible downtime and no duplicate DB writes.
 
 ---
 
