@@ -2,8 +2,14 @@
 import { useEffect, useRef } from 'react';
 import { Message } from '@/types/chat';
 import { generateChatName } from '@/utils/chatNameGenerator';
+import { generateSessionName } from '@/utils/generateSessionName';
 import { toast } from '@/components/ui/use-toast';
 import { ASSISTANT } from '@/constants/roles';
+
+export function getFallbackTitle(messages: Message[]): string | null {
+  const first = messages.find((m) => (m as any).isUser)?.content;
+  return first ? generateSessionName(first) : null;
+}
 
 export const useChatNameGenerator = (
   messages: Message[],
@@ -14,6 +20,7 @@ export const useChatNameGenerator = (
   isWaitingForResponse: boolean
 ) => {
   const lastGeneratedCountRef = useRef(0);
+  const initialTitle = useRef<string | null>(null);
 
   // Reset the generated count when switching chats or a name is set externally
   useEffect(() => {
@@ -21,6 +28,11 @@ export const useChatNameGenerator = (
       (m) => m.role && m.role.startsWith(ASSISTANT)
     ).length;
   }, [activeChatId]);
+
+  const firstUserPrompt = getFallbackTitle(messages);
+  if (!initialTitle.current && firstUserPrompt) {
+    initialTitle.current = firstUserPrompt;
+  }
 
   // Generate a chat name after every third assistant reply
   useEffect(() => {
@@ -51,4 +63,6 @@ export const useChatNameGenerator = (
         });
     }
   }, [messages, activeChatId, updateChatName, isWaitingForResponse]);
+
+  return chatName ?? initialTitle.current;
 };
