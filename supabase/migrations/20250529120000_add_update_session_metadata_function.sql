@@ -10,7 +10,7 @@ BEGIN
   UPDATE public.chat_sessions
      SET name = _name,
          session_summary = _summary,
-         updated_at = now()
+        last_updated = now()
    WHERE id = _session_id;
 END;
 $$;

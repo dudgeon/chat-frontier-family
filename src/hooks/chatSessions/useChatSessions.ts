@@ -9,6 +9,25 @@ import { useMessageManagement } from "./useMessageManagement";
 import { supabase } from "@/lib/supa";
 import { dedupeById } from "@/utils/dedupeById";
 
+export function mergeSessionMetadata(
+  session: ChatSession,
+  updated: any,
+): ChatSession {
+  const incomingTime = updated.last_updated
+    ? new Date(updated.last_updated).getTime()
+    : 0;
+  if (process.env.NODE_ENV === "development") {
+    console.debug("[metadata] merge", updated.last_updated, session.lastUpdated);
+  }
+  if (session.lastUpdated && incomingTime < session.lastUpdated) return session;
+  return {
+    ...session,
+    name: updated.name,
+    lastUpdated: incomingTime || session.lastUpdated,
+    sessionSummary: updated.session_summary ?? session.sessionSummary,
+  };
+}
+
 export const useChatSessions = (initialMessages: Message[] = []) => {
   const { user } = useAuth();
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
@@ -134,19 +153,9 @@ export const useChatSessions = (initialMessages: Message[] = []) => {
               if (updated.hidden || updated.deleted_at) {
                 return prev.filter((s) => s.id !== updated.id);
               }
-              return prev.map((s) => {
-                if (s.id !== updated.id) return s;
-                const incomingTime = updated.last_updated
-                  ? new Date(updated.last_updated).getTime()
-                  : 0;
-                if (s.lastUpdated && incomingTime <= s.lastUpdated) return s;
-                return {
-                  ...s,
-                  name: updated.name,
-                  lastUpdated: incomingTime || s.lastUpdated,
-                  sessionSummary: updated.session_summary ?? s.sessionSummary,
-                };
-              });
+              return prev.map((s) =>
+                s.id === updated.id ? mergeSessionMetadata(s, updated) : s,
+              );
             }
 
             return prev;
