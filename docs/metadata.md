@@ -13,3 +13,8 @@ The UI displays this recap for adult accounts only.
 
 To keep API costs low the request payloads are short and generation runs at most once every
 three assistant messages.
+
+Sample log entry (level:"info"):
+```json
+{"level":"info","event":"metadata.generated","session_id":"abc123","title":"Shopping List","summary":"We brainstormed dinner ideas."}
+```

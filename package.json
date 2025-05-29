@@ -10,6 +10,7 @@
     "lint": "eslint tests --ext .ts,.tsx --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest run --reporter=verbose",
+    "test:metadata": "vitest run src/utils/__tests__/utf8Truncate.test.ts tests/generate-chat-name.test.ts",
     "ci": "pnpm lint && pnpm test"
   },
   "dependencies": {
