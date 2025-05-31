@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 - Ensure `last_updated` timestamp updates so realtime title changes appear immediately.
 - Session summaries now save even without service role env key.
 - Robust session metadata generation avoids title resets and truncates summaries safely.
+- Fix: metadata generator trigger counted user messages, so titles never updated.
 
 ## [1.4.0] - 2025-05-26
 ### Added
