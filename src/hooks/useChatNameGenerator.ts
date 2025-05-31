@@ -21,11 +21,12 @@ export const useChatNameGenerator = (
 ) => {
   const lastGeneratedCountRef = useRef(0);
   const initialTitle = useRef<string | null>(null);
+  const fallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset the generated count when switching chats or a name is set externally
   useEffect(() => {
     lastGeneratedCountRef.current = messages.filter(
-      (m) => m.role && m.role.startsWith(ASSISTANT)
+      (m) => m.role === ASSISTANT
     ).length;
   }, [activeChatId]);
 
@@ -36,19 +37,21 @@ export const useChatNameGenerator = (
 
   // Generate a chat name after every third assistant reply
   useEffect(() => {
-    const assistantMessages = messages.filter(
-      (m) => m.role && m.role.startsWith(ASSISTANT)
-    );
-    const count = assistantMessages.length;
+    const assistantCount = messages.filter(
+      (m) => m.role === ASSISTANT
+    ).length;
+
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[metadata] trigger check', { assistantCount });
+    }
 
     if (
-      // Run after the third assistant reply
-      count >= 3 &&
-      count % 3 === 0 &&
+      assistantCount >= 3 &&
+      assistantCount % 3 === 0 &&
       !isWaitingForResponse &&
-      count !== lastGeneratedCountRef.current
+      assistantCount !== lastGeneratedCountRef.current
     ) {
-      lastGeneratedCountRef.current = count;
+      lastGeneratedCountRef.current = assistantCount;
       generateChatName(activeChatId, messages)
         .then(({ title, sessionSummary }) => {
           updateChatName(activeChatId, title);
@@ -61,8 +64,28 @@ export const useChatNameGenerator = (
             variant: 'destructive',
           });
         });
+
+      if (process.env.NODE_ENV !== 'production') {
+        if (fallbackRef.current) clearTimeout(fallbackRef.current);
+        fallbackRef.current = setTimeout(() => {
+          generateChatName(activeChatId, messages)
+            .then(({ title, sessionSummary }) => {
+              updateChatName(activeChatId, title);
+              stashSummary(activeChatId, sessionSummary);
+            })
+            .catch((err) => {
+              console.error('fallback metadata fetch failed', err);
+            });
+        }, 3000);
+      }
     }
   }, [messages, activeChatId, updateChatName, isWaitingForResponse]);
+
+  useEffect(() => {
+    return () => {
+      if (fallbackRef.current) clearTimeout(fallbackRef.current);
+    };
+  }, []);
 
   return chatName ?? initialTitle.current;
 };
