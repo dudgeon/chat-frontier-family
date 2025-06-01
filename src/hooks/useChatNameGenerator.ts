@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react';
 import { Message } from '@/types/chat';
 import { generateChatName } from '@/utils/chatNameGenerator';
+import { requestSessionMetadata } from '@/utils/requestSessionMetadata';
 import { generateSessionName } from '@/utils/generateSessionName';
 import { toast } from '@/components/ui/use-toast';
 import { ASSISTANT } from '@/constants/roles';
@@ -26,7 +27,7 @@ export const useChatNameGenerator = (
   // Reset the generated count when switching chats or a name is set externally
   useEffect(() => {
     lastGeneratedCountRef.current = messages.filter(
-      (m) => m.role === ASSISTANT
+      (m) => m.role === 'assistant'
     ).length;
   }, [activeChatId]);
 
@@ -38,11 +39,11 @@ export const useChatNameGenerator = (
   // Generate a chat name after every third assistant reply
   useEffect(() => {
     const assistantCount = messages.filter(
-      (m) => m.role === ASSISTANT
+      (m) => m.role === 'assistant'
     ).length;
 
     if (process.env.NODE_ENV === 'development') {
-      console.debug('[metadata] trigger check', { assistantCount });
+      console.debug('[metadata] trigger', { assistantCount });
     }
 
     if (
@@ -51,19 +52,10 @@ export const useChatNameGenerator = (
       !isWaitingForResponse &&
       assistantCount !== lastGeneratedCountRef.current
     ) {
-      lastGeneratedCountRef.current = assistantCount;
-      generateChatName(activeChatId, messages)
-        .then(({ title, sessionSummary }) => {
-          updateChatName(activeChatId, title);
-          stashSummary(activeChatId, sessionSummary);
-        })
-        .catch((err) => {
-          console.error('generateChatName failed', err);
-          toast({
-            title: 'Failed to update chat title',
-            variant: 'destructive',
-          });
-        });
+      (async () => {
+        await requestSessionMetadata(activeChatId);
+        lastGeneratedCountRef.current = assistantCount;
+      })();
 
       if (process.env.NODE_ENV !== 'production') {
         if (fallbackRef.current) clearTimeout(fallbackRef.current);
@@ -79,7 +71,7 @@ export const useChatNameGenerator = (
         }, 3000);
       }
     }
-  }, [messages, activeChatId, updateChatName, isWaitingForResponse]);
+  }, [messages, activeChatId, updateChatName, stashSummary, isWaitingForResponse]);
 
   useEffect(() => {
     return () => {
