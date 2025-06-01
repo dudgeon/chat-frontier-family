@@ -5,6 +5,14 @@ import { utf8Truncate } from "../../../src/utils/metadata/index.ts";
 
 const OPENAI_BASE = "https://api.openai.com";
 
+const systemPrompt = {
+  role: "system",
+  content:
+    "You are an assistant that summarises a chat. " +
+    'Return ONLY JSON like {"name":"<title>","summary":"<summary>"} ' +
+    "with no extra text."
+};
+
 function openaiHeaders(apiKey: string) {
   return {
     "Content-Type": "application/json",
@@ -29,8 +37,9 @@ serve(async (req) => {
       throw new Error("OpenAI API key is not configured");
     }
 
-    const { input, messages, session_id } = await req.json();
-    const finalMessages = (messages || input || []).slice(-40);
+    const { input, messages: incoming, session_id } = await req.json();
+    const history = (incoming || input || []) as unknown[];
+    const messages = [systemPrompt, ...history.slice(-40)];
     if (!session_id) {
       return new Response(
         JSON.stringify({ error: "session_id required" }),
@@ -40,7 +49,7 @@ serve(async (req) => {
         },
       );
     }
-    if (!finalMessages || !Array.isArray(finalMessages)) {
+    if (!history || !Array.isArray(history)) {
       return new Response(
         JSON.stringify({ error: "Invalid or missing messages array" }),
         {
@@ -61,8 +70,8 @@ serve(async (req) => {
       method: "POST",
       headers: openaiHeaders(apiKey),
       body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: finalMessages,
+        model: Deno.env.get("OPENAI_METADATA_MODEL") ?? "gpt-4o-mini",
+        messages,
         temperature: 0.3,
       }),
     });
@@ -83,26 +92,31 @@ serve(async (req) => {
     }
 
     const data = await createResp.json();
-    const text: string = data.choices?.[0]?.message?.content?.trim() ?? "";
-
-    const matchJson = text.startsWith("{") && text.endsWith("}");
     let title = "";
     let sessionSummary = "";
-    if (matchJson) {
-      try {
-        const parsed = JSON.parse(text);
-        title = parsed.title ?? parsed.name ?? "";
-        sessionSummary = parsed.summary ?? parsed.session_summary ?? "";
-      } catch {
-        title = text;
-      }
-    } else {
-      const titleMatch = /title[:\-]*\s*(.+)/i.exec(text);
-      const summaryMatch = /summary[:\-]*\s*(.+)/i.exec(text);
-      if (titleMatch) title = titleMatch[1].trim();
-      if (summaryMatch) sessionSummary = summaryMatch[1].trim();
-      if (!title && !sessionSummary) {
-        [title, sessionSummary] = text.split("\n", 2).map((s) => s.trim());
+    try {
+      ({ name: title, summary: sessionSummary } = JSON.parse(
+        data.choices?.[0]?.message?.content ?? "{}"
+      ));
+    } catch {
+      const text: string = data.choices?.[0]?.message?.content?.trim() ?? "";
+      const matchJson = text.startsWith("{") && text.endsWith("}");
+      if (matchJson) {
+        try {
+          const parsed = JSON.parse(text);
+          title = parsed.title ?? parsed.name ?? "";
+          sessionSummary = parsed.summary ?? parsed.session_summary ?? "";
+        } catch {
+          title = text;
+        }
+      } else {
+        const titleMatch = /title[:\-]*\s*(.+)/i.exec(text);
+        const summaryMatch = /summary[:\-]*\s*(.+)/i.exec(text);
+        if (titleMatch) title = titleMatch[1].trim();
+        if (summaryMatch) sessionSummary = summaryMatch[1].trim();
+        if (!title && !sessionSummary) {
+          [title, sessionSummary] = text.split("\n", 2).map((s) => s.trim());
+        }
       }
     }
 
