@@ -42,10 +42,6 @@ export const useChatNameGenerator = (
       (m) => m.role === 'assistant'
     ).length;
 
-    if (process.env.NODE_ENV === 'development') {
-      console.debug('[metadata] trigger', { assistantCount });
-    }
-
     if (
       assistantCount >= 3 &&
       assistantCount % 3 === 0 &&
@@ -70,6 +66,10 @@ export const useChatNameGenerator = (
             });
         }, 3000);
       }
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[metadata] trigger', { assistantCount });
     }
   }, [messages, activeChatId, updateChatName, stashSummary, isWaitingForResponse]);
 
