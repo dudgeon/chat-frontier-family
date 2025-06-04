@@ -1,17 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { utf8Truncate } from "../../../src/utils/metadata/index.ts";
+
+function utf8Truncate(str: string, maxBytes = 200) {
+  const encoder = new TextEncoder();
+  let bytes = encoder.encode(str);
+  while (bytes.length > maxBytes) {
+    str = str.slice(0, -1);
+    bytes = encoder.encode(str);
+  }
+  return str;
+}
 
 const OPENAI_BASE = "https://api.openai.com";
-
-const systemPrompt = {
-  role: "system",
-  content:
-    "You are an assistant that summarises a chat. " +
-    'Return ONLY JSON like {"name":"<title>","summary":"<summary>"} ' +
-    "with no extra text."
-};
 
 function openaiHeaders(apiKey: string) {
   return {
@@ -37,9 +38,8 @@ serve(async (req) => {
       throw new Error("OpenAI API key is not configured");
     }
 
-    const { input, messages: incoming, session_id } = await req.json();
-    const history = (incoming || input || []) as unknown[];
-    const messages = [systemPrompt, ...history.slice(-40)];
+    const { input, messages, session_id } = await req.json();
+    const finalMessages = (messages || input || []).slice(-40);
     if (!session_id) {
       return new Response(
         JSON.stringify({ error: "session_id required" }),
@@ -49,7 +49,7 @@ serve(async (req) => {
         },
       );
     }
-    if (!history || !Array.isArray(history)) {
+    if (!finalMessages || !Array.isArray(finalMessages)) {
       return new Response(
         JSON.stringify({ error: "Invalid or missing messages array" }),
         {
@@ -70,8 +70,8 @@ serve(async (req) => {
       method: "POST",
       headers: openaiHeaders(apiKey),
       body: JSON.stringify({
-        model: Deno.env.get("OPENAI_METADATA_MODEL") ?? "gpt-4o-mini",
-        messages,
+        model: "gpt-4o-mini",
+        messages: finalMessages,
         temperature: 0.3,
       }),
     });
@@ -92,31 +92,26 @@ serve(async (req) => {
     }
 
     const data = await createResp.json();
+    const text: string = data.choices?.[0]?.message?.content?.trim() ?? "";
+
+    const matchJson = text.startsWith("{") && text.endsWith("}");
     let title = "";
     let sessionSummary = "";
-    try {
-      ({ name: title, summary: sessionSummary } = JSON.parse(
-        data.choices?.[0]?.message?.content ?? "{}"
-      ));
-    } catch {
-      const text: string = data.choices?.[0]?.message?.content?.trim() ?? "";
-      const matchJson = text.startsWith("{") && text.endsWith("}");
-      if (matchJson) {
-        try {
-          const parsed = JSON.parse(text);
-          title = parsed.title ?? parsed.name ?? "";
-          sessionSummary = parsed.summary ?? parsed.session_summary ?? "";
-        } catch {
-          title = text;
-        }
-      } else {
-        const titleMatch = /title[:\-]*\s*(.+)/i.exec(text);
-        const summaryMatch = /summary[:\-]*\s*(.+)/i.exec(text);
-        if (titleMatch) title = titleMatch[1].trim();
-        if (summaryMatch) sessionSummary = summaryMatch[1].trim();
-        if (!title && !sessionSummary) {
-          [title, sessionSummary] = text.split("\n", 2).map((s) => s.trim());
-        }
+    if (matchJson) {
+      try {
+        const parsed = JSON.parse(text);
+        title = parsed.title ?? parsed.name ?? "";
+        sessionSummary = parsed.summary ?? parsed.session_summary ?? "";
+      } catch {
+        title = text;
+      }
+    } else {
+      const titleMatch = /title[:\-]*\s*(.+)/i.exec(text);
+      const summaryMatch = /summary[:\-]*\s*(.+)/i.exec(text);
+      if (titleMatch) title = titleMatch[1].trim();
+      if (summaryMatch) sessionSummary = summaryMatch[1].trim();
+      if (!title && !sessionSummary) {
+        [title, sessionSummary] = text.split("\n", 2).map((s) => s.trim());
       }
     }
 
@@ -143,9 +138,6 @@ serve(async (req) => {
       }
     }
 
-    if (Deno.env.get('DEBUG_META_LOGS')) {
-      console.debug('metadata result', { title, sessionSummary });
-    }
     return new Response(JSON.stringify({ title, session_summary: sessionSummary }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -2,7 +2,6 @@
 import { useEffect, useRef } from 'react';
 import { Message } from '@/types/chat';
 import { generateChatName } from '@/utils/chatNameGenerator';
-import { requestSessionMetadata } from '@/utils/requestSessionMetadata';
 import { generateSessionName } from '@/utils/generateSessionName';
 import { toast } from '@/components/ui/use-toast';
 import { ASSISTANT } from '@/constants/roles';
@@ -22,12 +21,11 @@ export const useChatNameGenerator = (
 ) => {
   const lastGeneratedCountRef = useRef(0);
   const initialTitle = useRef<string | null>(null);
-  const fallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset the generated count when switching chats or a name is set externally
   useEffect(() => {
     lastGeneratedCountRef.current = messages.filter(
-      (m) => m.role === 'assistant'
+      (m) => m.role && m.role.startsWith(ASSISTANT)
     ).length;
   }, [activeChatId]);
 
@@ -38,46 +36,33 @@ export const useChatNameGenerator = (
 
   // Generate a chat name after every third assistant reply
   useEffect(() => {
-    const assistantCount = messages.filter(
-      (m) => m.role === 'assistant'
-    ).length;
+    const assistantMessages = messages.filter(
+      (m) => m.role && m.role.startsWith(ASSISTANT)
+    );
+    const count = assistantMessages.length;
 
     if (
-      assistantCount >= 3 &&
-      assistantCount % 3 === 0 &&
+      // Run after the third assistant reply
+      count >= 3 &&
+      count % 3 === 0 &&
       !isWaitingForResponse &&
-      assistantCount !== lastGeneratedCountRef.current
+      count !== lastGeneratedCountRef.current
     ) {
-      (async () => {
-        await requestSessionMetadata(activeChatId);
-        lastGeneratedCountRef.current = assistantCount;
-      })();
-
-      if (process.env.NODE_ENV !== 'production') {
-        if (fallbackRef.current) clearTimeout(fallbackRef.current);
-        fallbackRef.current = setTimeout(() => {
-          generateChatName(activeChatId, messages)
-            .then(({ title, sessionSummary }) => {
-              updateChatName(activeChatId, title);
-              stashSummary(activeChatId, sessionSummary);
-            })
-            .catch((err) => {
-              console.error('fallback metadata fetch failed', err);
-            });
-        }, 3000);
-      }
+      lastGeneratedCountRef.current = count;
+      generateChatName(activeChatId, messages)
+        .then(({ title, sessionSummary }) => {
+          updateChatName(activeChatId, title);
+          stashSummary(activeChatId, sessionSummary);
+        })
+        .catch((err) => {
+          console.error('generateChatName failed', err);
+          toast({
+            title: 'Failed to update chat title',
+            variant: 'destructive',
+          });
+        });
     }
-
-    if (process.env.NODE_ENV === 'development') {
-      console.debug('[metadata] trigger', { assistantCount });
-    }
-  }, [messages, activeChatId, updateChatName, stashSummary, isWaitingForResponse]);
-
-  useEffect(() => {
-    return () => {
-      if (fallbackRef.current) clearTimeout(fallbackRef.current);
-    };
-  }, []);
+  }, [messages, activeChatId, updateChatName, isWaitingForResponse]);
 
   return chatName ?? initialTitle.current;
 };
